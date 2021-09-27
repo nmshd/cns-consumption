@@ -12,10 +12,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: apt-get update && apt-get install jq -y
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.6.0
       - run: bash .ci/build.sh
         env:
           GITHUB_BUILD_NUMBER: ${{ github.run_number }}
       - run: bash .ci/test.sh
+        env:
+          CONNECTION_STRING: mongodb://127.0.0.1:27017/?readPreference=primary&appname=transport&ssl=false
       - run: bash .ci/publish.sh
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
