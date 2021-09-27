@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        "target": "es2017",
+        "module": "commonjs",
+        "sourceMap": true,
+        "declaration": true,
+        "outDir": "dist-test",
+        "strict": true,
+        "allowSyntheticDefaultImports": true,
+        "emitDecoratorMetadata": true,
+        "esModuleInterop": true,
+        "experimentalDecorators": true,
+        "resolveJsonModule": true,
+        "moduleResolution": "node",
+        "forceConsistentCasingInFileNames": true,
+        "noImplicitReturns": true,
+        "strictNullChecks": true,
+        "strictPropertyInitialization": false,
+        "downlevelIteration": true,
+        "lib": ["es2017", "dom"],
+        "baseUrl": "./test",
+        "paths": {
+            "@nmshd/consumption": ["../dist"]
+        }
+    },
+    "include": ["test/**/*.ts"],
+    "exclude": ["node_modules"]
+}

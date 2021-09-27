@@ -1,0 +1,10 @@
+version: "3.7"
+
+services:
+  consumptionlib-mongo:
+    container_name: consumptionlib-mongo
+    image: mongo
+    logging:
+      driver: "none"
+    ports:
+      - 27025:27017

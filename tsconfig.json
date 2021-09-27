@@ -1,0 +1,33 @@
+{
+    "compilerOptions": {
+        "target": "es2017",
+        "module": "commonjs",
+        "sourceMap": true,
+        "declaration": true,
+        "outDir": "dist",
+        "strict": true,
+        "allowSyntheticDefaultImports": true,
+        "emitDecoratorMetadata": true,
+        "esModuleInterop": true,
+        "experimentalDecorators": true,
+        "resolveJsonModule": true,
+        "moduleResolution": "node",
+        "forceConsistentCasingInFileNames": true,
+        "noImplicitReturns": true,
+        "strictNullChecks": true,
+        "strictPropertyInitialization": false,
+        "downlevelIteration": true,
+        "lib": ["es2017", "dom"],
+        "typeRoots": ["./node_modules/@types"],
+        "baseUrl": ".",
+        "paths": {
+            "@nmshd/consumption": ["./src"],
+            "@nmshd/transport": ["./node_modules/@nmshd/transport"],
+            "chaimodule": ["./test/types/globalsals"],
+            "@nmshd/crypto": ["./node_modules/@nmshd/crypto"],
+            "@js-soft/ts-serval": ["./node_modules/@js-soft/ts-serval"]
+        }
+    },
+    "include": ["src/**/*.ts"],
+    "exclude": ["tmp-browser", "lib-web", "lib-node", "lib-esm", "lib-test"]
+}
