@@ -10,7 +10,7 @@ export class RelationshipRequestorTest extends AbstractTest {
         const that = this
 
         describe("RelationshipRequestor", function () {
-            const coreLib = new Transport(that.connection, that.config, that.loggerFactory)
+            const transport = new Transport(that.connection, that.config, that.loggerFactory)
             this.timeout(200000)
 
             let requestor: AccountController
@@ -25,13 +25,13 @@ export class RelationshipRequestorTest extends AbstractTest {
             before(async function () {
                 await TestUtil.clearAccounts(that.connection)
 
-                await coreLib.init()
+                await transport.init()
 
-                const accounts: AccountController[] = await TestUtil.provideAccounts(coreLib, 2)
+                const accounts: AccountController[] = await TestUtil.provideAccounts(transport, 2)
 
                 templator = accounts[0]
                 requestor = accounts[1]
-                requestorConsumption = await new ConsumptionController(coreLib, requestor).init()
+                requestorConsumption = await new ConsumptionController(transport, requestor).init()
             })
 
             it("should create a valid RelationshipTemplate with body", async function () {

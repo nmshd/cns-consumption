@@ -10,7 +10,7 @@ export class AttributeTest extends AbstractTest {
         const that = this
 
         describe("Attributes", function () {
-            const coreLib = new Transport(that.connection, that.config, that.loggerFactory)
+            const transport = new Transport(that.connection, that.config, that.loggerFactory)
 
             let consumptionController: ConsumptionController
             let testAccount: AccountController
@@ -20,11 +20,11 @@ export class AttributeTest extends AbstractTest {
             before(async function () {
                 await TestUtil.clearAccounts(that.connection)
 
-                await coreLib.init()
+                await transport.init()
 
-                const accounts: AccountController[] = await TestUtil.provideAccounts(coreLib, 1)
+                const accounts: AccountController[] = await TestUtil.provideAccounts(transport, 1)
                 testAccount = accounts[0]
-                consumptionController = await new ConsumptionController(coreLib, testAccount).init()
+                consumptionController = await new ConsumptionController(transport, testAccount).init()
             })
 
             it("should fill attributes", async function () {

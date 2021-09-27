@@ -7,7 +7,7 @@
                 "lokijs.min.js",
                 "tsserval.js",
                 "nmshd.crypto.js",
-                "nmshd.core.js",
+                "nmshd.transport.js",
                 "nmshd.content.js",
                 "nmshd.consumption.js",
                 "nmshd.consumption.test.js"
@@ -29,7 +29,7 @@
                 "lokijs.min.js",
                 "tsserval.js",
                 "nmshd.crypto.min.js",
-                "nmshd.core.min.js",
+                "nmshd.transport.min.js",
                 "nmshd.content.min.js",
                 "nmshd.consumption.min.js",
                 "nmshd.consumption.test.js"

@@ -9,7 +9,7 @@ import {
 } from "../modules"
 
 export class ConsumptionController {
-    public constructor(public readonly core: Transport, public readonly accountController: AccountController) {}
+    public constructor(public readonly transport: Transport, public readonly accountController: AccountController) {}
 
     private _attributes: ConsumptionAttributesController
     public get attributes(): ConsumptionAttributesController {

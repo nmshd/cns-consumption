@@ -9,7 +9,7 @@ export class RelationshipInfoTest extends AbstractTest {
         const that = this
 
         describe("RelationshipInfo", function () {
-            const coreLib = new Transport(that.connection, that.config, that.loggerFactory)
+            const transport = new Transport(that.connection, that.config, that.loggerFactory)
             this.timeout(200000)
 
             let recipient: AccountController
@@ -19,14 +19,14 @@ export class RelationshipInfoTest extends AbstractTest {
             before(async function () {
                 await TestUtil.clearAccounts(that.connection)
 
-                await coreLib.init()
+                await transport.init()
 
-                const accounts: AccountController[] = await TestUtil.provideAccounts(coreLib, 2)
+                const accounts: AccountController[] = await TestUtil.provideAccounts(transport, 2)
 
                 sender = accounts[0]
                 recipient = accounts[1]
 
-                senderConsumption = await new ConsumptionController(coreLib, sender).init()
+                senderConsumption = await new ConsumptionController(transport, sender).init()
 
                 await TestUtil.addRelationship(recipient, sender)
             })
