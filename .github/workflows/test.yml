@@ -6,17 +6,31 @@ on:
       - main
 
 jobs:
-  test:
+  run-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: bash .ci/runChecks.sh
+
+  test-node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14
+      - run: npm ci
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.6.0
+      - run: npm run test:node
+        env:
+          CONNECTION_STRING: mongodb://127.0.0.1:27017/?readPreference=primary&appname=transport&ssl=false
+
+  test-web:
     runs-on: ubuntu-latest
     container: jssoft/node_browsertests
     steps:
       - uses: actions/checkout@v2
-      - run: apt-get update && apt-get install jq -y
-      - run: bash .ci/build.sh
-        env:
-          GITHUB_BUILD_NUMBER: ${{ github.run_number }}
-      - name: Start MongoDB
-        uses: supercharge/mongodb-github-action@1.6.0
-      - run: bash .ci/test.sh
-        env:
-          CONNECTION_STRING: mongodb://127.0.0.1:27017/?readPreference=primary&appname=consumption&ssl=false
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:web
