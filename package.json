@@ -44,7 +44,6 @@
         "test:web": "browsertest-runner",
         "test:web:debug": "browsertest-runner-debug"
     },
-    "dependencies": {},
     "devDependencies": {
         "@js-soft/docdb-access-loki": "1.0.1",
         "@js-soft/docdb-access-mongo": "1.0.1",
