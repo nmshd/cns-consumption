@@ -1,4 +1,4 @@
-# Content
+# Consumption
 
 [![GitHub Actions CI](https://github.com/nmshd/cns-consumption/workflows/Publish/badge.svg)](https://github.com/nmshd/cns-consumption/actions?query=workflow%3APublish)
 [![npm version](https://badge.fury.io/js/@nmshd%2fconsumption.svg)](https://www.npmjs.com/package/@nmshd/consumption)
