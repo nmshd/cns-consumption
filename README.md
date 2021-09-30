@@ -15,4 +15,4 @@ Currently contribution to this project is not possible. This will change soon.
 
 ## License
 
-[UNLICENSED](LICENSE)
+[MIT](LICENSE)
