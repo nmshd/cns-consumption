@@ -4,7 +4,7 @@
     "description": "The consumption library extends the transport library.",
     "homepage": "https://enmeshed.eu",
     "repository": "github:nmshd/cns-consumption",
-    "license": "UNLICENSED",
+    "license": "MIT",
     "author": "j&s-soft GmbH",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
