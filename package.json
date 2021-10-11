@@ -61,7 +61,7 @@
         "@types/luxon": "^2.0.5",
         "@types/mocha": "^9.0.0",
         "@types/node": "^16.10.3",
-        "bt-runner": "^1.0.17",
+        "bt-runner": "^1.0.20",
         "chai": "^4.3.4",
         "copy-webpack-plugin": "^9.0.1",
         "eslint": "^7.32.0",
