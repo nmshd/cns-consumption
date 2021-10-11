@@ -54,11 +54,11 @@
         "@js-soft/ts-utils": "1.0.1",
         "@js-soft/web-logger": "1.0.0",
         "@nmshd/content": "1.0.3",
-        "@nmshd/crypto": "1.0.3",
-        "@nmshd/transport": "1.0.4",
+        "@nmshd/crypto": "1.0.4",
+        "@nmshd/transport": "1.0.7",
         "@types/chai": "^4.2.22",
         "@types/glob": "^7.1.4",
-        "@types/luxon": "^2.0.4",
+        "@types/luxon": "^2.0.5",
         "@types/mocha": "^9.0.0",
         "@types/node": "^16.10.3",
         "bt-runner": "^1.0.17",
@@ -72,8 +72,8 @@
         "ts-node": "^10.2.1",
         "tsconfig-paths": "^3.11.0",
         "typescript": "^4.4.3",
-        "webpack": "^5.57.1",
-        "webpack-cli": "^4.8.0"
+        "webpack": "^5.58.1",
+        "webpack-cli": "^4.9.0"
     },
     "publishConfig": {
         "access": "public"
