@@ -16,7 +16,6 @@ import {
     File,
     ISendFileParameters,
     Message,
-    Realm,
     Relationship,
     RelationshipStatus,
     RelationshipTemplate,
