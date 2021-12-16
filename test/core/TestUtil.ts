@@ -143,7 +143,7 @@ export class TestUtil {
         const randomId = Math.random().toString(36).substring(7)
         const db: IDatabaseCollectionProvider = await transport.createDatabase(`acc-${randomId}`)
 
-        const accountController: AccountController = new AccountController(transport, Realm.Prod, db, transport.config)
+        const accountController: AccountController = new AccountController(transport, db, transport.config)
         await accountController.init()
 
         return accountController
