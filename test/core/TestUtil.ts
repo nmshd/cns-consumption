@@ -139,7 +139,7 @@ export class TestUtil {
     }
 
     private static async createAccount(transport: Transport): Promise<AccountController> {
-        const randomId = Math.random().toString(36).substring(7)
+        const randomId = Math.random().toString(36).substring(0, 7)
         const db: IDatabaseCollectionProvider = await transport.createDatabase(`acc-${randomId}`)
 
         const accountController: AccountController = new AccountController(transport, db, transport.config)

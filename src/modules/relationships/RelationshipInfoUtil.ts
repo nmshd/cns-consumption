@@ -39,7 +39,7 @@ export class RelationshipInfoUtil {
     }
 
     private getTitle(relationship: Relationship, attributeMap: Map<string, RelationshipAttribute>): string {
-        let title = relationship.peer.address.toString().substring(3, 6)
+        let title = relationship.peer.address.toString().substring(3, 9)
         const thingname = attributeMap.get("Thing.name")?.content.value
         const firstname = attributeMap.get("Person.firstname")?.content.value
         const lastname = attributeMap.get("Person.lastname")?.content.value
@@ -64,7 +64,7 @@ export class RelationshipInfoUtil {
 
     private async createRelationshipInfo(relationship: Relationship): Promise<RelationshipInfo> {
         const peerAddress = relationship.peer.address
-        const truncatedAddress = peerAddress.address.substring(3, 6)
+        const truncatedAddress = peerAddress.address.substring(3, 9)
         let info = await RelationshipInfo.from({
             attributes: [],
             id: await ConsumptionIds.relationshipInfo.generate(),

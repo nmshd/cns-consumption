@@ -37,7 +37,7 @@ export class RelationshipInfoTest extends AbstractTest {
                     relationship!.id
                 )
                 expect(info).to.exist
-                expect(info!.title).to.equal(relationship?.peer.address.address.substring(3, 6))
+                expect(info!.title).to.equal(relationship?.peer.address.address.substring(3, 9))
                 expect(info!.relationshipId.toString()).to.equal(relationship!.id.toString())
             })
 
@@ -47,7 +47,7 @@ export class RelationshipInfoTest extends AbstractTest {
                     relationship!.id
                 )
                 expect(info).to.exist
-                expect(info!.title).to.equal(relationship?.peer.address.address.substring(3, 6))
+                expect(info!.title).to.equal(relationship?.peer.address.address.substring(3, 9))
                 expect(info!.relationshipId.toString()).to.equal(relationship!.id.toString())
             })
 
