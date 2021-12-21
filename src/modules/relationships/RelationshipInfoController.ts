@@ -2,6 +2,7 @@ import { CoreId, SynchronizedCollection } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionErrors } from "../../consumption"
 import { ConsumptionController } from "../../consumption/ConsumptionController"
 import { RelationshipInfo } from "./local/RelationshipInfo"
+import { RelationshipInfoUtil } from "./RelationshipInfoUtil"
 
 export class RelationshipInfoController extends ConsumptionBaseController {
     private relationshipInfo: SynchronizedCollection
@@ -24,7 +25,14 @@ export class RelationshipInfoController extends ConsumptionBaseController {
 
     public async getRelationshipInfoByRelationship(relationshipId: CoreId): Promise<RelationshipInfo | undefined> {
         const result = await this.relationshipInfo.findOne({ relationshipId: relationshipId.toString() })
-        return result ? await RelationshipInfo.from(result) : undefined
+
+        if (result) {
+            return await RelationshipInfo.from(result)
+        }
+
+        const info = await new RelationshipInfoUtil(this.parent).createInitialRelationshipInfo(relationshipId)
+        await this.relationshipInfo.create(info)
+        return info
     }
 
     public async getRelationshipInfos(query?: any): Promise<RelationshipInfo[]> {
