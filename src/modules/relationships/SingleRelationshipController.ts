@@ -49,7 +49,7 @@ export class SingleRelationshipController extends ConsumptionBaseController {
                 attributeMap.set(item.name, item)
             }
             this._attributeMap = attributeMap
-            this._info = info!
+            this._info = info
         }
 
         return this
@@ -80,7 +80,7 @@ export class SingleRelationshipController extends ConsumptionBaseController {
     }
 
     private getTitle(): string {
-        let title = this.relationship.peer.address.toString().substr(3, 6)
+        let title = this.relationship.peer.address.toString().substring(3, 6)
         const thingname = this.attributeMap.get("Thing.name")?.content.value
         const firstname = this.attributeMap.get("Person.firstname")?.content.value
         const lastname = this.attributeMap.get("Person.lastname")?.content.value
@@ -107,7 +107,7 @@ export class SingleRelationshipController extends ConsumptionBaseController {
         let info = await this.parent.relationshipInfo.getRelationshipInfoByRelationship(this.relationship.id)
         if (!info) {
             const peerAddress = this.relationship.peer.address
-            const truncatedAddress = peerAddress.address.substr(3, 6)
+            const truncatedAddress = peerAddress.address.substring(3, 6)
             info = await RelationshipInfo.from({
                 attributes: [],
                 id: await ConsumptionIds.relationshipInfo.generate(),

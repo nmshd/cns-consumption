@@ -72,7 +72,7 @@ export class RelationshipInfo extends CoreSynchronizable implements IRelationshi
                 relationshipId: relationship.id,
                 attributes: [],
                 isPinned: false,
-                title: relationship.peer.address.address.substr(3, 6)
+                title: relationship.peer.address.address.substring(3, 6)
             })
         }
         return await RelationshipInfo.from(relationship.metadata)
