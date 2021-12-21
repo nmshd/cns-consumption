@@ -51,8 +51,10 @@ export class RelationshipInfoUtil {
             title = thingname
         } else if (firstname && lastname) {
             title = `${firstname} ${lastname}`
+        } else if (firstname) {
+            title = firstname
         } else if (lastname && gender) {
-            title = `~~gender.salutation.${gender}~~ ${lastname}`
+            title = `i18n://salutation.gender.${gender} ${lastname}`
         } else if (orgname) {
             title = orgname
         } else if (legalname) {
