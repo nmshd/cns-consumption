@@ -1,69 +1,28 @@
+import { ILogger } from "@js-soft/logging-abstractions"
 import { Attribute, RelationshipCreationChangeRequestBody, RelationshipTemplateBody } from "@nmshd/content"
-import { CoreId, Relationship, RelationshipTemplate, TransportErrors } from "@nmshd/transport"
-import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionIds } from "../../consumption"
+import { CoreId, Relationship, RelationshipTemplate, TransportErrors, TransportLoggerFactory } from "@nmshd/transport"
+import { ConsumptionIds } from "../../consumption"
 import { ConsumptionController } from "../../consumption/ConsumptionController"
 import { SharedItem } from "../sharedItems/local/SharedItem"
 import { RelationshipAttribute } from "./local/RelationshipAttribute"
 import { RelationshipInfo } from "./local/RelationshipInfo"
 
-export class SingleRelationshipController extends ConsumptionBaseController {
-    private _relationship: Relationship
-    public get relationship(): Relationship {
-        return this._relationship
+export class RelationshipInfoUtil {
+    protected _log: ILogger
+    public get log(): ILogger {
+        return this._log
     }
 
-    private _info: RelationshipInfo
-    public get info(): RelationshipInfo {
-        return this._info
+    public constructor(private readonly parent: ConsumptionController) {
+        this._log = TransportLoggerFactory.getLogger(RelationshipInfoUtil)
     }
 
-    private _attributeMap: Map<string, RelationshipAttribute>
-    public get attributeMap(): Map<string, RelationshipAttribute> {
-        return this._attributeMap
-    }
-
-    public constructor(parent: ConsumptionController) {
-        super(ConsumptionControllerName.SingleRelationshipController, parent)
-    }
-
-    public async initWithRelationshipId(id: CoreId): Promise<SingleRelationshipController> {
+    public async createInitialRelationshipInfo(id: CoreId): Promise<RelationshipInfo> {
         const relationship = await this.parent.accountController.relationships.getRelationship(id)
         if (!relationship) {
             throw TransportErrors.general.recordNotFound(Relationship, id.toString()).logWith(this._log)
         }
 
-        return await this.initWithRelationship(relationship)
-    }
-
-    public async initWithRelationship(relationship: Relationship): Promise<SingleRelationshipController> {
-        await super.init()
-
-        this._relationship = relationship
-
-        const info = await this.parent.relationshipInfo.getRelationshipInfoByRelationship(this.relationship.id)
-        if (!info) {
-            await this.initialFill()
-        } else {
-            const attributeMap = new Map<string, RelationshipAttribute>()
-            for (const item of info.attributes) {
-                attributeMap.set(item.name, item)
-            }
-            this._attributeMap = attributeMap
-            this._info = info!
-        }
-
-        return this
-    }
-
-    private async initialFill(): Promise<SingleRelationshipController> {
-        const relationship = await this.parent.accountController.relationships.getRelationship(this._relationship.id)
-        if (!relationship) {
-            throw TransportErrors.general
-                .recordNotFound(Relationship, this._relationship.id.toString())
-                .logWith(this._log)
-        }
-
-        this._relationship = relationship
         const template = await this.parent.accountController.relationshipTemplates.getRelationshipTemplate(
             relationship.cache!.template.id
         )
@@ -73,20 +32,20 @@ export class SingleRelationshipController extends ConsumptionBaseController {
                 .logWith(this._log)
         }
 
-        await this.parseTemplateBody(template)
-        await this.parseCreationRequest()
-        this._info = await this.updateRelationshipInfo()
-        return this
+        await this.parseTemplateBody(relationship, template)
+        await this.parseCreationRequest(relationship)
+
+        return await this.createRelationshipInfo(relationship)
     }
 
-    private getTitle(): string {
-        let title = this.relationship.peer.address.toString().substr(3, 6)
-        const thingname = this.attributeMap.get("Thing.name")?.content.value
-        const firstname = this.attributeMap.get("Person.firstname")?.content.value
-        const lastname = this.attributeMap.get("Person.lastname")?.content.value
-        const gender = this.attributeMap.get("Person.gender")?.content.value
-        const orgname = this.attributeMap.get("Organization.name")?.content.value
-        const legalname = this.attributeMap.get("Organization.legalname")?.content.value
+    private getTitle(relationship: Relationship, attributeMap: Map<string, RelationshipAttribute>): string {
+        let title = relationship.peer.address.toString().substring(3, 9)
+        const thingname = attributeMap.get("Thing.name")?.content.value
+        const firstname = attributeMap.get("Person.firstname")?.content.value
+        const lastname = attributeMap.get("Person.lastname")?.content.value
+        const gender = attributeMap.get("Person.gender")?.content.value
+        const orgname = attributeMap.get("Organization.name")?.content.value
+        const legalname = attributeMap.get("Organization.legalname")?.content.value
 
         if (thingname) {
             title = thingname
@@ -103,23 +62,20 @@ export class SingleRelationshipController extends ConsumptionBaseController {
         return title
     }
 
-    public async updateRelationshipInfo(): Promise<RelationshipInfo> {
-        let info = await this.parent.relationshipInfo.getRelationshipInfoByRelationship(this.relationship.id)
-        if (!info) {
-            const peerAddress = this.relationship.peer.address
-            const truncatedAddress = peerAddress.address.substr(3, 6)
-            info = await RelationshipInfo.from({
-                attributes: [],
-                id: await ConsumptionIds.relationshipInfo.generate(),
-                isPinned: false,
-                relationshipId: this.relationship.id,
-                title: truncatedAddress
-            })
-            info = await this.parent.relationshipInfo.createRelationshipInfo(info)
-        }
+    private async createRelationshipInfo(relationship: Relationship): Promise<RelationshipInfo> {
+        const peerAddress = relationship.peer.address
+        const truncatedAddress = peerAddress.address.substring(3, 9)
+        let info = await RelationshipInfo.from({
+            attributes: [],
+            id: await ConsumptionIds.relationshipInfo.generate(),
+            isPinned: false,
+            relationshipId: relationship.id,
+            title: truncatedAddress
+        })
+        info = await this.parent.relationshipInfo.createRelationshipInfo(info)
 
         const items = await this.parent.sharedItems.getSharedItems({
-            sharedBy: this.relationship.peer.address.toString()
+            sharedBy: relationship.peer.address.toString()
         })
         const attributes = []
         const attributeMap = new Map<string, RelationshipAttribute>()
@@ -134,18 +90,17 @@ export class SingleRelationshipController extends ConsumptionBaseController {
                 attributeMap.set(relAttr.name, relAttr)
             }
         }
-        this._attributeMap = attributeMap
 
         info.attributes = attributes
 
-        const title = this.getTitle()
+        const title = this.getTitle(relationship, attributeMap)
         info.title = title
 
         await this.parent.relationshipInfo.updateRelationshipInfo(info)
         return info
     }
 
-    private async parseTemplateBody(template: RelationshipTemplate) {
+    private async parseTemplateBody(relationship: Relationship, template: RelationshipTemplate) {
         if (!template.cache) {
             throw TransportErrors.general.cacheEmpty(RelationshipTemplate, template.id.toString()).logWith(this._log)
         }
@@ -158,9 +113,9 @@ export class SingleRelationshipController extends ConsumptionBaseController {
                 const sharedAt = template.cache.createdAt
                 const sharedBy = isTemplator
                     ? this.parent.accountController.identity.address
-                    : this.relationship.peer.address
+                    : relationship.peer.address
                 const sharedWith = isTemplator
-                    ? this.relationship.peer.address
+                    ? relationship.peer.address
                     : this.parent.accountController.identity.address
 
                 for (const attribute of attributes) {
@@ -179,17 +134,14 @@ export class SingleRelationshipController extends ConsumptionBaseController {
         }
     }
 
-    private async parseCreationRequest() {
-        const request = this.relationship.cache!.creationChange.request
+    private async parseCreationRequest(relationship: Relationship) {
+        const request = relationship.cache!.creationChange.request
         if (!request.content) {
             const error = new Error("error.consumption.noRequestContent")
             this._log.error(error)
             throw error
         }
-        let isRequestor = false
-        if (this.parent.accountController.identity.isMe(request.createdBy)) {
-            isRequestor = true
-        }
+        const isRequestor = this.parent.accountController.identity.isMe(request.createdBy)
         if (request.content instanceof RelationshipCreationChangeRequestBody) {
             const body = request.content
             const attributes = body.sharedAttributes
@@ -197,9 +149,9 @@ export class SingleRelationshipController extends ConsumptionBaseController {
                 const sharedAt = request.createdAt
                 const sharedBy = isRequestor
                     ? this.parent.accountController.identity.address
-                    : this.relationship.peer.address
+                    : relationship.peer.address
                 const sharedWith = isRequestor
-                    ? this.relationship.peer.address
+                    ? relationship.peer.address
                     : this.parent.accountController.identity.address
 
                 for (const attribute of attributes) {
@@ -209,7 +161,7 @@ export class SingleRelationshipController extends ConsumptionBaseController {
                         sharedAt: sharedAt,
                         sharedBy: sharedBy,
                         sharedWith: sharedWith,
-                        reference: this.relationship.id,
+                        reference: relationship.id,
                         expiresAt: attribute.validTo
                     })
                     await this.parent.sharedItems.createSharedItem(sharedItem)

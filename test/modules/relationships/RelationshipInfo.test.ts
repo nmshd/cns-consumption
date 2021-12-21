@@ -1,4 +1,4 @@
-import { ConsumptionController, SingleRelationshipController } from "@nmshd/consumption"
+import { ConsumptionController } from "@nmshd/consumption"
 import { AccountController, Transport } from "@nmshd/transport"
 import { expect } from "chai"
 import { AbstractTest } from "../../core/AbstractTest"
@@ -33,22 +33,12 @@ export class RelationshipInfoTest extends AbstractTest {
 
             it("relationshipInfo should be created", async function () {
                 const relationship = await sender.relationships.getRelationshipToIdentity(recipient.identity.address)
-                const single = await new SingleRelationshipController(senderConsumption).initWithRelationship(
-                    relationship!
+                const info = await senderConsumption.relationshipInfo.getRelationshipInfoByRelationship(
+                    relationship!.id
                 )
-                expect(single.info).to.exist
-                expect(single.info.title).to.equal(relationship?.peer.address.address.substr(3, 6))
-                expect(single.info.relationshipId.toString()).to.equal(relationship!.id.toString())
-            })
-
-            it("created RelationshipInfo should be fetched again", async function () {
-                const relationship = await sender.relationships.getRelationshipToIdentity(recipient.identity.address)
-                const single = await new SingleRelationshipController(senderConsumption).initWithRelationship(
-                    relationship!
-                )
-                expect(single.info).to.exist
-                expect(single.info.title).to.equal(relationship?.peer.address.address.substr(3, 6))
-                expect(single.info.relationshipId.toString()).to.equal(relationship!.id.toString())
+                expect(info).to.exist
+                expect(info!.title).to.equal(relationship?.peer.address.address.substring(3, 9))
+                expect(info!.relationshipId.toString()).to.equal(relationship!.id.toString())
             })
 
             it("created RelationshipInfo should be stored", async function () {
@@ -57,7 +47,7 @@ export class RelationshipInfoTest extends AbstractTest {
                     relationship!.id
                 )
                 expect(info).to.exist
-                expect(info!.title).to.equal(relationship?.peer.address.address.substr(3, 6))
+                expect(info!.title).to.equal(relationship?.peer.address.address.substring(3, 9))
                 expect(info!.relationshipId.toString()).to.equal(relationship!.id.toString())
             })
 
