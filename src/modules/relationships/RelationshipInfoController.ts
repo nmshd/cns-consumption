@@ -41,10 +41,11 @@ export class RelationshipInfoController extends ConsumptionBaseController {
     }
 
     public async createRelationshipInfo(relationshipInfo: RelationshipInfo): Promise<RelationshipInfo> {
-        const current = await this.getRelationshipInfoByRelationship(relationshipInfo.relationshipId)
-        if (current) {
+        const exists = await this.relationshipInfo.exists({ relationshipId: relationshipInfo.relationshipId })
+        if (exists) {
             throw ConsumptionErrors.relationshipInfo.relationshipInfoExists(relationshipInfo.relationshipId.toString())
         }
+
         await this.relationshipInfo.create(relationshipInfo)
         return relationshipInfo
     }
