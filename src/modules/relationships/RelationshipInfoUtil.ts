@@ -40,25 +40,26 @@ export class RelationshipInfoUtil {
 
     private getTitle(relationship: Relationship, attributeMap: Map<string, RelationshipAttribute>): string {
         let title = relationship.peer.address.toString().substring(3, 9)
-        const thingname = attributeMap.get("Thing.name")?.content.value
-        const firstname = attributeMap.get("Person.firstname")?.content.value
-        const lastname = attributeMap.get("Person.lastname")?.content.value
+
+        const thingName = attributeMap.get("Thing.name")?.content.value
+        const givenName = attributeMap.get("Person.givenName")?.content.value
+        const familyName = attributeMap.get("Person.familyName")?.content.value
         const gender = attributeMap.get("Person.gender")?.content.value
         const orgname = attributeMap.get("Organization.name")?.content.value
-        const legalname = attributeMap.get("Organization.legalname")?.content.value
+        const legalName = attributeMap.get("Organization.legalname")?.content.value
 
-        if (thingname) {
-            title = thingname
-        } else if (firstname && lastname) {
-            title = `${firstname} ${lastname}`
-        } else if (firstname) {
-            title = firstname
-        } else if (lastname && gender) {
-            title = `i18n://salutation.gender.${gender} ${lastname}`
+        if (thingName) {
+            title = thingName
+        } else if (givenName && familyName) {
+            title = `${givenName} ${familyName}`
+        } else if (givenName) {
+            title = givenName
+        } else if (familyName && gender) {
+            title = `i18n://salutation.gender.${gender} ${familyName}`
         } else if (orgname) {
             title = orgname
-        } else if (legalname) {
-            title = legalname
+        } else if (legalName) {
+            title = legalName
         }
 
         return title
