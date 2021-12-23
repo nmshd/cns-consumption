@@ -102,7 +102,7 @@ export class RelationshipRequestorTest extends AbstractTest {
                 for (const item of receivedItems) {
                     expect(item).instanceOf(SharedItem)
                     expect(item.reference!.toString()).equals(template.id.toString())
-                    expect(item.sharedAt.isWithin({ seconds: 1 }, { seconds: 1 }, creationDate)).equals(true)
+                    expect(item.sharedAt.isWithin({ seconds: 5 }, { seconds: 5 }, creationDate)).equals(true)
                     expect(item.sharedBy.toString()).equals(relationship.peer.address.toString())
                     expect(item.sharedWith.toString()).equals(selfAddress)
                     expect(item.content).instanceOf(Attribute)
@@ -135,7 +135,7 @@ export class RelationshipRequestorTest extends AbstractTest {
                 for (const item of sentItems) {
                     expect(item).instanceOf(SharedItem)
                     expect(item.reference!.toString()).equals(change.id.toString())
-                    expect(item.sharedAt.isWithin({ seconds: 1 }, { seconds: 1 }, creationDate)).equals(true)
+                    expect(item.sharedAt.isWithin({ seconds: 5 }, { seconds: 5 }, creationDate)).equals(true)
                     expect(item.sharedBy.toString()).equals(selfAddress)
                     expect(item.sharedWith.toString()).equals(relationship.peer.address.toString())
                     expect(item.content).instanceOf(Attribute)
