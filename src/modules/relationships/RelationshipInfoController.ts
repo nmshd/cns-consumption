@@ -24,6 +24,11 @@ export class RelationshipInfoController extends ConsumptionBaseController {
     }
 
     public async getRelationshipInfoByRelationship(relationshipId: CoreId): Promise<RelationshipInfo | undefined> {
+        const info = await new RelationshipInfoUtil(this.parent).createInitialRelationshipInfo(relationshipId)
+        return info
+        /*
+        // So far, do not store the relationshipInfo, as they wouldn't be updated correctly
+
         const result = await this.relationshipInfo.findOne({ relationshipId: relationshipId.toString() })
 
         if (result) {
@@ -33,6 +38,7 @@ export class RelationshipInfoController extends ConsumptionBaseController {
         const info = await new RelationshipInfoUtil(this.parent).createInitialRelationshipInfo(relationshipId)
         await this.relationshipInfo.create(info)
         return info
+        */
     }
 
     public async getRelationshipInfos(query?: any): Promise<RelationshipInfo[]> {

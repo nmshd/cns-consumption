@@ -68,14 +68,14 @@ export class RelationshipInfoUtil {
     private async createRelationshipInfo(relationship: Relationship): Promise<RelationshipInfo> {
         const peerAddress = relationship.peer.address
         const truncatedAddress = peerAddress.address.substring(3, 9)
-        let info = await RelationshipInfo.from({
+        const info = await RelationshipInfo.from({
             attributes: [],
             id: await ConsumptionIds.relationshipInfo.generate(),
             isPinned: false,
             relationshipId: relationship.id,
             title: truncatedAddress
         })
-        info = await this.parent.relationshipInfo.createRelationshipInfo(info)
+        // info = await this.parent.relationshipInfo.createRelationshipInfo(info)
 
         const items = await this.parent.sharedItems.getSharedItems({
             sharedBy: relationship.peer.address.toString()
@@ -99,7 +99,7 @@ export class RelationshipInfoUtil {
         const title = this.getTitle(relationship, attributeMap)
         info.title = title
 
-        await this.parent.relationshipInfo.updateRelationshipInfo(info)
+        // await this.parent.relationshipInfo.updateRelationshipInfo(info)
         return info
     }
 
@@ -108,8 +108,8 @@ export class RelationshipInfoUtil {
             throw TransportErrors.general.cacheEmpty(RelationshipTemplate, template.id.toString()).logWith(this._log)
         }
 
-        const isTemplator = this.parent.accountController.identity.isMe(template.cache.createdBy)
         if (template.cache.content instanceof RelationshipTemplateBody) {
+            const isTemplator = this.parent.accountController.identity.isMe(template.cache.createdBy)
             const body = template.cache.content
             const attributes = body.sharedAttributes
             if (attributes) {
@@ -121,34 +121,49 @@ export class RelationshipInfoUtil {
                     ? relationship.peer.address
                     : this.parent.accountController.identity.address
 
-                for (const attribute of attributes) {
-                    const sharedItem = await SharedItem.from({
-                        id: await ConsumptionIds.sharedItem.generate(),
-                        content: attribute,
-                        sharedAt: sharedAt,
-                        sharedBy: sharedBy,
-                        sharedWith: sharedWith,
-                        reference: template.id,
-                        expiresAt: attribute.validTo
+                const sharedItemsWithSameReference = await this.parent.sharedItems.getSharedItems({
+                    reference: template.id.toString()
+                })
+                if (sharedItemsWithSameReference.length !== attributes.length) {
+                    const missingItems: Attribute[] = []
+                    attributes.forEach((attribute) => {
+                        if (
+                            !sharedItemsWithSameReference.find(function (item) {
+                                const content = item.content as Attribute
+                                return content.name === attribute.name
+                            })
+                        ) {
+                            missingItems.push(attribute)
+                        }
                     })
-                    await this.parent.sharedItems.createSharedItem(sharedItem)
+
+                    for (const attribute of missingItems) {
+                        const sharedItem = await SharedItem.from({
+                            id: await ConsumptionIds.sharedItem.generate(),
+                            content: attribute,
+                            sharedAt: sharedAt,
+                            sharedBy: sharedBy,
+                            sharedWith: sharedWith,
+                            reference: template.id,
+                            expiresAt: attribute.validTo
+                        })
+                        await this.parent.sharedItems.createSharedItem(sharedItem)
+                    }
                 }
             }
+        } else {
+            // do nothing, we don't know the content
         }
     }
 
     private async parseCreationRequest(relationship: Relationship) {
-        const request = relationship.cache!.creationChange.request
-        if (!request.content) {
-            const error = new Error("error.consumption.noRequestContent")
-            this._log.error(error)
-            throw error
-        }
-        const isRequestor = this.parent.accountController.identity.isMe(request.createdBy)
+        const change = relationship.cache!.creationChange
+        const request = change.request
         if (request.content instanceof RelationshipCreationChangeRequestBody) {
+            const isRequestor = this.parent.accountController.identity.isMe(request.createdBy)
             const body = request.content
             const attributes = body.sharedAttributes
-            if (attributes) {
+            if (attributes && attributes.length > 0) {
                 const sharedAt = request.createdAt
                 const sharedBy = isRequestor
                     ? this.parent.accountController.identity.address
@@ -157,21 +172,38 @@ export class RelationshipInfoUtil {
                     ? relationship.peer.address
                     : this.parent.accountController.identity.address
 
-                for (const attribute of attributes) {
-                    const sharedItem = await SharedItem.from({
-                        id: await ConsumptionIds.sharedItem.generate(),
-                        content: attribute,
-                        sharedAt: sharedAt,
-                        sharedBy: sharedBy,
-                        sharedWith: sharedWith,
-                        reference: relationship.id,
-                        expiresAt: attribute.validTo
+                const sharedItemsWithSameReference = await this.parent.sharedItems.getSharedItems({
+                    reference: change.id.toString()
+                })
+
+                if (sharedItemsWithSameReference.length !== attributes.length) {
+                    const missingItems: Attribute[] = []
+                    attributes.forEach((attribute) => {
+                        if (
+                            !sharedItemsWithSameReference.find(function (item) {
+                                const content = item.content as Attribute
+                                return content.name === attribute.name
+                            })
+                        ) {
+                            missingItems.push(attribute)
+                        }
                     })
-                    await this.parent.sharedItems.createSharedItem(sharedItem)
+                    for (const attribute of missingItems) {
+                        const sharedItem = await SharedItem.from({
+                            id: await ConsumptionIds.sharedItem.generate(),
+                            content: attribute,
+                            sharedAt: sharedAt,
+                            sharedBy: sharedBy,
+                            sharedWith: sharedWith,
+                            reference: change.id,
+                            expiresAt: attribute.validTo
+                        })
+                        await this.parent.sharedItems.createSharedItem(sharedItem)
+                    }
                 }
             }
         } else {
-            throw new Error("Request.content.content is no RelationshipCreationChangeRequestBody")
+            // do nothing, we don't know the content
         }
     }
 }
