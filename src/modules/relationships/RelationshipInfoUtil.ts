@@ -1,4 +1,5 @@
 import { ILogger } from "@js-soft/logging-abstractions"
+import { JSONWrapper, JSONWrapperAsync } from "@js-soft/ts-serval"
 import { Attribute, RelationshipCreationChangeRequestBody, RelationshipTemplateBody } from "@nmshd/content"
 import { CoreId, Relationship, RelationshipTemplate, TransportErrors, TransportLoggerFactory } from "@nmshd/transport"
 import { ConsumptionIds } from "../../consumption"
@@ -23,16 +24,7 @@ export class RelationshipInfoUtil {
             throw TransportErrors.general.recordNotFound(Relationship, id.toString()).logWith(this._log)
         }
 
-        const template = await this.parent.accountController.relationshipTemplates.getRelationshipTemplate(
-            relationship.cache!.template.id
-        )
-        if (!template) {
-            throw TransportErrors.general
-                .recordNotFound(RelationshipTemplate, relationship.cache!.template.id.toString())
-                .logWith(this._log)
-        }
-
-        await this.parseTemplateBody(relationship, template)
+        await this.parseTemplateBody(relationship)
         await this.parseCreationRequest(relationship)
 
         return await this.createRelationshipInfo(relationship)
@@ -103,29 +95,25 @@ export class RelationshipInfoUtil {
         return info
     }
 
-    private async parseTemplateBody(relationship: Relationship, template: RelationshipTemplate) {
+    private async parseTemplateBody(relationship: Relationship) {
+        const template = relationship.cache!.template
         if (!template.cache) {
             throw TransportErrors.general.cacheEmpty(RelationshipTemplate, template.id.toString()).logWith(this._log)
         }
+        const body = template.cache.content
+        const isTemplator = this.parent.accountController.identity.isMe(template.cache.createdBy)
+        const sharedAt = template.cache.createdAt
+        const sharedBy = isTemplator ? this.parent.accountController.identity.address : relationship.peer.address
+        const sharedWith = isTemplator ? relationship.peer.address : this.parent.accountController.identity.address
+        const sharedItemsWithSameReference = await this.parent.sharedItems.getSharedItems({
+            reference: template.id.toString()
+        })
+        const missingItems: Attribute[] = []
 
-        if (template.cache.content instanceof RelationshipTemplateBody) {
-            const isTemplator = this.parent.accountController.identity.isMe(template.cache.createdBy)
-            const body = template.cache.content
+        if (body instanceof RelationshipTemplateBody) {
             const attributes = body.sharedAttributes
             if (attributes) {
-                const sharedAt = template.cache.createdAt
-                const sharedBy = isTemplator
-                    ? this.parent.accountController.identity.address
-                    : relationship.peer.address
-                const sharedWith = isTemplator
-                    ? relationship.peer.address
-                    : this.parent.accountController.identity.address
-
-                const sharedItemsWithSameReference = await this.parent.sharedItems.getSharedItems({
-                    reference: template.id.toString()
-                })
                 if (sharedItemsWithSameReference.length !== attributes.length) {
-                    const missingItems: Attribute[] = []
                     attributes.forEach((attribute) => {
                         if (
                             !sharedItemsWithSameReference.find(function (item) {
@@ -136,48 +124,66 @@ export class RelationshipInfoUtil {
                             missingItems.push(attribute)
                         }
                     })
-
-                    for (const attribute of missingItems) {
-                        const sharedItem = await SharedItem.from({
-                            id: await ConsumptionIds.sharedItem.generate(),
-                            content: attribute,
-                            sharedAt: sharedAt,
-                            sharedBy: sharedBy,
-                            sharedWith: sharedWith,
-                            reference: template.id,
-                            expiresAt: attribute.validTo
-                        })
-                        await this.parent.sharedItems.createSharedItem(sharedItem)
-                    }
                 }
             }
         } else {
-            // do nothing, we don't know the content
+            // Try to parse the old template format (without types)
+            let oldTemplateBody: any = body
+            if (body instanceof JSONWrapper || body instanceof JSONWrapperAsync) {
+                oldTemplateBody = oldTemplateBody.value
+            }
+            if (oldTemplateBody?.attributes && Array.isArray(oldTemplateBody.attributes)) {
+                if (sharedItemsWithSameReference.length !== oldTemplateBody.attributes.length) {
+                    oldTemplateBody.attributes.forEach((attribute: any) => {
+                        if (
+                            !sharedItemsWithSameReference.find(function (item) {
+                                const content = item.content as Attribute
+                                return content.name === attribute.name
+                            })
+                        ) {
+                            missingItems.push(
+                                Attribute.from({
+                                    name: attribute.name,
+                                    value: attribute.value
+                                })
+                            )
+                        }
+                    })
+                }
+            }
+        }
+
+        for (const attribute of missingItems) {
+            const sharedItem = await SharedItem.from({
+                id: await ConsumptionIds.sharedItem.generate(),
+                content: attribute,
+                sharedAt: sharedAt,
+                sharedBy: sharedBy,
+                sharedWith: sharedWith,
+                reference: template.id,
+                expiresAt: attribute.validTo
+            })
+            await this.parent.sharedItems.createSharedItem(sharedItem)
         }
     }
 
     private async parseCreationRequest(relationship: Relationship) {
         const change = relationship.cache!.creationChange
         const request = change.request
-        if (request.content instanceof RelationshipCreationChangeRequestBody) {
-            const isRequestor = this.parent.accountController.identity.isMe(request.createdBy)
-            const body = request.content
+        const body = request.content
+        const isRequestor = this.parent.accountController.identity.isMe(request.createdBy)
+        const sharedAt = request.createdAt
+        const sharedBy = isRequestor ? this.parent.accountController.identity.address : relationship.peer.address
+        const sharedWith = isRequestor ? relationship.peer.address : this.parent.accountController.identity.address
+        const sharedItemsWithSameReference = await this.parent.sharedItems.getSharedItems({
+            reference: change.id.toString()
+        })
+        const missingItems: Attribute[] = []
+
+        if (body instanceof RelationshipCreationChangeRequestBody) {
             const attributes = body.sharedAttributes
             if (attributes && attributes.length > 0) {
-                const sharedAt = request.createdAt
-                const sharedBy = isRequestor
-                    ? this.parent.accountController.identity.address
-                    : relationship.peer.address
-                const sharedWith = isRequestor
-                    ? relationship.peer.address
-                    : this.parent.accountController.identity.address
-
-                const sharedItemsWithSameReference = await this.parent.sharedItems.getSharedItems({
-                    reference: change.id.toString()
-                })
-
                 if (sharedItemsWithSameReference.length !== attributes.length) {
-                    const missingItems: Attribute[] = []
                     attributes.forEach((attribute) => {
                         if (
                             !sharedItemsWithSameReference.find(function (item) {
@@ -188,22 +194,49 @@ export class RelationshipInfoUtil {
                             missingItems.push(attribute)
                         }
                     })
-                    for (const attribute of missingItems) {
-                        const sharedItem = await SharedItem.from({
-                            id: await ConsumptionIds.sharedItem.generate(),
-                            content: attribute,
-                            sharedAt: sharedAt,
-                            sharedBy: sharedBy,
-                            sharedWith: sharedWith,
-                            reference: change.id,
-                            expiresAt: attribute.validTo
-                        })
-                        await this.parent.sharedItems.createSharedItem(sharedItem)
-                    }
                 }
             }
         } else {
-            // do nothing, we don't know the content
+            // Try to parse the old request format (without types)
+            let oldRequestBody: any = body
+            if (body instanceof JSONWrapper || body instanceof JSONWrapperAsync) {
+                oldRequestBody = oldRequestBody.value
+            }
+
+            if (oldRequestBody?.attributes) {
+                const keys = Object.keys(oldRequestBody.attributes)
+                if (sharedItemsWithSameReference.length !== keys.length) {
+                    keys.forEach((key: string) => {
+                        const attribute = oldRequestBody.attributes[key]
+                        if (
+                            !sharedItemsWithSameReference.find(function (item) {
+                                const content = item.content as Attribute
+                                return content.name === attribute.name
+                            })
+                        ) {
+                            missingItems.push(
+                                Attribute.from({
+                                    name: attribute.name,
+                                    value: attribute.value
+                                })
+                            )
+                        }
+                    })
+                }
+            }
+        }
+
+        for (const attribute of missingItems) {
+            const sharedItem = await SharedItem.from({
+                id: await ConsumptionIds.sharedItem.generate(),
+                content: attribute,
+                sharedAt: sharedAt,
+                sharedBy: sharedBy,
+                sharedWith: sharedWith,
+                reference: change.id,
+                expiresAt: attribute.validTo
+            })
+            await this.parent.sharedItems.createSharedItem(sharedItem)
         }
     }
 }

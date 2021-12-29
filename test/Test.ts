@@ -3,6 +3,8 @@ import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import { IConfigOverwrite } from "@nmshd/transport"
 import { AttributeTest } from "./modules/attributes/Attribute.test"
 import { RelationshipInfoTest } from "./modules/relationships/RelationshipInfo.test"
+import { RelationshipInfoNoTemplateTest } from "./modules/relationships/RelationshipInfoNoTemplate.test"
+import { RelationshipInfoOldTemplateTest } from "./modules/relationships/RelationshipInfoOldTemplate.test"
 import { RelationshipRequestorTest } from "./modules/relationships/RelationshipRequestor.test"
 
 export enum BackboneEnvironment {
@@ -26,6 +28,8 @@ export class Test {
         databaseConnection: IDatabaseConnection,
         logger: ILoggerFactory
     ): void {
+        new RelationshipInfoOldTemplateTest(config, databaseConnection, logger).run()
+        new RelationshipInfoNoTemplateTest(config, databaseConnection, logger).run()
         new AttributeTest(config, databaseConnection, logger).run()
         new RelationshipInfoTest(config, databaseConnection, logger).run()
         new RelationshipRequestorTest(config, databaseConnection, logger).run()
