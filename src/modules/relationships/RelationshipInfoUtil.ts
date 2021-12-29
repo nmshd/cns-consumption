@@ -24,16 +24,7 @@ export class RelationshipInfoUtil {
             throw TransportErrors.general.recordNotFound(Relationship, id.toString()).logWith(this._log)
         }
 
-        const template = await this.parent.accountController.relationshipTemplates.getRelationshipTemplate(
-            relationship.cache!.template.id
-        )
-        if (!template) {
-            throw TransportErrors.general
-                .recordNotFound(RelationshipTemplate, relationship.cache!.template.id.toString())
-                .logWith(this._log)
-        }
-
-        await this.parseTemplateBody(relationship, template)
+        await this.parseTemplateBody(relationship)
         await this.parseCreationRequest(relationship)
 
         return await this.createRelationshipInfo(relationship)
@@ -104,7 +95,8 @@ export class RelationshipInfoUtil {
         return info
     }
 
-    private async parseTemplateBody(relationship: Relationship, template: RelationshipTemplate) {
+    private async parseTemplateBody(relationship: Relationship) {
+        const template = relationship.cache!.template
         if (!template.cache) {
             throw TransportErrors.general.cacheEmpty(RelationshipTemplate, template.id.toString()).logWith(this._log)
         }
@@ -160,6 +152,7 @@ export class RelationshipInfoUtil {
                 }
             }
         }
+
         for (const attribute of missingItems) {
             const sharedItem = await SharedItem.from({
                 id: await ConsumptionIds.sharedItem.generate(),
@@ -177,6 +170,7 @@ export class RelationshipInfoUtil {
     private async parseCreationRequest(relationship: Relationship) {
         const change = relationship.cache!.creationChange
         const request = change.request
+        const body = request.content
         const isRequestor = this.parent.accountController.identity.isMe(request.createdBy)
         const sharedAt = request.createdAt
         const sharedBy = isRequestor ? this.parent.accountController.identity.address : relationship.peer.address
@@ -185,7 +179,7 @@ export class RelationshipInfoUtil {
             reference: change.id.toString()
         })
         const missingItems: Attribute[] = []
-        const body = request.content
+
         if (body instanceof RelationshipCreationChangeRequestBody) {
             const attributes = body.sharedAttributes
             if (attributes && attributes.length > 0) {
@@ -231,6 +225,7 @@ export class RelationshipInfoUtil {
                 }
             }
         }
+
         for (const attribute of missingItems) {
             const sharedItem = await SharedItem.from({
                 id: await ConsumptionIds.sharedItem.generate(),
