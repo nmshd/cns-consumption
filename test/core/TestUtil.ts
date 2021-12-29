@@ -148,12 +148,19 @@ export class TestUtil {
         return accountController
     }
 
-    public static async addRelationship(from: AccountController, to: AccountController): Promise<Relationship[]> {
-        const templateBody = await RelationshipTemplateBody.from({
-            metadata: {
-                mycontent: "template"
-            }
-        })
+    public static async addRelationship(
+        from: AccountController,
+        to: AccountController,
+        templateBody?: any,
+        requestBody?: any
+    ): Promise<Relationship[]> {
+        if (!templateBody) {
+            templateBody = await RelationshipTemplateBody.from({
+                metadata: {
+                    mycontent: "template"
+                }
+            })
+        }
 
         const templateFrom = await from.relationshipTemplates.sendRelationshipTemplate({
             content: templateBody,
@@ -185,11 +192,13 @@ export class TestUtil {
             receivedToken.cache!.content.secretKey
         )
 
-        const requestBody = await RelationshipCreationChangeRequestBody.from({
-            metadata: {
-                mycontent: "request"
-            }
-        })
+        if (!requestBody) {
+            requestBody = await RelationshipCreationChangeRequestBody.from({
+                metadata: {
+                    mycontent: "request"
+                }
+            })
+        }
 
         const relRequest = await to.relationships.sendRelationship({
             template: templateTo,
