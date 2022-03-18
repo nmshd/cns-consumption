@@ -3,12 +3,16 @@ import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import { IConfigOverwrite } from "@nmshd/transport"
 import { use } from "chai"
 import chaiExclude from "chai-exclude"
+import { CompleteRequestParamsValidatorTests } from "./modules/requests/CompleteRequestParamsValidator.test"
 // import { AttributeTest } from "./modules/attributes/Attribute.test"
 // import { RelationshipInfoTest } from "./modules/relationships/RelationshipInfo.test"
 // import { RelationshipInfoNoTemplateTest } from "./modules/relationships/RelationshipInfoNoTemplate.test"
 // import { RelationshipInfoOldTemplateTest } from "./modules/relationships/RelationshipInfoOldTemplate.test"
 // import { RelationshipRequestorTest } from "./modules/relationships/RelationshipRequestor.test"
 import { ConsumptionRequestTest } from "./modules/requests/local/ConsumptionRequest.test"
+import { RequestItemProcessorTests } from "./modules/requests/RequestItemProcessor.test"
+import { RequestItemProcessorRegistryTests } from "./modules/requests/RequestItemProcessorRegistry.test"
+import { RequestControllerTests } from "./modules/requests/RequestsController.test"
 
 use(chaiExclude)
 
@@ -38,9 +42,13 @@ export class Test {
         // new AttributeTest(config, databaseConnection, logger).run()
         // new RelationshipInfoTest(config, databaseConnection, logger).run()
         // new RelationshipRequestorTest(config, databaseConnection, logger).run()
+        new RequestControllerTests(config, databaseConnection, logger).run()
+        new RequestItemProcessorRegistryTests(config, databaseConnection, logger).run()
+        new RequestItemProcessorTests(config, databaseConnection, logger).run()
     }
 
     public static runUnitTests(logger: ILoggerFactory): void {
         new ConsumptionRequestTest(logger).run()
+        new CompleteRequestParamsValidatorTests(logger).run()
     }
 }

@@ -8,19 +8,20 @@ import {
 import { ResponseItem } from "@nmshd/content"
 import { expect } from "chai"
 import { UnitTest } from "../../../core/UnitTest"
-import { TestObjectFactory, TestRequestItem } from "../TestObjectFactory"
+import { TestObjectFactory } from "../testHelpers/TestObjectFactory"
+import { TestRequestItem } from "../testHelpers/TestRequestItem"
 
 export class ConsumptionRequestTest extends UnitTest {
     public run(): void {
         describe("ConsumptionRequest", function () {
-            it("creates objects of all classes", async function () {
+            it("creates objects of all nested classes", async function () {
                 const requestJSON: ConsumptionRequestJSON = {
                     "@type": "ConsumptionRequest",
                     id: "CNSREQ1",
                     isOwn: true,
                     peer: "id11",
                     createdAt: "2020-01-01T00:00:00.000Z",
-                    content: TestObjectFactory.createRequest(),
+                    content: TestObjectFactory.createRequestWithOneItem(),
                     sourceType: "Message",
                     sourceReference: "MSG1",
                     response: {
@@ -60,7 +61,7 @@ export class ConsumptionRequestTest extends UnitTest {
                     status: ConsumptionRequestStatus.Checked,
                     sourceType: "Message",
                     sourceReference: "MSG1",
-                    content: TestObjectFactory.createRequest(),
+                    content: TestObjectFactory.createRequestWithOneItem(),
                     response: {
                         "@type": "ConsumptionResponse",
                         createdAt: "2020-01-01T00:00:00.000Z",

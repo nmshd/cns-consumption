@@ -4,10 +4,12 @@ import {
     CoreAddress,
     CoreDate,
     CoreId,
+    CoreSerializable,
     CoreSerializableAsync,
     ICoreAddress,
     ICoreDate,
     ICoreId,
+    ICoreSerializable,
     ICoreSerializableAsync
 } from "@nmshd/transport"
 
@@ -17,7 +19,7 @@ export enum ConsumptionRequestStatus {
     DecisionRequired = "DecisionRequired",
     ManualDecisionRequired = "ManualDecisionRequired",
     Error = "Error",
-    Resolved = "Resolved"
+    Completed = "Completed"
 }
 
 /** ************************************JSON**************************************/
@@ -36,8 +38,13 @@ export interface ConsumptionRequestJSON extends ContentJSON {
 
 export interface ConsumptionResponseJSON extends ContentJSON {
     createdAt: string
+    content: ResponseJSON
     sourceType?: string
     sourceReference?: string
+}
+
+export interface ConsumptionResponseDraftJSON extends ContentJSON {
+    createdAt: string
     content: ResponseJSON
 }
 
@@ -58,7 +65,7 @@ export interface IConsumptionRequest extends ICoreSerializableAsync {
     content: IRequest
     sourceType: string
     sourceReference: ICoreId
-    response?: IConsumptionResponse
+    response?: IConsumptionResponse | IConsumptionResponseDraft
     status: ConsumptionRequestStatus
     statusLog: IConsumptionRequestStatusLogEntry[]
 }
@@ -70,11 +77,16 @@ export interface IConsumptionResponse extends ICoreSerializableAsync {
     sourceReference: ICoreId
 }
 
-export interface IConsumptionRequestStatusLogEntry extends ICoreSerializableAsync {
+export interface IConsumptionResponseDraft extends ICoreSerializableAsync {
+    createdAt: ICoreDate
+    content: IResponse
+}
+
+export interface IConsumptionRequestStatusLogEntry extends ICoreSerializable {
     createdAt: ICoreDate
     oldStatus: ConsumptionRequestStatus
     newStatus: ConsumptionRequestStatus
-    data: object
+    data?: object
     code?: string
 }
 
@@ -100,6 +112,23 @@ export class ConsumptionResponse extends CoreSerializableAsync implements IConsu
 
     public static async from(value: IConsumptionResponse | ConsumptionResponseJSON): Promise<ConsumptionResponse> {
         return await super.fromT<ConsumptionResponse>(value, ConsumptionResponse)
+    }
+}
+
+@type("ConsumptionResponseDraft")
+export class ConsumptionResponseDraft extends CoreSerializableAsync implements IConsumptionResponseDraft {
+    @serialize()
+    @validate()
+    public createdAt: CoreDate
+
+    @serialize()
+    @validate()
+    public content: Response
+
+    public static async from(
+        value: IConsumptionResponseDraft | ConsumptionResponseJSON
+    ): Promise<ConsumptionResponseDraft> {
+        return await super.fromT<ConsumptionResponseDraft>(value, ConsumptionResponseDraft)
     }
 }
 
@@ -133,9 +162,9 @@ export class ConsumptionRequest extends CoreSerializableAsync implements IConsum
     @validate()
     public sourceReference: CoreId
 
-    @serialize({})
+    @serialize({ unionTypes: [ConsumptionResponse, ConsumptionResponseDraft] })
     @validate({ nullable: true })
-    public response?: ConsumptionResponse
+    public response?: ConsumptionResponse | ConsumptionResponseDraft
 
     @serialize()
     @validate()
@@ -145,22 +174,31 @@ export class ConsumptionRequest extends CoreSerializableAsync implements IConsum
     @validate()
     public statusLog: ConsumptionRequestStatusLogEntry[]
 
+    public changeStatus(newStatus: ConsumptionRequestStatus): void {
+        const logEntry = ConsumptionRequestStatusLogEntry.from({
+            createdAt: CoreDate.utc(),
+            oldStatus: this.status,
+            newStatus
+        })
+
+        this.statusLog.push(logEntry)
+
+        this.status = newStatus
+    }
+
     public static async from(value: IConsumptionRequest | ConsumptionRequestJSON): Promise<ConsumptionRequest> {
         return await super.fromT<ConsumptionRequest>(value, ConsumptionRequest)
     }
 }
 
 @type("ConsumptionRequestStatusLogEntry")
-export class ConsumptionRequestStatusLogEntry
-    extends CoreSerializableAsync
-    implements IConsumptionRequestStatusLogEntry
-{
+export class ConsumptionRequestStatusLogEntry extends CoreSerializable implements IConsumptionRequestStatusLogEntry {
     @serialize()
     @validate()
     public createdAt: CoreDate
 
     @serialize()
-    @validate()
+    @validate({ nullable: true })
     public oldStatus: ConsumptionRequestStatus
 
     @serialize()
@@ -169,9 +207,15 @@ export class ConsumptionRequestStatusLogEntry
 
     @serialize()
     @validate({ nullable: true })
-    public data: object
+    public data?: object
 
     @serialize()
     @validate({ nullable: true })
     public code?: string
+
+    public static from(
+        value: IConsumptionRequestStatusLogEntry | ConsumptionRequestStatusLogEntryJSON
+    ): ConsumptionRequestStatusLogEntry {
+        return super.fromT<ConsumptionRequestStatusLogEntry>(value, ConsumptionRequestStatusLogEntry)
+    }
 }
