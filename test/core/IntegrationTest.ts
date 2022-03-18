@@ -2,7 +2,7 @@ import { IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
 import { ILogger, ILoggerFactory } from "@js-soft/logging-abstractions"
 import { IConfigOverwrite } from "@nmshd/transport"
 
-export abstract class AbstractTest {
+export abstract class IntegrationTest {
     protected logger: ILogger
 
     public constructor(
