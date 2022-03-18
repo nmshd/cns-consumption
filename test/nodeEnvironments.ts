@@ -58,8 +58,10 @@ export function runOnMongoDb(): void {
     })
 
     Test.runIntegrationTests(Test.config, mongoDbConnection, loggerFactory)
+    Test.runUnitTests(loggerFactory)
 }
 
 export function runOnLokiJs(): void {
     Test.runIntegrationTests(Test.config, new LokiJsConnection("./db"), loggerFactory)
+    Test.runUnitTests(loggerFactory)
 }

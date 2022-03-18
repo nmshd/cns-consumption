@@ -1,83 +1,177 @@
 import { serialize, type, validate } from "@js-soft/ts-serval"
-import { CoreDate, CoreId, CoreSynchronizable, ICoreDate, ICoreId, ICoreSynchronizable } from "@nmshd/transport"
-import { nameof } from "ts-simple-nameof"
-
-export interface IConsumptionRequest extends ICoreSynchronizable {
-    isOwn: boolean
-    requestMessage: ICoreId
-    responseMessage?: ICoreId
-    isPending: boolean
-    status: ConsumptionRequestStatus
-    processingMetadata?: any
-    metadata?: any
-    metadataModifiedAt?: ICoreDate
-}
+import { ContentJSON, IRequest, IResponse, Request, RequestJSON, Response, ResponseJSON } from "@nmshd/content"
+import {
+    CoreAddress,
+    CoreDate,
+    CoreId,
+    CoreSerializableAsync,
+    ICoreAddress,
+    ICoreDate,
+    ICoreId,
+    ICoreSerializableAsync
+} from "@nmshd/transport"
 
 export enum ConsumptionRequestStatus {
-    Pending = "Pending",
-    Accepted = "Accepted",
-    Rejected = "Rejected",
-    Revoked = "Revoked"
+    Open = "Open",
+    Checked = "Checked",
+    DecisionRequired = "DecisionRequired",
+    ManualDecisionRequired = "ManualDecisionRequired",
+    Error = "Error",
+    Resolved = "Resolved"
+}
+
+/** ************************************JSON**************************************/
+export interface ConsumptionRequestJSON extends ContentJSON {
+    id: string
+    isOwn: boolean
+    peer: string
+    createdAt: string
+    sourceType: string
+    sourceReference: string
+    response?: ConsumptionResponseJSON
+    status: ConsumptionRequestStatus
+    statusLog: ConsumptionRequestStatusLogEntryJSON[]
+    content: RequestJSON
+}
+
+export interface ConsumptionResponseJSON extends ContentJSON {
+    createdAt: string
+    sourceType?: string
+    sourceReference?: string
+    content: ResponseJSON
+}
+
+export interface ConsumptionRequestStatusLogEntryJSON extends ContentJSON {
+    createdAt: string
+    oldStatus: ConsumptionRequestStatus
+    newStatus: ConsumptionRequestStatus
+    data?: object
+    code?: string
+}
+
+/** ************************************Interfaces**************************************/
+export interface IConsumptionRequest extends ICoreSerializableAsync {
+    id: ICoreId
+    isOwn: boolean
+    peer: ICoreAddress
+    createdAt: ICoreDate
+    content: IRequest
+    sourceType: string
+    sourceReference: ICoreId
+    response?: IConsumptionResponse
+    status: ConsumptionRequestStatus
+    statusLog: IConsumptionRequestStatusLogEntry[]
+}
+
+export interface IConsumptionResponse extends ICoreSerializableAsync {
+    createdAt: ICoreDate
+    content: IResponse
+    sourceType: string
+    sourceReference: ICoreId
+}
+
+export interface IConsumptionRequestStatusLogEntry extends ICoreSerializableAsync {
+    createdAt: ICoreDate
+    oldStatus: ConsumptionRequestStatus
+    newStatus: ConsumptionRequestStatus
+    data: object
+    code?: string
+}
+
+/** ************************************Classes**************************************/
+
+@type("ConsumptionResponse")
+export class ConsumptionResponse extends CoreSerializableAsync implements IConsumptionResponse {
+    @serialize()
+    @validate()
+    public createdAt: CoreDate
+
+    @serialize()
+    @validate()
+    public sourceType: string
+
+    @serialize()
+    @validate()
+    public sourceReference: CoreId
+
+    @serialize()
+    @validate()
+    public content: Response
+
+    public static async from(value: IConsumptionResponse | ConsumptionResponseJSON): Promise<ConsumptionResponse> {
+        return await super.fromT<ConsumptionResponse>(value, ConsumptionResponse)
+    }
 }
 
 @type("ConsumptionRequest")
-export class ConsumptionRequest extends CoreSynchronizable implements IConsumptionRequest {
-    public readonly technicalProperties = [
-        "@type",
-        "@context",
-        nameof<ConsumptionRequest>((r) => r.isOwn),
-        nameof<ConsumptionRequest>((r) => r.requestMessage),
-        nameof<ConsumptionRequest>((r) => r.responseMessage),
-        nameof<ConsumptionRequest>((r) => r.isPending),
-        nameof<ConsumptionRequest>((r) => r.status)
-    ]
-
-    public readonly metadataProperties = [
-        nameof<ConsumptionRequest>((r) => r.processingMetadata),
-        nameof<ConsumptionRequest>((r) => r.metadata),
-        nameof<ConsumptionRequest>((r) => r.metadataModifiedAt)
-    ]
-
-    @validate()
+export class ConsumptionRequest extends CoreSerializableAsync implements IConsumptionRequest {
     @serialize()
+    @validate()
+    public id: CoreId
+
+    @serialize()
+    @validate()
     public isOwn: boolean
 
-    @validate()
     @serialize()
-    public requestMessage: CoreId
+    @validate()
+    public peer: CoreAddress
 
+    @serialize()
+    @validate()
+    public createdAt: CoreDate
+
+    @serialize()
+    @validate()
+    public content: Request
+
+    @serialize()
+    @validate()
+    public sourceType: string
+
+    @serialize()
+    @validate()
+    public sourceReference: CoreId
+
+    @serialize({})
     @validate({ nullable: true })
-    @serialize()
-    public responseMessage?: CoreId
+    public response?: ConsumptionResponse
 
+    @serialize()
     @validate()
-    @serialize()
-    public isPending: boolean
-
-    @validate({
-        allowedValues: [
-            ConsumptionRequestStatus.Pending,
-            ConsumptionRequestStatus.Accepted,
-            ConsumptionRequestStatus.Rejected,
-            ConsumptionRequestStatus.Revoked
-        ]
-    })
-    @serialize()
     public status: ConsumptionRequestStatus
 
-    @validate({ nullable: true })
-    @serialize({ any: true })
-    public processingMetadata?: any
-
-    @validate({ nullable: true })
-    @serialize({ any: true })
-    public metadata?: any
-
-    @validate({ nullable: true })
     @serialize()
-    public metadataModifiedAt?: CoreDate
+    @validate()
+    public statusLog: ConsumptionRequestStatusLogEntry[]
 
-    public static async from(value: IConsumptionRequest): Promise<ConsumptionRequest> {
-        return (await super.from(value, ConsumptionRequest)) as ConsumptionRequest
+    public static async from(value: IConsumptionRequest | ConsumptionRequestJSON): Promise<ConsumptionRequest> {
+        return await super.fromT<ConsumptionRequest>(value, ConsumptionRequest)
     }
+}
+
+@type("ConsumptionRequestStatusLogEntry")
+export class ConsumptionRequestStatusLogEntry
+    extends CoreSerializableAsync
+    implements IConsumptionRequestStatusLogEntry
+{
+    @serialize()
+    @validate()
+    public createdAt: CoreDate
+
+    @serialize()
+    @validate()
+    public oldStatus: ConsumptionRequestStatus
+
+    @serialize()
+    @validate()
+    public newStatus: ConsumptionRequestStatus
+
+    @serialize()
+    @validate({ nullable: true })
+    public data: object
+
+    @serialize()
+    @validate({ nullable: true })
+    public code?: string
 }
