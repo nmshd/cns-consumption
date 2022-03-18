@@ -2,7 +2,7 @@ import { CoreId, SynchronizedCollection } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionErrors } from "../../consumption"
 import { ConsumptionController } from "../../consumption/ConsumptionController"
 import { RelationshipInfo } from "./local/RelationshipInfo"
-import { RelationshipInfoUtil } from "./RelationshipInfoUtil"
+// import { RelationshipInfoUtil } from "./RelationshipInfoUtil"
 
 export class RelationshipInfoController extends ConsumptionBaseController {
     private relationshipInfo: SynchronizedCollection
@@ -23,23 +23,23 @@ export class RelationshipInfoController extends ConsumptionBaseController {
         return result ? await RelationshipInfo.from(result) : undefined
     }
 
-    public async getRelationshipInfoByRelationship(relationshipId: CoreId): Promise<RelationshipInfo | undefined> {
-        const info = await new RelationshipInfoUtil(this.parent).createInitialRelationshipInfo(relationshipId)
-        return info
-        /*
-        // So far, do not store the relationshipInfo, as they wouldn't be updated correctly
+    // public async getRelationshipInfoByRelationship(relationshipId: CoreId): Promise<RelationshipInfo | undefined> {
+    //     const info = await new RelationshipInfoUtil(this.parent).createInitialRelationshipInfo(relationshipId)
+    //     return info
+    //     /*
+    //     // So far, do not store the relationshipInfo, as they wouldn't be updated correctly
 
-        const result = await this.relationshipInfo.findOne({ relationshipId: relationshipId.toString() })
+    //     const result = await this.relationshipInfo.findOne({ relationshipId: relationshipId.toString() })
 
-        if (result) {
-            return await RelationshipInfo.from(result)
-        }
+    //     if (result) {
+    //         return await RelationshipInfo.from(result)
+    //     }
 
-        const info = await new RelationshipInfoUtil(this.parent).createInitialRelationshipInfo(relationshipId)
-        await this.relationshipInfo.create(info)
-        return info
-        */
-    }
+    //     const info = await new RelationshipInfoUtil(this.parent).createInitialRelationshipInfo(relationshipId)
+    //     await this.relationshipInfo.create(info)
+    //     return info
+    //     */
+    // }
 
     public async getRelationshipInfos(query?: any): Promise<RelationshipInfo[]> {
         const items = await this.relationshipInfo.find(query)
