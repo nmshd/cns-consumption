@@ -38,9 +38,9 @@
         "test:local:node:mongodb": ". ./scripts/testSetup.sh && npm run test:node:mongodb",
         "test:local:node:lokijs": "npm run test:node:lokijs",
         "test:local:teardown": "docker-compose -f test/docker-compose.yml rm -fsv",
-        "test:node": "mocha -r ts-node/register -r tsconfig-paths/register ./test/index.node.ts --project ./test/tsconfig.json --exit",
+        "test:node": "mocha --timeout 5000 -r ts-node/register -r tsconfig-paths/register ./test/index.node.ts --project ./test/tsconfig.json --exit",
         "test:node:mongodb": "mocha --timeout 5000 -r ts-node/register -r tsconfig-paths/register ./test/index.node.mongo.ts --project ./test/tsconfig.json --exit",
-        "test:node:lokijs": "mocha -r ts-node/register -r tsconfig-paths/register ./test/index.node.loki.ts --project ./test/tsconfig.json --exit",
+        "test:node:lokijs": "mocha --timeout 5000 -r ts-node/register -r tsconfig-paths/register ./test/index.node.loki.ts --project ./test/tsconfig.json --exit",
         "test:web": "browsertest-runner",
         "test:web:debug": "browsertest-runner-debug"
     },
