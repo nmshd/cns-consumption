@@ -6,7 +6,9 @@ import { ConsumptionController } from "../../consumption/ConsumptionController"
 import {
     CompleteRequestItemGroupParams,
     CompleteRequestItemParams,
-    CompleteRequestParams
+    CompleteRequestParams,
+    isCompleteRequestItemGroupParams,
+    isCompleteRequestItemParams
 } from "./CompleteRequestParams"
 import { CompleteRequestParamsValidator } from "./CompleteRequestParamsValidator"
 import { ConsumptionRequest, ConsumptionRequestStatus, ConsumptionResponseDraft } from "./local/ConsumptionRequest"
@@ -80,13 +82,34 @@ export class RequestsController extends ConsumptionBaseController {
         }
     }
 
-    public async get(id: CoreId): Promise<ConsumptionRequest> {
-        return await this.requests.read(id.toString())
+    public async get(id: CoreId): Promise<ConsumptionRequest | undefined> {
+        const requestDoc = await this.requests.read(id.toString())
+        const request = requestDoc ? await ConsumptionRequest.from(requestDoc) : undefined
+        return request
     }
 
     public async accept(params: CompleteRequestParams): Promise<ConsumptionRequest> {
         const requestDoc = await this.requests.read(params.requestId.toString())
-        const consumptionRequest = await super.parseObject(requestDoc, ConsumptionRequest)
+        const consumptionRequest = await ConsumptionRequest.from(requestDoc)
+
+        const validationResult = this.completeRequestParamsValidator.validate(params, consumptionRequest)
+        if (!validationResult.isSuccess) {
+            throw new Error(validationResult.error.message)
+        }
+
+        const consumptionResponse = await this.createConsumptionResponse(params, consumptionRequest)
+
+        consumptionRequest.response = consumptionResponse
+        consumptionRequest.changeStatus(ConsumptionRequestStatus.Completed)
+
+        await this.requests.update(requestDoc, consumptionRequest)
+
+        return consumptionRequest
+    }
+
+    public async reject(params: CompleteRequestParams): Promise<ConsumptionRequest> {
+        const requestDoc = await this.requests.read(params.requestId.toString())
+        const consumptionRequest = await ConsumptionRequest.from(requestDoc)
 
         const validationResult = this.completeRequestParamsValidator.validate(params, consumptionRequest)
         if (!validationResult.isSuccess) {
@@ -241,14 +264,6 @@ export class RequestsController extends ConsumptionBaseController {
     // public async deleteRequest(request: ConsumptionRequestOld): Promise<void> {
     //     await this.requests.delete(request)
     // }
-}
-
-function isCompleteRequestItemParams(obj: unknown): obj is CompleteRequestItemParams {
-    return typeof obj === "object" && obj !== null && "decision" in obj
-}
-
-function isCompleteRequestItemGroupParams(obj: unknown): obj is CompleteRequestItemGroupParams {
-    return typeof obj === "object" && obj !== null && "items" in obj
 }
 
 export interface CreateRequestParams {

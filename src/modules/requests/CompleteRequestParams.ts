@@ -7,8 +7,6 @@ export interface CompleteRequestParams {
 
 export type CompleteRequestItemParams = AcceptRequestItemParams | RejectRequestItemParams
 
-export type CompleteRequestItemGroupParams = AcceptRequestItemGroupParams | RejectRequestItemGroupParams
-
 export interface AcceptRequestItemParams {
     decision: RequestItemDecision.Accept
 }
@@ -19,14 +17,8 @@ export interface RejectRequestItemParams {
     message?: string
 }
 
-export interface AcceptRequestItemGroupParams {
+export interface CompleteRequestItemGroupParams {
     items: CompleteRequestItemParams[]
-}
-
-export interface RejectRequestItemGroupParams {
-    items: CompleteRequestItemParams[]
-    code?: string
-    message?: string
 }
 
 export enum RequestItemDecision {
@@ -42,4 +34,12 @@ export interface AcceptReadAttributeRequestItemParams extends AcceptRequestItemP
 
 export interface AcceptSucceedAttributeRequestItemParams extends AcceptRequestItemParams {
     attributeId: CoreId
+}
+
+export function isCompleteRequestItemParams(obj: unknown): obj is CompleteRequestItemParams {
+    return typeof obj === "object" && obj !== null && "decision" in obj
+}
+
+export function isCompleteRequestItemGroupParams(obj: unknown): obj is CompleteRequestItemGroupParams {
+    return typeof obj === "object" && obj !== null && "items" in obj
 }
