@@ -1,5 +1,13 @@
 import { IDatabaseCollection } from "@js-soft/docdb-access-abstractions"
-import { Request, RequestItem, RequestItemGroup, Response, ResponseItem, ResponseItemGroup } from "@nmshd/content"
+import {
+    Request,
+    RequestItem,
+    RequestItemGroup,
+    Response,
+    ResponseItem,
+    ResponseItemGroup,
+    ResponseResult
+} from "@nmshd/content"
 import { CoreDate, CoreId, Message, RelationshipTemplate } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName } from "../../consumption"
 import { ConsumptionController } from "../../consumption/ConsumptionController"
@@ -131,6 +139,7 @@ export class RequestsController extends ConsumptionBaseController {
         const responseItems = await this.createResponseItems(params.items, requestItems)
 
         const response = await Response.from({
+            result: ResponseResult.Accepted,
             requestId: request.id,
             items: responseItems
         })

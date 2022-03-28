@@ -53,7 +53,7 @@
         "@js-soft/ts-serval": "1.1.1",
         "@js-soft/ts-utils": "1.1.1",
         "@js-soft/web-logger": "1.0.1",
-        "@nmshd/content": "2.0.0-alpha.2.2",
+        "@nmshd/content": "2.0.0-alpha.2.3",
         "@nmshd/crypto": "1.0.8",
         "@nmshd/transport": "1.1.10",
         "@types/chai": "^4.3.0",

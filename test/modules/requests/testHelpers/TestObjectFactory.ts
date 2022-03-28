@@ -1,4 +1,4 @@
-import { RequestJSON, ResponseItemResult, ResponseJSON } from "@nmshd/content"
+import { RequestJSON, ResponseItemResult, ResponseJSON, ResponseResult } from "@nmshd/content"
 import {
     CoreBuffer,
     CryptoCipher,
@@ -37,6 +37,7 @@ export class TestObjectFactory {
     public static createResponse(): ResponseJSON {
         return {
             "@type": "Response",
+            result: ResponseResult.Accepted,
             requestId: "CNSREQ1",
             items: [
                 {

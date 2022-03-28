@@ -11,7 +11,7 @@ import {
     RequestItemDecision,
     RequestsController
 } from "@nmshd/consumption"
-import { Request, ResponseItem, ResponseItemGroup, ResponseItemResult } from "@nmshd/content"
+import { Request, ResponseItem, ResponseItemGroup, ResponseItemResult, ResponseResult } from "@nmshd/content"
 import { AccountController, CoreId, IConfigOverwrite, Transport } from "@nmshd/transport"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
@@ -221,13 +221,14 @@ export class RequestControllerTests extends IntegrationTest {
                         ]
                     })
 
-                    const updatedConsumptionRequest = (await defaultAccount.consumptionController.requests.get(
+                    const updatedConsumptionRequest = await defaultAccount.consumptionController.requests.get(
                         createdConsumptionRequest.id
-                    ))!
+                    )
 
                     expect(updatedConsumptionRequest).to.exist
-                    expect(updatedConsumptionRequest.response).to.exist
-                    expect(updatedConsumptionRequest.response).to.be.instanceOf(ConsumptionResponseDraft)
+                    expect(updatedConsumptionRequest!.response).to.exist
+                    expect(updatedConsumptionRequest!.response).to.be.instanceOf(ConsumptionResponseDraft)
+                    expect(updatedConsumptionRequest!.response!.content.result).to.equal(ResponseResult.Accepted)
                 })
 
                 it("creates Response Items and Groups with the correct structure", async function () {
