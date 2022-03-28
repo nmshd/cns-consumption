@@ -9,6 +9,7 @@ import {
     ConsumptionRequest,
     ConsumptionRequestStatus,
     ConsumptionResponseDraft,
+    CreateIncomingRequestParameters,
     ICompleteRequestParameters,
     RejectRequestItemParameters,
     RequestsController
@@ -16,7 +17,6 @@ import {
 import { Request, ResponseItem, ResponseItemGroup, ResponseItemResult, ResponseResult } from "@nmshd/content"
 import { AccountController, CoreId, IConfigOverwrite, Transport } from "@nmshd/transport"
 import { expect } from "chai"
-import { CreateIncomingRequestParameters } from "../../../src/modules/requests/createIncomingRequestParams/CreateIncomingRequestParameters"
 import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"

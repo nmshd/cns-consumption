@@ -23,7 +23,7 @@ import {
     ICompleteRequestParameters
 } from "./completeRequestParameters/CompleteRequestParameters"
 import { CompleteRequestParamsValidator } from "./CompleteRequestParamsValidator"
-import { ICreateIncomingRequestParameters } from "./createIncomingRequestParams/CreateIncomingRequestParameters"
+import { ICreateIncomingRequestParameters } from "./createIncomingRequestParameters/CreateIncomingRequestParameters"
 import { ConsumptionRequest, ConsumptionRequestStatus, ConsumptionResponseDraft } from "./local/ConsumptionRequest"
 import { RequestItemProcessorRegistry } from "./RequestItemProcessorRegistry"
 
