@@ -23,7 +23,10 @@ import {
     ICompleteRequestParameters
 } from "./completeRequestParameters/CompleteRequestParameters"
 import { CompleteRequestParamsValidator } from "./CompleteRequestParamsValidator"
-import { ICreateIncomingRequestParameters } from "./createIncomingRequestParameters/CreateIncomingRequestParameters"
+import {
+    CreateIncomingRequestParameters,
+    ICreateIncomingRequestParameters
+} from "./createIncomingRequestParameters/CreateIncomingRequestParameters"
 import { ConsumptionRequest, ConsumptionRequestStatus, ConsumptionResponseDraft } from "./local/ConsumptionRequest"
 import { RequestItemProcessorRegistry } from "./RequestItemProcessorRegistry"
 
@@ -46,6 +49,8 @@ export class RequestsController extends ConsumptionBaseController {
     }
 
     public async createIncomingRequest(params: ICreateIncomingRequestParameters): Promise<ConsumptionRequest> {
+        params = CreateIncomingRequestParameters.from(params)
+
         const info = this.extractInfoFromSource(params.source)
 
         const request = await ConsumptionRequest.from({

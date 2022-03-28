@@ -147,6 +147,17 @@ export class RequestControllerTests extends IntegrationTest {
                         "Cannot create incoming Request from own Relationship Template"
                     )
                 })
+
+                it("throws on invalid input", async function () {
+                    const paramsWithoutSource = {
+                        content: await Request.from(TestObjectFactory.createRequestWithOneItem())
+                    }
+
+                    await TestUtil.expectThrowsAsync(
+                        defaultAccount.consumptionController.requests.createIncomingRequest(paramsWithoutSource as any),
+                        "*source*Value is not defined*"
+                    )
+                })
             })
 
             describe("Get", function () {
