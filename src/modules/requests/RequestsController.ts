@@ -12,12 +12,17 @@ import { CoreDate, CoreId, Message, RelationshipTemplate } from "@nmshd/transpor
 import { ConsumptionBaseController, ConsumptionControllerName } from "../../consumption"
 import { ConsumptionController } from "../../consumption/ConsumptionController"
 import {
-    CompleteRequestItemGroupParams,
-    CompleteRequestItemParams,
-    CompleteRequestParams,
-    isCompleteRequestItemGroupParams,
-    isCompleteRequestItemParams
-} from "./CompleteRequestParams"
+    CompleteRequestItemGroupParameters,
+    ICompleteRequestItemGroupParameters
+} from "./completeRequestParameters/CompleteRequestItemGroupParameters"
+import {
+    CompleteRequestItemParameters,
+    ICompleteRequestItemParameters
+} from "./completeRequestParameters/CompleteRequestItemParameters"
+import {
+    CompleteRequestParameters,
+    ICompleteRequestParameters
+} from "./completeRequestParameters/CompleteRequestParameters"
 import { CompleteRequestParamsValidator } from "./CompleteRequestParamsValidator"
 import { ConsumptionRequest, ConsumptionRequestStatus, ConsumptionResponseDraft } from "./local/ConsumptionRequest"
 import { RequestItemProcessorRegistry } from "./RequestItemProcessorRegistry"
@@ -40,7 +45,7 @@ export class RequestsController extends ConsumptionBaseController {
         return this
     }
 
-    public async createIncomingRequest(params: CreateRequestParams): Promise<ConsumptionRequest> {
+    public async createIncomingRequest(params: CreateIncomingRequestParams): Promise<ConsumptionRequest> {
         const info = this.extractInfoFromSource(params.source)
 
         const request = await ConsumptionRequest.from({
@@ -96,7 +101,9 @@ export class RequestsController extends ConsumptionBaseController {
         return request
     }
 
-    public async accept(params: CompleteRequestParams): Promise<ConsumptionRequest> {
+    public async accept(params: ICompleteRequestParameters): Promise<ConsumptionRequest> {
+        params = CompleteRequestParameters.from(params)
+
         const requestDoc = await this.requests.read(params.requestId.toString())
         const consumptionRequest = await ConsumptionRequest.from(requestDoc)
 
@@ -115,7 +122,7 @@ export class RequestsController extends ConsumptionBaseController {
         return consumptionRequest
     }
 
-    public async reject(params: CompleteRequestParams): Promise<ConsumptionRequest> {
+    public async reject(params: ICompleteRequestParameters): Promise<ConsumptionRequest> {
         const requestDoc = await this.requests.read(params.requestId.toString())
         const consumptionRequest = await ConsumptionRequest.from(requestDoc)
 
@@ -134,7 +141,7 @@ export class RequestsController extends ConsumptionBaseController {
         return consumptionRequest
     }
 
-    private async createConsumptionResponse(params: CompleteRequestParams, request: ConsumptionRequest) {
+    private async createConsumptionResponse(params: ICompleteRequestParameters, request: ConsumptionRequest) {
         const requestItems = request.content.items
         const responseItems = await this.createResponseItems(params.items, requestItems)
 
@@ -153,7 +160,7 @@ export class RequestsController extends ConsumptionBaseController {
     }
 
     private async createResponseItems(
-        params: (CompleteRequestItemParams | CompleteRequestItemGroupParams)[],
+        params: (ICompleteRequestItemParameters | ICompleteRequestItemGroupParameters)[],
         requestItems: (RequestItemGroup | RequestItem)[]
     ) {
         const responseItems: (ResponseItem | ResponseItemGroup)[] = []
@@ -161,9 +168,9 @@ export class RequestsController extends ConsumptionBaseController {
         for (let i = 0; i < params.length; i++) {
             const itemParam = params[i]
 
-            if (isCompleteRequestItemParams(itemParam)) {
+            if (itemParam instanceof CompleteRequestItemParameters) {
                 responseItems.push(await this.createResponseItem(itemParam, requestItems[i] as RequestItem))
-            } else if (isCompleteRequestItemGroupParams(itemParam)) {
+            } else if (itemParam instanceof CompleteRequestItemGroupParameters) {
                 responseItems.push(await this.createResponseItemGroup(itemParam, requestItems[i] as RequestItemGroup))
             }
         }
@@ -171,7 +178,7 @@ export class RequestsController extends ConsumptionBaseController {
     }
 
     private async createResponseItem(
-        params: CompleteRequestItemParams,
+        params: CompleteRequestItemParameters,
         requestItem: RequestItem
     ): Promise<ResponseItem> {
         const processor = this.requestItemProcessorRegistry.getProcessorForItem(requestItem)
@@ -179,7 +186,7 @@ export class RequestsController extends ConsumptionBaseController {
     }
 
     private async createResponseItemGroup(
-        groupItemParam: CompleteRequestItemGroupParams,
+        groupItemParam: CompleteRequestItemGroupParameters,
         requestItemGroup: RequestItemGroup
     ) {
         const items = (await this.createResponseItems(groupItemParam.items, requestItemGroup.items)) as ResponseItem[]
@@ -275,7 +282,7 @@ export class RequestsController extends ConsumptionBaseController {
     // }
 }
 
-export interface CreateRequestParams {
+export interface CreateIncomingRequestParams {
     // id?: CoreId
     content: Request
     source: Message | RelationshipTemplate

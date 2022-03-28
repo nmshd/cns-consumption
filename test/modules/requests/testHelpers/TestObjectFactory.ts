@@ -28,7 +28,7 @@ export class TestObjectFactory {
             items: [
                 {
                     "@type": "TestRequestItem",
-                    mustBeAccepted: true
+                    mustBeAccepted: false
                 }
             ]
         }

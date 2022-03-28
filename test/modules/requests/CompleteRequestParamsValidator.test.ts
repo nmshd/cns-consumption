@@ -1,9 +1,9 @@
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import {
+    AcceptRequestItemParameters,
     CompleteRequestParamsValidator,
     ConsumptionRequest,
-    ConsumptionRequestStatus,
-    RequestItemDecision
+    ConsumptionRequestStatus
 } from "@nmshd/consumption"
 import { Request } from "@nmshd/content"
 import { CoreAddress, CoreDate, CoreId } from "@nmshd/transport"
@@ -59,7 +59,7 @@ export class CompleteRequestParamsValidatorTests extends UnitTest {
 
                 const validationResult = validator.validate(
                     {
-                        items: [{ decision: RequestItemDecision.Accept }, { decision: RequestItemDecision.Accept }],
+                        items: [AcceptRequestItemParameters.from({}), AcceptRequestItemParameters.from({})],
                         requestId: consumptionRequest.id
                     },
                     consumptionRequest

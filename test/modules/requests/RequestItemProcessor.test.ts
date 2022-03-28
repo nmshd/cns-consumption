@@ -1,6 +1,6 @@
 import { IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
-import { RequestItemDecision } from "@nmshd/consumption"
+import { AcceptRequestItemParameters, RejectRequestItemParameters } from "@nmshd/consumption"
 import { IConfigOverwrite } from "@nmshd/transport"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
@@ -37,9 +37,7 @@ export class RequestItemProcessorTests extends IntegrationTest {
                 const processor = new MockRequestItemProcessor()
 
                 const item = await TestRequestItem.from({ mustBeAccepted: false })
-                const acceptParams = {
-                    decision: RequestItemDecision.Accept
-                }
+                const acceptParams = AcceptRequestItemParameters.from({})
 
                 await processor.complete(item, acceptParams)
 
@@ -50,9 +48,7 @@ export class RequestItemProcessorTests extends IntegrationTest {
                 const processor = new MockRequestItemProcessor()
 
                 const item = await TestRequestItem.from({ mustBeAccepted: false })
-                const rejectParams = {
-                    decision: RequestItemDecision.Reject
-                }
+                const rejectParams = RejectRequestItemParameters.from({})
 
                 await processor.complete(item, rejectParams)
 
