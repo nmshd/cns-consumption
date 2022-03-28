@@ -1,5 +1,5 @@
 import { ISerializable, serialize, type, validate } from "@js-soft/ts-serval"
-import { CompleteRequestItemParameters } from "../.."
+import { CompleteRequestItemParameters } from "./CompleteRequestItemParameters"
 
 export interface IRejectRequestItemParameters extends ISerializable {
     code?: string
