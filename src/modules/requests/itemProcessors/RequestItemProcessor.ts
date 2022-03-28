@@ -4,7 +4,7 @@ import {
     CompleteRequestItemParams,
     RejectRequestItemParams,
     RequestItemDecision
-} from "../../.."
+} from "../CompleteRequestParameters"
 
 export class RequestItemProcessor<
     TRequestItem extends RequestItem = RequestItem,

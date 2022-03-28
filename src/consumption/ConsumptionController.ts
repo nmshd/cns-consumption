@@ -1,13 +1,10 @@
 import { AccountController, Transport } from "@nmshd/transport"
-import {
-    // ConsumptionAttributesController,
-    DraftsController,
-    RelationshipInfoController,
-    SettingsController,
-    SharedItemsController
-} from "../modules"
+import { DraftsController } from "../modules"
 import { ConsumptionAttributesController } from "../modules/attributes/ConsumptionAttributesController"
+import { RelationshipInfoController } from "../modules/relationships/RelationshipInfoController"
 import { RequestsController } from "../modules/requests/RequestsController"
+import { SettingsController } from "../modules/settings/SettingsController"
+import { SharedItemsController } from "../modules/sharedItems/SharedItemsController"
 
 export class ConsumptionController {
     public constructor(public readonly transport: Transport, public readonly accountController: AccountController) {}
