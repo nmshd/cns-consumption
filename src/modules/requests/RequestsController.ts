@@ -1,6 +1,5 @@
 import { IDatabaseCollection } from "@js-soft/docdb-access-abstractions"
 import {
-    Request,
     RequestItem,
     RequestItemGroup,
     Response,
@@ -24,6 +23,7 @@ import {
     ICompleteRequestParameters
 } from "./completeRequestParameters/CompleteRequestParameters"
 import { CompleteRequestParamsValidator } from "./CompleteRequestParamsValidator"
+import { ICreateIncomingRequestParameters } from "./createIncomingRequestParams/CreateIncomingRequestParameters"
 import { ConsumptionRequest, ConsumptionRequestStatus, ConsumptionResponseDraft } from "./local/ConsumptionRequest"
 import { RequestItemProcessorRegistry } from "./RequestItemProcessorRegistry"
 
@@ -45,7 +45,7 @@ export class RequestsController extends ConsumptionBaseController {
         return this
     }
 
-    public async createIncomingRequest(params: CreateIncomingRequestParams): Promise<ConsumptionRequest> {
+    public async createIncomingRequest(params: ICreateIncomingRequestParameters): Promise<ConsumptionRequest> {
         const info = this.extractInfoFromSource(params.source)
 
         const request = await ConsumptionRequest.from({
@@ -280,10 +280,4 @@ export class RequestsController extends ConsumptionBaseController {
     // public async deleteRequest(request: ConsumptionRequestOld): Promise<void> {
     //     await this.requests.delete(request)
     // }
-}
-
-export interface CreateIncomingRequestParams {
-    // id?: CoreId
-    content: Request
-    source: Message | RelationshipTemplate
 }
