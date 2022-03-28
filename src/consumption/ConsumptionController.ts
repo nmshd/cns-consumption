@@ -6,15 +6,16 @@ import {
     SettingsController,
     SharedItemsController
 } from "../modules"
+import { ConsumptionAttributesController } from "../modules/attributes/ConsumptionAttributesController"
 import { RequestsController } from "../modules/requests/RequestsController"
 
 export class ConsumptionController {
     public constructor(public readonly transport: Transport, public readonly accountController: AccountController) {}
 
-    // private _attributes: ConsumptionAttributesController
-    // public get attributes(): ConsumptionAttributesController {
-    //     return this._attributes
-    // }
+    private _attributes: ConsumptionAttributesController
+    public get attributes(): ConsumptionAttributesController {
+        return this._attributes
+    }
 
     private _drafts: DraftsController
     public get drafts(): DraftsController {
@@ -42,7 +43,7 @@ export class ConsumptionController {
     }
 
     public async init(): Promise<ConsumptionController> {
-        // this._attributes = await new ConsumptionAttributesController(this).init()
+        this._attributes = await new ConsumptionAttributesController(this).init()
         this._drafts = await new DraftsController(this).init()
         this._requests = await new RequestsController(this).init()
         this._settings = await new SettingsController(this).init()
