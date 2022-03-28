@@ -1,4 +1,4 @@
-import { ConsumptionController } from "@nmshd/consumption"
+import { ConsumptionController, RelationshipInfo, SharedItem } from "@nmshd/consumption"
 import { Attribute, RelationshipCreationChangeRequestBody, RelationshipTemplateBody } from "@nmshd/content"
 import { AccountController, Relationship, RelationshipTemplate, Transport } from "@nmshd/transport"
 import { expect } from "chai"
@@ -81,99 +81,99 @@ export class RelationshipRequestorTest extends IntegrationTest {
                 expect(relationship).to.exist
             })
 
-            // it("should store the corresponding relationshipInfo", async function () {
-            //     const relationshipInfo = await requestorConsumption.relationshipInfo.getRelationshipInfoByRelationship(
-            //         relationship.id
-            //     )
-            //     expect(relationshipInfo).instanceOf(RelationshipInfo)
-            //     expect(relationshipInfo!.relationshipId.toString()).equals(relationship.id.toString())
-            //     expect(relationshipInfo!.title).equals("Hugo Becker")
-            // })
+            it("should store the corresponding relationshipInfo", async function () {
+                const relationshipInfo = await requestorConsumption.relationshipInfo.getRelationshipInfoByRelationship(
+                    relationship.id
+                )
+                expect(relationshipInfo).instanceOf(RelationshipInfo)
+                expect(relationshipInfo!.relationshipId.toString()).equals(relationship.id.toString())
+                expect(relationshipInfo!.title).equals("Hugo Becker")
+            })
 
-            // it("should store the received attributes", async function () {
-            //     const receivedItems = await requestorConsumption.sharedItems.getSharedItems({
-            //         sharedBy: relationship.peer.address.toString()
-            //     })
-            //     const creationDate = relationship.cache!.creationChange.request.createdAt
-            //     const selfAddress = requestor.identity.address.toString()
-            //     expect(receivedItems).lengthOf(2)
+            it("should store the received attributes", async function () {
+                const receivedItems = await requestorConsumption.sharedItems.getSharedItems({
+                    sharedBy: relationship.peer.address.toString()
+                })
+                const creationDate = relationship.cache!.creationChange.request.createdAt
+                const selfAddress = requestor.identity.address.toString()
+                expect(receivedItems).lengthOf(2)
 
-            //     const attributes: Record<string, Attribute | undefined> = {}
-            //     for (const item of receivedItems) {
-            //         expect(item).instanceOf(SharedItem)
-            //         expect(item.reference!.toString()).equals(template.id.toString())
-            //         expect(item.sharedAt.isWithin({ seconds: 5 }, { seconds: 5 }, creationDate)).equals(true)
-            //         expect(item.sharedBy.toString()).equals(relationship.peer.address.toString())
-            //         expect(item.sharedWith.toString()).equals(selfAddress)
-            //         expect(item.content).instanceOf(Attribute)
-            //         const attribute = item.content as Attribute
-            //         attributes[attribute.name] = attribute
-            //     }
+                const attributes: Record<string, Attribute | undefined> = {}
+                for (const item of receivedItems) {
+                    expect(item).instanceOf(SharedItem)
+                    expect(item.reference!.toString()).equals(template.id.toString())
+                    expect(item.sharedAt.isWithin({ seconds: 5 }, { seconds: 5 }, creationDate)).equals(true)
+                    expect(item.sharedBy.toString()).equals(relationship.peer.address.toString())
+                    expect(item.sharedWith.toString()).equals(selfAddress)
+                    expect(item.content).instanceOf(Attribute)
+                    const attribute = item.content as Attribute
+                    attributes[attribute.name] = attribute
+                }
 
-            //     let found = 0
-            //     for (const templateItem of templateBody.sharedAttributes!) {
-            //         if (attributes[templateItem.name]) {
-            //             const attribute = attributes[templateItem.name]!
-            //             found++
-            //             expect(attribute.name).equals(templateItem.name)
-            //             expect(attribute.value).equals(templateItem.value)
-            //         }
-            //     }
-            //     expect(found).equals(templateBody.sharedAttributes!.length)
-            // })
+                let found = 0
+                for (const templateItem of templateBody.sharedAttributes!) {
+                    if (attributes[templateItem.name]) {
+                        const attribute = attributes[templateItem.name]!
+                        found++
+                        expect(attribute.name).equals(templateItem.name)
+                        expect(attribute.value).equals(templateItem.value)
+                    }
+                }
+                expect(found).equals(templateBody.sharedAttributes!.length)
+            })
 
-            // it("should store the sent attributes", async function () {
-            //     const sentItems = await requestorConsumption.sharedItems.getSharedItems({
-            //         sharedWith: relationship.peer.address.toString()
-            //     })
-            //     const change = relationship.cache!.creationChange
-            //     const creationDate = change.request.createdAt
-            //     const selfAddress = requestor.identity.address.toString()
-            //     expect(sentItems).lengthOf(2)
+            it("should store the sent attributes", async function () {
+                const sentItems = await requestorConsumption.sharedItems.getSharedItems({
+                    sharedWith: relationship.peer.address.toString()
+                })
+                const change = relationship.cache!.creationChange
+                const creationDate = change.request.createdAt
+                const selfAddress = requestor.identity.address.toString()
+                expect(sentItems).lengthOf(2)
 
-            //     const attributes: Record<string, Attribute | undefined> = {}
-            //     for (const item of sentItems) {
-            //         expect(item).instanceOf(SharedItem)
-            //         expect(item.reference!.toString()).equals(change.id.toString())
-            //         expect(item.sharedAt.isWithin({ seconds: 5 }, { seconds: 5 }, creationDate)).equals(true)
-            //         expect(item.sharedBy.toString()).equals(selfAddress)
-            //         expect(item.sharedWith.toString()).equals(relationship.peer.address.toString())
-            //         expect(item.content).instanceOf(Attribute)
-            //         const attribute = item.content as Attribute
-            //         attributes[attribute.name] = attribute
-            //     }
+                const attributes: Record<string, Attribute | undefined> = {}
+                for (const item of sentItems) {
+                    expect(item).instanceOf(SharedItem)
+                    expect(item.reference!.toString()).equals(change.id.toString())
+                    expect(item.sharedAt.isWithin({ seconds: 5 }, { seconds: 5 }, creationDate)).equals(true)
+                    expect(item.sharedBy.toString()).equals(selfAddress)
+                    expect(item.sharedWith.toString()).equals(relationship.peer.address.toString())
+                    expect(item.content).instanceOf(Attribute)
+                    const attribute = item.content as Attribute
+                    attributes[attribute.name] = attribute
+                }
 
-            //     let found = 0
-            //     const requestBody = change.request.content as RelationshipCreationChangeRequestBody
-            //     for (const templateItem of requestBody.sharedAttributes!) {
-            //         if (attributes[templateItem.name]) {
-            //             const attribute = attributes[templateItem.name]!
-            //             found++
-            //             expect(attribute.name).equals(templateItem.name)
-            //             expect(attribute.value).equals(templateItem.value)
-            //         }
-            //     }
-            //     expect(found).equals(requestBody.sharedAttributes!.length)
-            // })
+                let found = 0
+                const requestBody = change.request.content as RelationshipCreationChangeRequestBody
+                for (const templateItem of requestBody.sharedAttributes!) {
+                    if (attributes[templateItem.name]) {
+                        const attribute = attributes[templateItem.name]!
+                        found++
+                        expect(attribute.name).equals(templateItem.name)
+                        expect(attribute.value).equals(templateItem.value)
+                    }
+                }
+                expect(found).equals(requestBody.sharedAttributes!.length)
+            })
 
-            // it("should check for duplicates within sharedItems", async function () {
-            //     const relationshipInfo = await requestorConsumption.relationshipInfo.getRelationshipInfoByRelationship(
-            //         relationship.id
-            //     )
-            //     expect(relationshipInfo).instanceOf(RelationshipInfo)
-            //     expect(relationshipInfo!.relationshipId.toString()).equals(relationship.id.toString())
-            //     expect(relationshipInfo!.title).equals("Hugo Becker")
+            it("should check for duplicates within sharedItems", async function () {
+                const relationshipInfo = await requestorConsumption.relationshipInfo.getRelationshipInfoByRelationship(
+                    relationship.id
+                )
+                expect(relationshipInfo).instanceOf(RelationshipInfo)
+                expect(relationshipInfo!.relationshipId.toString()).equals(relationship.id.toString())
+                expect(relationshipInfo!.title).equals("Hugo Becker")
 
-            //     const templateItems = await requestorConsumption.sharedItems.getSharedItems({
-            //         reference: template.id.toString()
-            //     })
-            //     expect(templateItems).length(2)
+                const templateItems = await requestorConsumption.sharedItems.getSharedItems({
+                    reference: template.id.toString()
+                })
+                expect(templateItems).length(2)
 
-            //     const requestItems = await requestorConsumption.sharedItems.getSharedItems({
-            //         reference: template.id.toString()
-            //     })
-            //     expect(requestItems).length(2)
-            // })
+                const requestItems = await requestorConsumption.sharedItems.getSharedItems({
+                    reference: template.id.toString()
+                })
+                expect(requestItems).length(2)
+            })
 
             after(async function () {
                 await templator.close()
