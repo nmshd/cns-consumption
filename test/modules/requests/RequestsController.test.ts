@@ -40,7 +40,7 @@ export class RequestControllerTests extends IntegrationTest {
         const transport = new Transport(that.connection, that.config, that.loggerFactory)
         let defaultAccount: Account
 
-        describe.only("RequestController", function () {
+        describe("RequestController", function () {
             before(async function () {
                 this.timeout(5000)
 
