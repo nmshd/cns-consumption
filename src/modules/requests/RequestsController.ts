@@ -53,7 +53,7 @@ export class RequestsController extends ConsumptionBaseController {
         const info = this.extractInfoFromSource(params.source)
 
         const request = await ConsumptionRequest.from({
-            id: await CoreId.generate(),
+            id: params.content.id ? CoreId.from(params.content.id) : await CoreId.generate(),
             createdAt: CoreDate.utc(),
             status: ConsumptionRequestStatus.Open,
             content: params.content,
@@ -191,12 +191,6 @@ export class RequestsController extends ConsumptionBaseController {
         })
         return group
     }
-
-    // private extractInfoFromRelationship(relationship: Relationship) {
-    //     return {
-    //         isOwn:
-    //     }
-    // }
 
     // public async createRequest(request: Request, message: Message): Promise<ConsumptionRequestOld> {
     //     if (request.id) {

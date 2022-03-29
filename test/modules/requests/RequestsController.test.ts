@@ -155,6 +155,24 @@ export class RequestControllerTests extends IntegrationTest {
                         "*source*Value is not defined*"
                     )
                 }).timeout(5000)
+
+                it("created Consumption Request has ID of Request if one exists", async function () {
+                    const requestSource = await TestObjectFactory.createIncomingMessage(
+                        defaultAccount.accountController.identity.address
+                    )
+                    const request = await Request.from(TestObjectFactory.createRequestWithOneItem())
+                    request.id = await CoreId.generate()
+
+                    const consumptionRequest =
+                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                            CreateIncomingRequestParameters.from({
+                                content: request,
+                                source: requestSource
+                            })
+                        )
+
+                    expect(consumptionRequest.id.toString()).equals(request.id.toString())
+                }).timeout(5000)
             })
 
             describe("Get", function () {
@@ -200,6 +218,9 @@ export class RequestControllerTests extends IntegrationTest {
 
                     expect(acceptedRequest.response).to.exist
                     expect(acceptedRequest.response).to.be.instanceOf(ConsumptionResponseDraft)
+                    expect(acceptedRequest.response!.content.requestId.toString()).to.equal(
+                        consumptionRequest.id.toString()
+                    )
                 }).timeout(5000)
 
                 it("updates the status of the Consumption Request", async function () {
@@ -440,6 +461,9 @@ export class RequestControllerTests extends IntegrationTest {
 
                     expect(rejectedRequest.response).to.exist
                     expect(rejectedRequest.response).to.be.instanceOf(ConsumptionResponseDraft)
+                    expect(rejectedRequest.response!.content.requestId.toString()).to.equal(
+                        consumptionRequest.id.toString()
+                    )
                 }).timeout(5000)
 
                 it("updates the status of the Consumption Request", async function () {
