@@ -11,8 +11,7 @@ import {
     ConsumptionResponseDraft,
     CreateIncomingRequestParameters,
     ICompleteRequestParameters,
-    RejectRequestItemParameters,
-    RequestsController
+    RejectRequestItemParameters
 } from "@nmshd/consumption"
 import { Request, ResponseItem, ResponseItemGroup, ResponseItemResult, ResponseResult } from "@nmshd/content"
 import { AccountController, CoreId, IConfigOverwrite, Transport } from "@nmshd/transport"
@@ -57,10 +56,6 @@ export class RequestControllerTests extends IntegrationTest {
         })
 
         describe("RequestController", function () {
-            it("is initialized at startup", function () {
-                expect(defaultAccount.consumptionController.requests).to.be.instanceOf(RequestsController)
-            })
-
             describe("CreateIncomingRequest", function () {
                 it("creates an incoming Request with an incoming Message as source", async function () {
                     const requestSource = await TestObjectFactory.createIncomingMessage(
@@ -87,7 +82,7 @@ export class RequestControllerTests extends IntegrationTest {
                     expect(consumptionRequest.status).to.equal(ConsumptionRequestStatus.Open)
                     expect(consumptionRequest.statusLog).to.be.empty
                     expect(consumptionRequest.content.toJSON()).to.deep.equal(consumptionRequest.content.toJSON())
-                })
+                }).timeout(5000)
 
                 it("cannot create incoming Request from outgoing Message", async function () {
                     const requestSource = await TestObjectFactory.createOutgoingMessage(
@@ -104,7 +99,7 @@ export class RequestControllerTests extends IntegrationTest {
                         ),
                         "Cannot create incoming Request from own Message"
                     )
-                })
+                }).timeout(5000)
 
                 it("creates an incoming Request with an incoming RelationshipTemplate as source", async function () {
                     const requestSource = await TestObjectFactory.createIncomingRelationshipTemplate()
@@ -129,7 +124,7 @@ export class RequestControllerTests extends IntegrationTest {
                     expect(consumptionRequest.status).to.equal(ConsumptionRequestStatus.Open)
                     expect(consumptionRequest.statusLog).to.be.empty
                     expect(consumptionRequest.content.toJSON()).to.deep.equal(consumptionRequest.content.toJSON())
-                })
+                }).timeout(5000)
 
                 it("cannot create incoming Request from outgoing RelationshipTemplate", async function () {
                     const requestSource = await TestObjectFactory.createOutgoingRelationshipTemplate(
@@ -146,7 +141,7 @@ export class RequestControllerTests extends IntegrationTest {
                         ),
                         "Cannot create incoming Request from own Relationship Template"
                     )
-                })
+                }).timeout(5000)
 
                 it("throws on invalid input", async function () {
                     const paramsWithoutSource = {
@@ -157,7 +152,7 @@ export class RequestControllerTests extends IntegrationTest {
                         defaultAccount.consumptionController.requests.createIncomingRequest(paramsWithoutSource as any),
                         "*source*Value is not defined*"
                     )
-                })
+                }).timeout(5000)
             })
 
             describe("Get", function () {
@@ -175,7 +170,7 @@ export class RequestControllerTests extends IntegrationTest {
                     )
 
                     expect(consumptionRequest).to.exist
-                })
+                }).timeout(5000)
 
                 it("returns undefined when the given id does not exist", async function () {
                     const consumptionRequest = await defaultAccount.consumptionController.requests.get(
@@ -183,11 +178,12 @@ export class RequestControllerTests extends IntegrationTest {
                     )
 
                     expect(consumptionRequest).to.be.undefined
-                })
+                }).timeout(5000)
             })
 
+            // TODO: combine multiple tests into one???
             describe("Accept", function () {
-                it("sets the response property of the Consumption Request", async function () {
+                it.only("sets the response property of the Consumption Request", async function () {
                     const consumptionRequest =
                         await defaultAccount.consumptionController.requests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
@@ -203,7 +199,7 @@ export class RequestControllerTests extends IntegrationTest {
 
                     expect(acceptedRequest.response).to.exist
                     expect(acceptedRequest.response).to.be.instanceOf(ConsumptionResponseDraft)
-                })
+                }).timeout(5000)
 
                 it("updates the status of the Consumption Request", async function () {
                     const consumptionRequest =
@@ -223,7 +219,7 @@ export class RequestControllerTests extends IntegrationTest {
                     expect(acceptedRequest.statusLog).to.have.lengthOf(1)
                     expect(acceptedRequest.statusLog[0].oldStatus).to.equal(ConsumptionRequestStatus.Open)
                     expect(acceptedRequest.statusLog[0].newStatus).to.equal(ConsumptionRequestStatus.Completed)
-                })
+                }).timeout(5000)
 
                 it("persists the updated Consumption Request", async function () {
                     const createdConsumptionRequest =
@@ -247,7 +243,7 @@ export class RequestControllerTests extends IntegrationTest {
                     expect(updatedConsumptionRequest!.response).to.exist
                     expect(updatedConsumptionRequest!.response).to.be.instanceOf(ConsumptionResponseDraft)
                     expect(updatedConsumptionRequest!.response!.content.result).to.equal(ResponseResult.Accepted)
-                })
+                }).timeout(5000)
 
                 it("creates Response Items and Groups with the correct structure", async function () {
                     const createdConsumptionRequest =
@@ -292,7 +288,7 @@ export class RequestControllerTests extends IntegrationTest {
                     expect(responseContent.items[0]).to.be.instanceOf(ResponseItem)
                     expect(responseContent.items[1]).to.be.instanceOf(ResponseItemGroup)
                     expect((responseContent.items[1] as ResponseItemGroup).items[0]).to.be.instanceOf(ResponseItem)
-                })
+                }).timeout(5000)
 
                 it("creates Response Items with the correct result", async function () {
                     const createdConsumptionRequest =
@@ -348,7 +344,7 @@ export class RequestControllerTests extends IntegrationTest {
                     const responseGroup = responseContent.items[1] as ResponseItemGroup
                     const innerResponseItem = responseGroup.items[0]
                     expect(innerResponseItem.result).to.equal(ResponseItemResult.Rejected)
-                })
+                }).timeout(5000)
 
                 it("writes responseMetadata from Request Items and Groups into the corresponding Response Items and Groups", async function () {
                     const createdConsumptionRequest =
@@ -412,7 +408,7 @@ export class RequestControllerTests extends IntegrationTest {
                     expect(innerResponseItem.metadata).to.deep.equal({
                         innerItemMetaKey: "innerItemMetaValue"
                     })
-                })
+                }).timeout(5000)
 
                 it("throws on invalid input", async function () {
                     const paramsWithoutItems = {
@@ -423,7 +419,7 @@ export class RequestControllerTests extends IntegrationTest {
                         defaultAccount.consumptionController.requests.accept(paramsWithoutItems as any),
                         "*items*Value is not defined*"
                     )
-                })
+                }).timeout(5000)
             })
         })
     }

@@ -1,4 +1,4 @@
-import { Serializable, serialize, type, validate } from "@js-soft/ts-serval"
+import { Serializable, serialize, validate } from "@js-soft/ts-serval"
 import { CoreId } from "@nmshd/transport"
 import {
     CompleteRequestItemGroupParameters,
@@ -11,8 +11,7 @@ export interface ICompleteRequestParameters {
     items: (ICompleteRequestItemParameters | ICompleteRequestItemGroupParameters)[]
 }
 
-@type("CompleteRequestParameters")
-export class CompleteRequestParameters extends Serializable implements ICompleteRequestParameters {
+export abstract class CompleteRequestParameters extends Serializable implements ICompleteRequestParameters {
     @serialize()
     @validate()
     public requestId: CoreId
@@ -24,8 +23,4 @@ export class CompleteRequestParameters extends Serializable implements IComplete
     //         items.length === 0 ? "may not be empty" : undefined
     // })
     public items: (CompleteRequestItemParameters | CompleteRequestItemGroupParameters)[]
-
-    public static from(params: ICompleteRequestParameters): CompleteRequestParameters {
-        return super.fromT(params, CompleteRequestParameters)
-    }
 }

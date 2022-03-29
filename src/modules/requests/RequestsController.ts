@@ -10,6 +10,7 @@ import {
 import { CoreDate, CoreId, Message, RelationshipTemplate } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName } from "../../consumption"
 import { ConsumptionController } from "../../consumption/ConsumptionController"
+import { AcceptRequestParameters, IAcceptRequestParameters } from "./completeRequestParameters/AcceptRequestParameters"
 import {
     CompleteRequestItemGroupParameters,
     ICompleteRequestItemGroupParameters
@@ -18,10 +19,6 @@ import {
     CompleteRequestItemParameters,
     ICompleteRequestItemParameters
 } from "./completeRequestParameters/CompleteRequestItemParameters"
-import {
-    CompleteRequestParameters,
-    ICompleteRequestParameters
-} from "./completeRequestParameters/CompleteRequestParameters"
 import { CompleteRequestParamsValidator } from "./CompleteRequestParamsValidator"
 import {
     CreateIncomingRequestParameters,
@@ -106,18 +103,18 @@ export class RequestsController extends ConsumptionBaseController {
         return request
     }
 
-    public async accept(params: ICompleteRequestParameters): Promise<ConsumptionRequest> {
-        params = CompleteRequestParameters.from(params)
+    public async accept(params: IAcceptRequestParameters): Promise<ConsumptionRequest> {
+        const acceptParams = AcceptRequestParameters.from(params)
 
-        const requestDoc = await this.requests.read(params.requestId.toString())
+        const requestDoc = await this.requests.read(acceptParams.requestId.toString())
         const consumptionRequest = await ConsumptionRequest.from(requestDoc)
 
-        const validationResult = this.completeRequestParamsValidator.validate(params, consumptionRequest)
+        const validationResult = this.completeRequestParamsValidator.validate(acceptParams, consumptionRequest)
         if (!validationResult.isSuccess) {
             throw new Error(validationResult.error.message)
         }
 
-        const consumptionResponse = await this.createConsumptionResponse(params, consumptionRequest)
+        const consumptionResponse = await this.createConsumptionResponse(acceptParams, consumptionRequest)
 
         consumptionRequest.response = consumptionResponse
         consumptionRequest.changeStatus(ConsumptionRequestStatus.Completed)
@@ -127,26 +124,26 @@ export class RequestsController extends ConsumptionBaseController {
         return consumptionRequest
     }
 
-    public async reject(params: ICompleteRequestParameters): Promise<ConsumptionRequest> {
-        const requestDoc = await this.requests.read(params.requestId.toString())
-        const consumptionRequest = await ConsumptionRequest.from(requestDoc)
+    // public async reject(params: ICompleteRequestParameters): Promise<ConsumptionRequest> {
+    //     const requestDoc = await this.requests.read(params.requestId.toString())
+    //     const consumptionRequest = await ConsumptionRequest.from(requestDoc)
 
-        const validationResult = this.completeRequestParamsValidator.validate(params, consumptionRequest)
-        if (!validationResult.isSuccess) {
-            throw new Error(validationResult.error.message)
-        }
+    //     const validationResult = this.completeRequestParamsValidator.validate(params, consumptionRequest)
+    //     if (!validationResult.isSuccess) {
+    //         throw new Error(validationResult.error.message)
+    //     }
 
-        const consumptionResponse = await this.createConsumptionResponse(params, consumptionRequest)
+    //     const consumptionResponse = await this.createConsumptionResponse(params, consumptionRequest)
 
-        consumptionRequest.response = consumptionResponse
-        consumptionRequest.changeStatus(ConsumptionRequestStatus.Completed)
+    //     consumptionRequest.response = consumptionResponse
+    //     consumptionRequest.changeStatus(ConsumptionRequestStatus.Completed)
 
-        await this.requests.update(requestDoc, consumptionRequest)
+    //     await this.requests.update(requestDoc, consumptionRequest)
 
-        return consumptionRequest
-    }
+    //     return consumptionRequest
+    // }
 
-    private async createConsumptionResponse(params: ICompleteRequestParameters, request: ConsumptionRequest) {
+    private async createConsumptionResponse(params: AcceptRequestParameters, request: ConsumptionRequest) {
         const requestItems = request.content.items
         const responseItems = await this.createResponseItems(params.items, requestItems)
 
