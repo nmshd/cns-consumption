@@ -17,10 +17,9 @@ export abstract class CompleteRequestParameters extends Serializable implements 
     public requestId: CoreId
 
     @serialize()
-    @validate()
-    // @validate({
-    //     customValidator: (items: (ICompleteRequestItemParameters | ICompleteRequestItemGroupParameters)[]) =>
-    //         items.length === 0 ? "may not be empty" : undefined
-    // })
+    @validate({
+        customValidator: (items: (ICompleteRequestItemParameters | ICompleteRequestItemGroupParameters)[]) =>
+            items.length === 0 ? "may not be empty" : undefined
+    })
     public items: (CompleteRequestItemParameters | CompleteRequestItemGroupParameters)[]
 }

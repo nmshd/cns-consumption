@@ -19,6 +19,8 @@ import {
     CompleteRequestItemParameters,
     ICompleteRequestItemParameters
 } from "./completeRequestParameters/CompleteRequestItemParameters"
+import { CompleteRequestParameters } from "./completeRequestParameters/CompleteRequestParameters"
+import { IRejectRequestParameters, RejectRequestParameters } from "./completeRequestParameters/RejectRequestParameters"
 import { CompleteRequestParamsValidator } from "./CompleteRequestParamsValidator"
 import {
     CreateIncomingRequestParameters,
@@ -104,17 +106,23 @@ export class RequestsController extends ConsumptionBaseController {
     }
 
     public async accept(params: IAcceptRequestParameters): Promise<ConsumptionRequest> {
-        const acceptParams = AcceptRequestParameters.from(params)
+        return await this.complete(AcceptRequestParameters.from(params))
+    }
 
-        const requestDoc = await this.requests.read(acceptParams.requestId.toString())
+    public async reject(params: IRejectRequestParameters): Promise<ConsumptionRequest> {
+        return await this.complete(RejectRequestParameters.from(params))
+    }
+
+    private async complete(params: CompleteRequestParameters) {
+        const requestDoc = await this.requests.read(params.requestId.toString())
         const consumptionRequest = await ConsumptionRequest.from(requestDoc)
 
-        const validationResult = this.completeRequestParamsValidator.validate(acceptParams, consumptionRequest)
+        const validationResult = this.completeRequestParamsValidator.validate(params, consumptionRequest)
         if (!validationResult.isSuccess) {
             throw new Error(validationResult.error.message)
         }
 
-        const consumptionResponse = await this.createConsumptionResponse(acceptParams, consumptionRequest)
+        const consumptionResponse = await this.createConsumptionResponse(params, consumptionRequest)
 
         consumptionRequest.response = consumptionResponse
         consumptionRequest.changeStatus(ConsumptionRequestStatus.Completed)
@@ -124,31 +132,15 @@ export class RequestsController extends ConsumptionBaseController {
         return consumptionRequest
     }
 
-    // public async reject(params: ICompleteRequestParameters): Promise<ConsumptionRequest> {
-    //     const requestDoc = await this.requests.read(params.requestId.toString())
-    //     const consumptionRequest = await ConsumptionRequest.from(requestDoc)
-
-    //     const validationResult = this.completeRequestParamsValidator.validate(params, consumptionRequest)
-    //     if (!validationResult.isSuccess) {
-    //         throw new Error(validationResult.error.message)
-    //     }
-
-    //     const consumptionResponse = await this.createConsumptionResponse(params, consumptionRequest)
-
-    //     consumptionRequest.response = consumptionResponse
-    //     consumptionRequest.changeStatus(ConsumptionRequestStatus.Completed)
-
-    //     await this.requests.update(requestDoc, consumptionRequest)
-
-    //     return consumptionRequest
-    // }
-
-    private async createConsumptionResponse(params: AcceptRequestParameters, request: ConsumptionRequest) {
+    private async createConsumptionResponse(
+        params: AcceptRequestParameters | RejectRequestParameters,
+        request: ConsumptionRequest
+    ) {
         const requestItems = request.content.items
         const responseItems = await this.createResponseItems(params.items, requestItems)
 
         const response = await Response.from({
-            result: ResponseResult.Accepted,
+            result: params instanceof AcceptRequestParameters ? ResponseResult.Accepted : ResponseResult.Rejected,
             requestId: request.id,
             items: responseItems
         })

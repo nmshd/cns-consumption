@@ -40,7 +40,7 @@ export class RequestControllerTests extends IntegrationTest {
         const transport = new Transport(that.connection, that.config, that.loggerFactory)
         let defaultAccount: Account
 
-        describe("RequestController", function () {
+        describe.only("RequestController", function () {
             before(async function () {
                 this.timeout(5000)
 
@@ -183,7 +183,6 @@ export class RequestControllerTests extends IntegrationTest {
                 }).timeout(5000)
             })
 
-            // TODO: combine multiple tests into one???
             describe("Accept", function () {
                 it("sets the response property of the Consumption Request", async function () {
                     const consumptionRequest =
@@ -419,6 +418,246 @@ export class RequestControllerTests extends IntegrationTest {
 
                     await TestUtil.expectThrowsAsync(
                         defaultAccount.consumptionController.requests.accept(paramsWithoutItems as any),
+                        "*items*Value is not defined*"
+                    )
+                }).timeout(5000)
+            })
+
+            describe("Reject", function () {
+                it("sets the response property of the Consumption Request", async function () {
+                    const consumptionRequest =
+                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                            CreateIncomingRequestParameters.from({
+                                content: await Request.from(TestObjectFactory.createRequestWithOneItem()),
+                                source: await TestObjectFactory.createIncomingRelationshipTemplate()
+                            })
+                        )
+
+                    const rejectedRequest = await defaultAccount.consumptionController.requests.reject({
+                        requestId: consumptionRequest.id,
+                        items: [RejectRequestItemParameters.from({})]
+                    })
+
+                    expect(rejectedRequest.response).to.exist
+                    expect(rejectedRequest.response).to.be.instanceOf(ConsumptionResponseDraft)
+                }).timeout(5000)
+
+                it("updates the status of the Consumption Request", async function () {
+                    const consumptionRequest =
+                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                            CreateIncomingRequestParameters.from({
+                                content: await Request.from(TestObjectFactory.createRequestWithOneItem()),
+                                source: await TestObjectFactory.createIncomingRelationshipTemplate()
+                            })
+                        )
+
+                    const rejectedRequest = await defaultAccount.consumptionController.requests.reject({
+                        requestId: consumptionRequest.id,
+                        items: [RejectRequestItemParameters.from({})]
+                    })
+
+                    expect(rejectedRequest.status).to.equal(ConsumptionRequestStatus.Completed)
+                    expect(rejectedRequest.statusLog).to.have.lengthOf(1)
+                    expect(rejectedRequest.statusLog[0].oldStatus).to.equal(ConsumptionRequestStatus.Open)
+                    expect(rejectedRequest.statusLog[0].newStatus).to.equal(ConsumptionRequestStatus.Completed)
+                }).timeout(5000)
+
+                it("persists the updated Consumption Request", async function () {
+                    const createdConsumptionRequest =
+                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                            CreateIncomingRequestParameters.from({
+                                content: await Request.from(TestObjectFactory.createRequestWithOneItem()),
+                                source: await TestObjectFactory.createIncomingRelationshipTemplate()
+                            })
+                        )
+
+                    await defaultAccount.consumptionController.requests.reject({
+                        requestId: createdConsumptionRequest.id,
+                        items: [RejectRequestItemParameters.from({})]
+                    })
+
+                    const updatedConsumptionRequest = await defaultAccount.consumptionController.requests.get(
+                        createdConsumptionRequest.id
+                    )
+
+                    expect(updatedConsumptionRequest).to.exist
+                    expect(updatedConsumptionRequest!.response).to.exist
+                    expect(updatedConsumptionRequest!.response).to.be.instanceOf(ConsumptionResponseDraft)
+                    expect(updatedConsumptionRequest!.response!.content.result).to.equal(ResponseResult.Rejected)
+                }).timeout(5000)
+
+                it("creates Response Items and Groups with the correct structure", async function () {
+                    const createdConsumptionRequest =
+                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                            CreateIncomingRequestParameters.from({
+                                content: await Request.from({
+                                    "@type": "Request",
+                                    items: [
+                                        {
+                                            "@type": "TestRequestItem",
+                                            mustBeAccepted: false
+                                        },
+                                        {
+                                            "@type": "RequestItemGroup",
+                                            mustBeAccepted: false,
+                                            items: [
+                                                {
+                                                    "@type": "TestRequestItem",
+                                                    mustBeAccepted: false
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }),
+                                source: await TestObjectFactory.createIncomingRelationshipTemplate()
+                            })
+                        )
+
+                    const rejectedRequest = await defaultAccount.consumptionController.requests.reject({
+                        requestId: createdConsumptionRequest.id,
+                        items: [
+                            RejectRequestItemParameters.from({}),
+                            CompleteRequestItemGroupParameters.from({
+                                items: [RejectRequestItemParameters.from({})]
+                            })
+                        ]
+                    })
+
+                    const responseContent = rejectedRequest.response!.content
+
+                    expect(responseContent.items).to.have.lengthOf(2)
+                    expect(responseContent.items[0]).to.be.instanceOf(ResponseItem)
+                    expect(responseContent.items[1]).to.be.instanceOf(ResponseItemGroup)
+                    expect((responseContent.items[1] as ResponseItemGroup).items[0]).to.be.instanceOf(ResponseItem)
+                }).timeout(5000)
+
+                it("creates Response Items with the correct result", async function () {
+                    const createdConsumptionRequest =
+                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                            CreateIncomingRequestParameters.from({
+                                content: await Request.from({
+                                    "@type": "Request",
+                                    items: [
+                                        {
+                                            "@type": "TestRequestItem",
+                                            mustBeAccepted: false,
+                                            responseMetadata: {
+                                                outerItemMetaKey: "outerItemMetaValue"
+                                            }
+                                        },
+                                        {
+                                            "@type": "RequestItemGroup",
+                                            responseMetadata: {
+                                                groupMetaKey: "groupMetaValue"
+                                            },
+                                            mustBeAccepted: false,
+                                            items: [
+                                                {
+                                                    "@type": "TestRequestItem",
+                                                    responseMetadata: {
+                                                        innerItemMetaKey: "innerItemMetaValue"
+                                                    },
+                                                    mustBeAccepted: false
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }),
+                                source: await TestObjectFactory.createIncomingRelationshipTemplate()
+                            })
+                        )
+
+                    const rejectedRequest = await defaultAccount.consumptionController.requests.reject({
+                        requestId: createdConsumptionRequest.id,
+                        items: [
+                            RejectRequestItemParameters.from({}),
+                            CompleteRequestItemGroupParameters.from({
+                                items: [RejectRequestItemParameters.from({})]
+                            })
+                        ]
+                    })
+
+                    const responseContent = rejectedRequest.response!.content
+
+                    const outerResponseItem = responseContent.items[0] as ResponseItem
+                    expect(outerResponseItem.result).to.equal(ResponseItemResult.Rejected)
+
+                    const responseGroup = responseContent.items[1] as ResponseItemGroup
+                    const innerResponseItem = responseGroup.items[0]
+                    expect(innerResponseItem.result).to.equal(ResponseItemResult.Rejected)
+                }).timeout(5000)
+
+                it("writes responseMetadata from Request Items and Groups into the corresponding Response Items and Groups", async function () {
+                    const createdConsumptionRequest =
+                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                            CreateIncomingRequestParameters.from({
+                                content: await Request.from({
+                                    "@type": "Request",
+                                    items: [
+                                        {
+                                            "@type": "TestRequestItem",
+                                            mustBeAccepted: false,
+                                            responseMetadata: {
+                                                outerItemMetaKey: "outerItemMetaValue"
+                                            }
+                                        },
+                                        {
+                                            "@type": "RequestItemGroup",
+                                            responseMetadata: {
+                                                groupMetaKey: "groupMetaValue"
+                                            },
+                                            mustBeAccepted: false,
+                                            items: [
+                                                {
+                                                    "@type": "TestRequestItem",
+                                                    responseMetadata: {
+                                                        innerItemMetaKey: "innerItemMetaValue"
+                                                    },
+                                                    mustBeAccepted: false
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }),
+                                source: await TestObjectFactory.createIncomingRelationshipTemplate()
+                            })
+                        )
+
+                    const rejectedRequest = await defaultAccount.consumptionController.requests.reject({
+                        requestId: createdConsumptionRequest.id,
+                        items: [
+                            RejectRequestItemParameters.from({}),
+                            CompleteRequestItemGroupParameters.from({
+                                items: [RejectRequestItemParameters.from({})]
+                            })
+                        ]
+                    })
+
+                    const responseContent = rejectedRequest.response!.content
+
+                    const outerResponseItem = responseContent.items[0] as ResponseItem
+                    expect(outerResponseItem.metadata).to.deep.equal({
+                        outerItemMetaKey: "outerItemMetaValue"
+                    })
+
+                    const responseGroup = responseContent.items[1] as ResponseItemGroup
+                    expect(responseGroup.metadata).to.deep.equal({
+                        groupMetaKey: "groupMetaValue"
+                    })
+
+                    const innerResponseItem = responseGroup.items[0]
+                    expect(innerResponseItem.metadata).to.deep.equal({
+                        innerItemMetaKey: "innerItemMetaValue"
+                    })
+                }).timeout(5000)
+
+                it("throws on invalid input", async function () {
+                    const paramsWithoutItems = {
+                        requestId: CoreId.from("CNSREQ1")
+                    }
+
+                    await TestUtil.expectThrowsAsync(
+                        defaultAccount.consumptionController.requests.reject(paramsWithoutItems as any),
                         "*items*Value is not defined*"
                     )
                 }).timeout(5000)
