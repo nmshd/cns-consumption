@@ -51,9 +51,11 @@ export function runOnMongoDb(): void {
     const mongoDbConnection = new MongoDbConnection(process.env["CONNECTION_STRING"])
 
     before(async function () {
+        this.timeout(5000)
         await mongoDbConnection.connect()
     })
     after(async function () {
+        this.timeout(5000)
         await mongoDbConnection.close()
     })
 
