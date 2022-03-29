@@ -40,22 +40,24 @@ export class RequestControllerTests extends IntegrationTest {
         const transport = new Transport(that.connection, that.config, that.loggerFactory)
         let defaultAccount: Account
 
-        before(async function () {
-            await TestUtil.clearAccounts(that.connection)
-            await transport.init()
-            const accountController = (await TestUtil.provideAccounts(transport, 1))[0]
-            const consumptionController = await new ConsumptionController(transport, accountController).init()
-
-            ;(consumptionController.requests as any).completeRequestParamsValidator =
-                new AlwaysTrueCompleteRequestParamsValidator()
-
-            defaultAccount = {
-                accountController,
-                consumptionController
-            }
-        })
-
         describe("RequestController", function () {
+            before(async function () {
+                this.timeout(5000)
+
+                await TestUtil.clearAccounts(that.connection)
+                await transport.init()
+                const accountController = (await TestUtil.provideAccounts(transport, 1))[0]
+                const consumptionController = await new ConsumptionController(transport, accountController).init()
+
+                ;(consumptionController.requests as any).completeRequestParamsValidator =
+                    new AlwaysTrueCompleteRequestParamsValidator()
+
+                defaultAccount = {
+                    accountController,
+                    consumptionController
+                }
+            })
+
             describe("CreateIncomingRequest", function () {
                 it("creates an incoming Request with an incoming Message as source", async function () {
                     const requestSource = await TestObjectFactory.createIncomingMessage(
