@@ -183,7 +183,7 @@ export class RequestControllerTests extends IntegrationTest {
 
             // TODO: combine multiple tests into one???
             describe("Accept", function () {
-                it.only("sets the response property of the Consumption Request", async function () {
+                it("sets the response property of the Consumption Request", async function () {
                     const consumptionRequest =
                         await defaultAccount.consumptionController.requests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
