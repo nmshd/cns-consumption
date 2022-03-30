@@ -11,6 +11,7 @@ import {
     ConsumptionResponse,
     CreateIncomingRequestParameters,
     ICompleteRequestParameters,
+    ICreateOutgoingRequestParameters,
     RejectRequestItemParameters
 } from "@nmshd/consumption"
 import { Request, ResponseItem, ResponseItemGroup, ResponseItemResult, ResponseResult } from "@nmshd/content"
@@ -40,7 +41,7 @@ export class RequestControllerTests extends IntegrationTest {
         const transport = new Transport(that.connection, that.config, that.loggerFactory)
         let defaultAccount: Account
 
-        describe("RequestController", function () {
+        describe.only("RequestController", function () {
             before(async function () {
                 this.timeout(5000)
 
@@ -48,9 +49,6 @@ export class RequestControllerTests extends IntegrationTest {
                 await transport.init()
                 const accountController = (await TestUtil.provideAccounts(transport, 1))[0]
                 const consumptionController = await new ConsumptionController(transport, accountController).init()
-
-                ;(consumptionController.requests as any).completeRequestParamsValidator =
-                    new AlwaysTrueCompleteRequestParamsValidator()
 
                 defaultAccount = {
                     accountController,
@@ -75,7 +73,6 @@ export class RequestControllerTests extends IntegrationTest {
 
                     expect(consumptionRequest).to.be.instanceOf(ConsumptionRequest)
                     expect(consumptionRequest.id).to.exist
-                    expect(consumptionRequest.createdAt).to.exist
                     expect(consumptionRequest.isOwn).to.be.false
                     expect(consumptionRequest.peer).to.equal(requestSource.cache!.createdBy)
                     expect(consumptionRequest.source).to.exist
@@ -84,7 +81,6 @@ export class RequestControllerTests extends IntegrationTest {
                     expect(consumptionRequest.response).to.be.undefined
                     expect(consumptionRequest.status).to.equal(ConsumptionRequestStatus.Open)
                     expect(consumptionRequest.statusLog).to.be.empty
-                    expect(consumptionRequest.content.toJSON()).to.deep.equal(consumptionRequest.content.toJSON())
                 }).timeout(5000)
 
                 it("cannot create incoming Request from outgoing Message", async function () {
@@ -177,9 +173,67 @@ export class RequestControllerTests extends IntegrationTest {
                 }).timeout(5000)
             })
 
-            describe("CreateOutgoingRequest", function () {
-                it("creates a new outgoing ConsumptionRequest", async function () {
-                    const params = {
+            describe("CompleteIncomingRequest", function () {
+                it("updates the status of the ConsumptionRequest", async function () {
+                    const requestSource = await TestObjectFactory.createIncomingMessage(
+                        defaultAccount.accountController.identity.address
+                    )
+                    const request = await Request.from(await TestObjectFactory.createRequestWithOneItem())
+
+                    const consumptionRequest =
+                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                            CreateIncomingRequestParameters.from({
+                                content: request,
+                                source: requestSource
+                            })
+                        )
+
+                    await defaultAccount.consumptionController.requests.accept({
+                        requestId: consumptionRequest.id,
+                        items: [AcceptRequestItemParameters.from({})]
+                    })
+
+                    const completedRequest =
+                        await defaultAccount.consumptionController.requests.completeIncomingRequest(
+                            consumptionRequest.id
+                        )
+
+                    expect(completedRequest.status).to.equal(ConsumptionRequestStatus.Completed)
+
+                    const statusLogEntry = completedRequest.statusLog[completedRequest.statusLog.length - 1]
+                    expect(statusLogEntry.newStatus).to.equal(ConsumptionRequestStatus.Completed)
+                })
+
+                it("persists the updated ConsumptionRequest", async function () {
+                    const requestSource = await TestObjectFactory.createIncomingMessage(
+                        defaultAccount.accountController.identity.address
+                    )
+                    const request = await Request.from(await TestObjectFactory.createRequestWithOneItem())
+
+                    const consumptionRequest =
+                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                            CreateIncomingRequestParameters.from({
+                                content: request,
+                                source: requestSource
+                            })
+                        )
+
+                    await defaultAccount.consumptionController.requests.accept({
+                        requestId: consumptionRequest.id,
+                        items: [AcceptRequestItemParameters.from({})]
+                    })
+
+                    await defaultAccount.consumptionController.requests.completeIncomingRequest(consumptionRequest.id)
+
+                    const completedRequest = (await defaultAccount.consumptionController.requests.get(
+                        consumptionRequest.id
+                    ))!
+
+                    expect(completedRequest.status).to.equal(ConsumptionRequestStatus.Completed)
+                })
+
+                it("cannot complete outgoing ConsumptionRequests", async function () {
+                    const params: ICreateOutgoingRequestParameters = {
                         content: {
                             items: [
                                 {
@@ -187,10 +241,51 @@ export class RequestControllerTests extends IntegrationTest {
                                 }
                             ]
                         },
-                        peer: CoreAddress.from("id1"),
-                        source: await TestObjectFactory.createOutgoingMessage(
-                            defaultAccount.accountController.identity.address
+                        peer: CoreAddress.from("id1")
+                    }
+
+                    const outgoingRequest = await defaultAccount.consumptionController.requests.createOutgoingRequest(
+                        params
+                    )
+
+                    await TestUtil.expectThrowsAsync(
+                        defaultAccount.consumptionController.requests.completeIncomingRequest(outgoingRequest.id),
+                        "*Cannot complete own Request*"
+                    )
+                })
+
+                it("can only complete ConsumptionRequests in status 'Decided'", async function () {
+                    const requestSource = await TestObjectFactory.createIncomingMessage(
+                        defaultAccount.accountController.identity.address
+                    )
+                    const request = await Request.from(await TestObjectFactory.createRequestWithOneItem())
+
+                    const consumptionRequest =
+                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                            CreateIncomingRequestParameters.from({
+                                content: request,
+                                source: requestSource
+                            })
                         )
+
+                    await TestUtil.expectThrowsAsync(
+                        defaultAccount.consumptionController.requests.completeIncomingRequest(consumptionRequest.id),
+                        "*Can only complete Request in status 'Decided'*"
+                    )
+                })
+            })
+
+            describe("CreateOutgoingRequest", function () {
+                it("creates a new outgoing ConsumptionRequest", async function () {
+                    const params: ICreateOutgoingRequestParameters = {
+                        content: {
+                            items: [
+                                {
+                                    mustBeAccepted: false
+                                }
+                            ]
+                        },
+                        peer: CoreAddress.from("id1")
                     }
 
                     const createdRequest = await defaultAccount.consumptionController.requests.createOutgoingRequest(
@@ -199,7 +294,72 @@ export class RequestControllerTests extends IntegrationTest {
 
                     expect(createdRequest).to.exist
                     expect(createdRequest.id).to.exist
+                    expect(createdRequest.status).to.equal(ConsumptionRequestStatus.Draft)
                     expect(createdRequest.content).to.be.instanceOf(Request)
+                    expect(createdRequest.content.id).to.exist
+                    expect(createdRequest.source).to.be.undefined
+                })
+
+                it("persists the created Request", async function () {
+                    const params: ICreateOutgoingRequestParameters = {
+                        content: {
+                            items: [
+                                {
+                                    mustBeAccepted: false
+                                }
+                            ]
+                        },
+                        peer: CoreAddress.from("id1")
+                    }
+
+                    const createdRequest = await defaultAccount.consumptionController.requests.createOutgoingRequest(
+                        params
+                    )
+
+                    const request = await defaultAccount.consumptionController.requests.get(createdRequest.id)
+
+                    expect(request).to.be.instanceOf(ConsumptionRequest)
+                })
+            })
+
+            describe("CompleteOutgoingRequest", function () {
+                it("updates the status of the ConsumptionRequest", async function () {
+                    const request = await defaultAccount.consumptionController.requests.createOutgoingRequest({
+                        content: {
+                            items: [
+                                {
+                                    mustBeAccepted: false
+                                }
+                            ]
+                        },
+                        peer: CoreAddress.from("id1")
+                    })
+                    const completedRequest =
+                        await defaultAccount.consumptionController.requests.completeOutgoingRequest(request.id)
+
+                    expect(completedRequest.status).to.equal(ConsumptionRequestStatus.Completed)
+
+                    const statusLogEntry = completedRequest.statusLog[completedRequest.statusLog.length - 1]
+                    expect(statusLogEntry.oldStatus).to.equal(ConsumptionRequestStatus.Draft)
+                    expect(statusLogEntry.newStatus).to.equal(ConsumptionRequestStatus.Completed)
+                })
+
+                it("persists the updated ConsumptionRequest", async function () {
+                    const request = await defaultAccount.consumptionController.requests.createOutgoingRequest({
+                        content: {
+                            items: [
+                                {
+                                    mustBeAccepted: false
+                                }
+                            ]
+                        },
+                        peer: CoreAddress.from("id1")
+                    })
+                    await defaultAccount.consumptionController.requests.completeOutgoingRequest(request.id)
+
+                    const completedRequest = (await defaultAccount.consumptionController.requests.get(request.id))!
+
+                    expect(completedRequest.status).to.equal(ConsumptionRequestStatus.Completed)
                 })
             })
 
@@ -265,10 +425,10 @@ export class RequestControllerTests extends IntegrationTest {
                         items: [AcceptRequestItemParameters.from({})]
                     })
 
-                    expect(acceptedRequest.status).to.equal(ConsumptionRequestStatus.Completed)
+                    expect(acceptedRequest.status).to.equal(ConsumptionRequestStatus.Decided)
                     expect(acceptedRequest.statusLog).to.have.lengthOf(1)
                     expect(acceptedRequest.statusLog[0].oldStatus).to.equal(ConsumptionRequestStatus.Open)
-                    expect(acceptedRequest.statusLog[0].newStatus).to.equal(ConsumptionRequestStatus.Completed)
+                    expect(acceptedRequest.statusLog[0].newStatus).to.equal(ConsumptionRequestStatus.Decided)
                 }).timeout(5000)
 
                 it("persists the updated Consumption Request", async function () {
@@ -508,10 +668,10 @@ export class RequestControllerTests extends IntegrationTest {
                         items: [RejectRequestItemParameters.from({})]
                     })
 
-                    expect(rejectedRequest.status).to.equal(ConsumptionRequestStatus.Completed)
+                    expect(rejectedRequest.status).to.equal(ConsumptionRequestStatus.Decided)
                     expect(rejectedRequest.statusLog).to.have.lengthOf(1)
                     expect(rejectedRequest.statusLog[0].oldStatus).to.equal(ConsumptionRequestStatus.Open)
-                    expect(rejectedRequest.statusLog[0].newStatus).to.equal(ConsumptionRequestStatus.Completed)
+                    expect(rejectedRequest.statusLog[0].newStatus).to.equal(ConsumptionRequestStatus.Decided)
                 }).timeout(5000)
 
                 it("persists the updated Consumption Request", async function () {

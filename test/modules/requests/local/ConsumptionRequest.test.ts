@@ -28,12 +28,12 @@ export class ConsumptionRequestTest extends UnitTest {
                         content: await TestObjectFactory.createResponse(),
                         source: { reference: CoreId.from("MSG2"), type: "Message" }
                     },
-                    status: ConsumptionRequestStatus.Checked,
+                    status: ConsumptionRequestStatus.Open,
                     statusLog: [
                         ConsumptionRequestStatusLogEntry.from({
                             createdAt: CoreDate.from("2020-01-01T00:00:00.000Z"),
-                            oldStatus: ConsumptionRequestStatus.Checked,
-                            newStatus: ConsumptionRequestStatus.DecisionRequired
+                            oldStatus: ConsumptionRequestStatus.Open,
+                            newStatus: ConsumptionRequestStatus.Completed
                         })
                     ]
                 }

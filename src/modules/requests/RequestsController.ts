@@ -10,7 +10,7 @@ import {
     ResponseItemGroup,
     ResponseResult
 } from "@nmshd/content"
-import { CoreDate, CoreId, ICoreAddress, Message, RelationshipTemplate } from "@nmshd/transport"
+import { CoreDate, CoreId, ICoreAddress, ICoreId, Message, RelationshipTemplate } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionIds } from "../../consumption"
 import { ConsumptionController } from "../../consumption/ConsumptionController"
 import { AcceptRequestParameters, IAcceptRequestParameters } from "./completeRequestParameters/AcceptRequestParameters"
@@ -35,7 +35,6 @@ import { ConsumptionResponse } from "./local/ConsumptionResponse"
 import { RequestItemProcessorRegistry } from "./RequestItemProcessorRegistry"
 
 export interface ICreateOutgoingRequestParameters extends ISerializable {
-    source: Message
     content: Omit<IRequest, "id">
     peer: ICoreAddress
 }
@@ -48,7 +47,7 @@ export class CreateOutgoingRequestParameters extends Serializable implements ICr
 }
 
 export class RequestsController extends ConsumptionBaseController {
-    private requests: IDatabaseCollection
+    private consumptionRequests: IDatabaseCollection
     private readonly completeRequestParamsValidator: CompleteRequestParamsValidator =
         new CompleteRequestParamsValidator()
     private readonly requestItemProcessorRegistry: RequestItemProcessorRegistry
@@ -61,44 +60,27 @@ export class RequestsController extends ConsumptionBaseController {
 
     public async init(): Promise<RequestsController> {
         await super.init()
-        this.requests = await this.parent.accountController.getSynchronizedCollection("Requests")
+        this.consumptionRequests = await this.parent.accountController.getSynchronizedCollection("Requests")
         return this
     }
 
     public async createIncomingRequest(params: ICreateIncomingRequestParameters): Promise<ConsumptionRequest> {
         params = CreateIncomingRequestParameters.from(params)
 
-        const info = this.extractInfoFromSource(params.source)
+        const infoFromSource = this.extractInfoFromSource(params.source)
 
-        const request = await ConsumptionRequest.from({
+        const consumptionRequest = await ConsumptionRequest.from({
             id: params.content.id ? CoreId.from(params.content.id) : await CoreId.generate(),
             createdAt: CoreDate.utc(),
             status: ConsumptionRequestStatus.Open,
             content: params.content,
-            isOwn: info.isOwn,
-            peer: info.peer,
-            source: { reference: info.sourceReference, type: info.sourceType },
+            isOwn: infoFromSource.isOwn,
+            peer: infoFromSource.peer,
+            source: { reference: infoFromSource.sourceReference, type: infoFromSource.sourceType },
             statusLog: []
         })
 
-        await this.requests.create(request)
-
-        return request
-    }
-
-    public async createOutgoingRequest(params: ICreateOutgoingRequestParameters): Promise<ConsumptionRequest> {
-        const requestId = await ConsumptionIds.request.generate()
-        const request = await Request.from({ id: requestId, ...params.content })
-
-        const consumptionRequest = await ConsumptionRequest.from({
-            id: requestId,
-            content: request,
-            createdAt: CoreDate.utc(),
-            isOwn: true,
-            peer: params.peer,
-            status: ConsumptionRequestStatus.Open,
-            statusLog: []
-        })
+        await this.consumptionRequests.create(consumptionRequest)
 
         return consumptionRequest
     }
@@ -133,8 +115,58 @@ export class RequestsController extends ConsumptionBaseController {
         }
     }
 
-    public async get(id: CoreId): Promise<ConsumptionRequest | undefined> {
-        const requestDoc = await this.requests.read(id.toString())
+    public async completeIncomingRequest(id: ICoreId): Promise<ConsumptionRequest> {
+        const requestDoc = await this.consumptionRequests.read(id.toString())
+        const request = await ConsumptionRequest.from(requestDoc)
+
+        if (request.isOwn) {
+            throw new Error("Cannot complete own Request")
+        }
+
+        if (request.status !== ConsumptionRequestStatus.Decided) {
+            throw new Error(`Can only complete Request in status '${ConsumptionRequestStatus.Decided}'`)
+        }
+
+        request.changeStatus(ConsumptionRequestStatus.Completed)
+
+        await this.consumptionRequests.update(requestDoc, request)
+
+        return request
+    }
+
+    public async createOutgoingRequest(params: ICreateOutgoingRequestParameters): Promise<ConsumptionRequest> {
+        const consumptionRequestId = await ConsumptionIds.request.generate()
+
+        const request = await Request.from({ id: consumptionRequestId, ...params.content })
+
+        const consumptionRequest = await ConsumptionRequest.from({
+            id: consumptionRequestId,
+            content: request,
+            createdAt: CoreDate.utc(),
+            isOwn: true,
+            peer: params.peer,
+            status: ConsumptionRequestStatus.Draft,
+            statusLog: []
+        })
+
+        await this.consumptionRequests.create(consumptionRequest)
+
+        return consumptionRequest
+    }
+
+    public async completeOutgoingRequest(requestId: ICoreId): Promise<ConsumptionRequest> {
+        const requestDoc = await this.consumptionRequests.read(requestId.toString())
+        const request = await ConsumptionRequest.from(requestDoc)
+
+        request.changeStatus(ConsumptionRequestStatus.Completed)
+
+        await this.consumptionRequests.update(requestDoc, request)
+
+        return request
+    }
+
+    public async get(id: ICoreId): Promise<ConsumptionRequest | undefined> {
+        const requestDoc = await this.consumptionRequests.read(id.toString())
         const request = requestDoc ? await ConsumptionRequest.from(requestDoc) : undefined
         return request
     }
@@ -148,7 +180,7 @@ export class RequestsController extends ConsumptionBaseController {
     }
 
     private async complete(params: CompleteRequestParameters) {
-        const requestDoc = await this.requests.read(params.requestId.toString())
+        const requestDoc = await this.consumptionRequests.read(params.requestId.toString())
         const consumptionRequest = await ConsumptionRequest.from(requestDoc)
 
         const validationResult = this.completeRequestParamsValidator.validate(params, consumptionRequest)
@@ -159,9 +191,9 @@ export class RequestsController extends ConsumptionBaseController {
         const consumptionResponse = await this.createConsumptionResponse(params, consumptionRequest)
 
         consumptionRequest.response = consumptionResponse
-        consumptionRequest.changeStatus(ConsumptionRequestStatus.Completed)
+        consumptionRequest.changeStatus(ConsumptionRequestStatus.Decided)
 
-        await this.requests.update(requestDoc, consumptionRequest)
+        await this.consumptionRequests.update(requestDoc, consumptionRequest)
 
         return consumptionRequest
     }

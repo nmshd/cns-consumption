@@ -1,8 +1,10 @@
 export enum ConsumptionRequestStatus {
     Open = "Open",
-    Checked = "Checked",
-    DecisionRequired = "DecisionRequired",
-    ManualDecisionRequired = "ManualDecisionRequired",
-    Error = "Error",
+    Draft = "Draft",
+    // Checked = "Checked",
+    // DecisionRequired = "DecisionRequired",
+    // ManualDecisionRequired = "ManualDecisionRequired",
+    // Error = "Error",
+    Decided = "Decided",
     Completed = "Completed"
 }
