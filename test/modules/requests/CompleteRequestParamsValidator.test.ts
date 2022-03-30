@@ -27,12 +27,11 @@ export class CompleteRequestParamsValidatorTests extends UnitTest {
             it("fails when number of items is too low", async function () {
                 const consumptionRequest = await ConsumptionRequest.from({
                     id: await CoreId.generate(),
-                    content: await Request.from(TestObjectFactory.createRequestWithOneItem()),
+                    content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
                     createdAt: CoreDate.utc(),
                     isOwn: true,
                     peer: CoreAddress.from("id1"),
-                    sourceReference: await CoreId.generate(),
-                    sourceType: "Message",
+                    source: { reference: await CoreId.generate(), type: "Message" },
                     status: ConsumptionRequestStatus.Open,
                     statusLog: []
                 })
@@ -47,12 +46,11 @@ export class CompleteRequestParamsValidatorTests extends UnitTest {
             it("fails when number of items is too high", async function () {
                 const consumptionRequest = await ConsumptionRequest.from({
                     id: await CoreId.generate(),
-                    content: await Request.from(TestObjectFactory.createRequestWithOneItem()),
+                    content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
                     createdAt: CoreDate.utc(),
                     isOwn: true,
                     peer: CoreAddress.from("id1"),
-                    sourceReference: await CoreId.generate(),
-                    sourceType: "Message",
+                    source: { reference: await CoreId.generate(), type: "Message" },
                     status: ConsumptionRequestStatus.Open,
                     statusLog: []
                 })

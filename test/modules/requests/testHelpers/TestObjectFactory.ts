@@ -1,4 +1,11 @@
-import { RequestJSON, ResponseItemResult, ResponseJSON, ResponseResult } from "@nmshd/content"
+import {
+    AcceptResponseItem,
+    IRequest,
+    IResponse,
+    ResponseItemResult,
+    ResponseJSON,
+    ResponseResult
+} from "@nmshd/content"
 import {
     CoreBuffer,
     CryptoCipher,
@@ -20,21 +27,20 @@ import {
     RelationshipTemplate,
     RelationshipTemplatePublicKey
 } from "@nmshd/transport"
+import { TestRequestItem } from "./TestRequestItem"
 
 export class TestObjectFactory {
-    public static createRequestWithOneItem(): RequestJSON {
+    public static async createRequestWithOneItem(): Promise<IRequest> {
         return {
-            "@type": "Request",
             items: [
-                {
-                    "@type": "TestRequestItem",
+                await TestRequestItem.from({
                     mustBeAccepted: false
-                }
+                })
             ]
         }
     }
 
-    public static createResponse(): ResponseJSON {
+    public static createResponseJSON(): ResponseJSON {
         return {
             "@type": "Response",
             result: ResponseResult.Accepted,
@@ -44,6 +50,18 @@ export class TestObjectFactory {
                     "@type": "AcceptResponseItem",
                     result: ResponseItemResult.Accepted
                 }
+            ]
+        }
+    }
+
+    public static async createResponse(): Promise<IResponse> {
+        return {
+            result: ResponseResult.Accepted,
+            requestId: CoreId.from("CNSREQ1"),
+            items: [
+                await AcceptResponseItem.from({
+                    result: ResponseItemResult.Accepted
+                })
             ]
         }
     }

@@ -1,5 +1,8 @@
 import { IDatabaseCollection } from "@js-soft/docdb-access-abstractions"
+import { ISerializable, Serializable, type } from "@js-soft/ts-serval"
 import {
+    IRequest,
+    Request,
     RequestItem,
     RequestItemGroup,
     Response,
@@ -7,8 +10,8 @@ import {
     ResponseItemGroup,
     ResponseResult
 } from "@nmshd/content"
-import { CoreDate, CoreId, Message, RelationshipTemplate } from "@nmshd/transport"
-import { ConsumptionBaseController, ConsumptionControllerName } from "../../consumption"
+import { CoreDate, CoreId, ICoreAddress, Message, RelationshipTemplate } from "@nmshd/transport"
+import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionIds } from "../../consumption"
 import { ConsumptionController } from "../../consumption/ConsumptionController"
 import { AcceptRequestParameters, IAcceptRequestParameters } from "./completeRequestParameters/AcceptRequestParameters"
 import {
@@ -26,8 +29,23 @@ import {
     CreateIncomingRequestParameters,
     ICreateIncomingRequestParameters
 } from "./createIncomingRequestParameters/CreateIncomingRequestParameters"
-import { ConsumptionRequest, ConsumptionRequestStatus, ConsumptionResponseDraft } from "./local/ConsumptionRequest"
+import { ConsumptionRequest } from "./local/ConsumptionRequest"
+import { ConsumptionRequestStatus } from "./local/ConsumptionRequestStatus"
+import { ConsumptionResponse } from "./local/ConsumptionResponse"
 import { RequestItemProcessorRegistry } from "./RequestItemProcessorRegistry"
+
+export interface ICreateOutgoingRequestParameters extends ISerializable {
+    source: Message
+    content: Omit<IRequest, "id">
+    peer: ICoreAddress
+}
+
+@type("CreateOutgoingRequestParameters")
+export class CreateOutgoingRequestParameters extends Serializable implements ICreateOutgoingRequestParameters {
+    public source: Message
+    public content: Omit<Request, "id">
+    public peer: ICoreAddress
+}
 
 export class RequestsController extends ConsumptionBaseController {
     private requests: IDatabaseCollection
@@ -59,14 +77,30 @@ export class RequestsController extends ConsumptionBaseController {
             content: params.content,
             isOwn: info.isOwn,
             peer: info.peer,
-            sourceReference: info.sourceReference,
-            sourceType: info.sourceType,
+            source: { reference: info.sourceReference, type: info.sourceType },
             statusLog: []
         })
 
         await this.requests.create(request)
 
         return request
+    }
+
+    public async createOutgoingRequest(params: ICreateOutgoingRequestParameters): Promise<ConsumptionRequest> {
+        const requestId = await ConsumptionIds.request.generate()
+        const request = await Request.from({ id: requestId, ...params.content })
+
+        const consumptionRequest = await ConsumptionRequest.from({
+            id: requestId,
+            content: request,
+            createdAt: CoreDate.utc(),
+            isOwn: true,
+            peer: params.peer,
+            status: ConsumptionRequestStatus.Open,
+            statusLog: []
+        })
+
+        return consumptionRequest
     }
 
     private extractInfoFromSource(source: Message | RelationshipTemplate) {
@@ -145,7 +179,7 @@ export class RequestsController extends ConsumptionBaseController {
             items: responseItems
         })
 
-        const consumptionResponse = await ConsumptionResponseDraft.from({
+        const consumptionResponse = await ConsumptionResponse.from({
             content: response,
             createdAt: CoreDate.utc()
         })
@@ -175,6 +209,7 @@ export class RequestsController extends ConsumptionBaseController {
         params: CompleteRequestItemParameters,
         requestItem: RequestItem
     ): Promise<ResponseItem> {
+        // TODO: router instead of registry?
         const processor = this.requestItemProcessorRegistry.getProcessorForItem(requestItem)
         return await processor.complete(requestItem, params)
     }

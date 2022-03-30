@@ -8,13 +8,13 @@ import {
     ConsumptionController,
     ConsumptionRequest,
     ConsumptionRequestStatus,
-    ConsumptionResponseDraft,
+    ConsumptionResponse,
     CreateIncomingRequestParameters,
     ICompleteRequestParameters,
     RejectRequestItemParameters
 } from "@nmshd/consumption"
 import { Request, ResponseItem, ResponseItemGroup, ResponseItemResult, ResponseResult } from "@nmshd/content"
-import { AccountController, CoreId, IConfigOverwrite, Transport } from "@nmshd/transport"
+import { AccountController, CoreAddress, CoreId, IConfigOverwrite, Transport } from "@nmshd/transport"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
@@ -63,7 +63,7 @@ export class RequestControllerTests extends IntegrationTest {
                     const requestSource = await TestObjectFactory.createIncomingMessage(
                         defaultAccount.accountController.identity.address
                     )
-                    const request = await Request.from(TestObjectFactory.createRequestWithOneItem())
+                    const request = await Request.from(await TestObjectFactory.createRequestWithOneItem())
 
                     const consumptionRequest =
                         await defaultAccount.consumptionController.requests.createIncomingRequest(
@@ -78,8 +78,9 @@ export class RequestControllerTests extends IntegrationTest {
                     expect(consumptionRequest.createdAt).to.exist
                     expect(consumptionRequest.isOwn).to.be.false
                     expect(consumptionRequest.peer).to.equal(requestSource.cache!.createdBy)
-                    expect(consumptionRequest.sourceReference.toString()).to.equal(requestSource.id.toString())
-                    expect(consumptionRequest.sourceType).to.equal("Message")
+                    expect(consumptionRequest.source).to.exist
+                    expect(consumptionRequest.source!.reference.toString()).to.equal(requestSource.id.toString())
+                    expect(consumptionRequest.source!.type).to.equal("Message")
                     expect(consumptionRequest.response).to.be.undefined
                     expect(consumptionRequest.status).to.equal(ConsumptionRequestStatus.Open)
                     expect(consumptionRequest.statusLog).to.be.empty
@@ -90,7 +91,7 @@ export class RequestControllerTests extends IntegrationTest {
                     const requestSource = await TestObjectFactory.createOutgoingMessage(
                         defaultAccount.accountController.identity.address
                     )
-                    const request = await Request.from(TestObjectFactory.createRequestWithOneItem())
+                    const request = await Request.from(await TestObjectFactory.createRequestWithOneItem())
 
                     await TestUtil.expectThrowsAsync(
                         defaultAccount.consumptionController.requests.createIncomingRequest(
@@ -105,7 +106,7 @@ export class RequestControllerTests extends IntegrationTest {
 
                 it("creates an incoming Request with an incoming RelationshipTemplate as source", async function () {
                     const requestSource = await TestObjectFactory.createIncomingRelationshipTemplate()
-                    const request = await Request.from(TestObjectFactory.createRequestWithOneItem())
+                    const request = await Request.from(await TestObjectFactory.createRequestWithOneItem())
 
                     const consumptionRequest =
                         await defaultAccount.consumptionController.requests.createIncomingRequest(
@@ -120,8 +121,9 @@ export class RequestControllerTests extends IntegrationTest {
                     expect(consumptionRequest.createdAt).to.exist
                     expect(consumptionRequest.isOwn).to.be.false
                     expect(consumptionRequest.peer).to.equal(requestSource.cache!.createdBy)
-                    expect(consumptionRequest.sourceReference).to.equal(requestSource.id)
-                    expect(consumptionRequest.sourceType).to.equal("Relationship")
+                    expect(consumptionRequest.source).to.exist
+                    expect(consumptionRequest.source!.reference).to.equal(requestSource.id)
+                    expect(consumptionRequest.source!.type).to.equal("Relationship")
                     expect(consumptionRequest.response).to.be.undefined
                     expect(consumptionRequest.status).to.equal(ConsumptionRequestStatus.Open)
                     expect(consumptionRequest.statusLog).to.be.empty
@@ -132,7 +134,7 @@ export class RequestControllerTests extends IntegrationTest {
                     const requestSource = await TestObjectFactory.createOutgoingRelationshipTemplate(
                         defaultAccount.accountController.identity.address
                     )
-                    const request = await Request.from(TestObjectFactory.createRequestWithOneItem())
+                    const request = await Request.from(await TestObjectFactory.createRequestWithOneItem())
 
                     await TestUtil.expectThrowsAsync(
                         defaultAccount.consumptionController.requests.createIncomingRequest(
@@ -147,7 +149,7 @@ export class RequestControllerTests extends IntegrationTest {
 
                 it("throws on invalid input", async function () {
                     const paramsWithoutSource = {
-                        content: await Request.from(TestObjectFactory.createRequestWithOneItem())
+                        content: await Request.from(await TestObjectFactory.createRequestWithOneItem())
                     }
 
                     await TestUtil.expectThrowsAsync(
@@ -160,7 +162,7 @@ export class RequestControllerTests extends IntegrationTest {
                     const requestSource = await TestObjectFactory.createIncomingMessage(
                         defaultAccount.accountController.identity.address
                     )
-                    const request = await Request.from(TestObjectFactory.createRequestWithOneItem())
+                    const request = await Request.from(await TestObjectFactory.createRequestWithOneItem())
                     request.id = await CoreId.generate()
 
                     const consumptionRequest =
@@ -175,12 +177,38 @@ export class RequestControllerTests extends IntegrationTest {
                 }).timeout(5000)
             })
 
+            describe("CreateOutgoingRequest", function () {
+                it("creates a new outgoing ConsumptionRequest", async function () {
+                    const params = {
+                        content: {
+                            items: [
+                                {
+                                    mustBeAccepted: false
+                                }
+                            ]
+                        },
+                        peer: CoreAddress.from("id1"),
+                        source: await TestObjectFactory.createOutgoingMessage(
+                            defaultAccount.accountController.identity.address
+                        )
+                    }
+
+                    const createdRequest = await defaultAccount.consumptionController.requests.createOutgoingRequest(
+                        params
+                    )
+
+                    expect(createdRequest).to.exist
+                    expect(createdRequest.id).to.exist
+                    expect(createdRequest.content).to.be.instanceOf(Request)
+                })
+            })
+
             describe("Get", function () {
                 it("returns a Request that was created before", async function () {
                     const createdConsumptionRequest =
                         await defaultAccount.consumptionController.requests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
-                                content: await Request.from(TestObjectFactory.createRequestWithOneItem()),
+                                content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
                                 source: await TestObjectFactory.createIncomingRelationshipTemplate()
                             })
                         )
@@ -202,11 +230,11 @@ export class RequestControllerTests extends IntegrationTest {
             })
 
             describe("Accept", function () {
-                it("sets the response property of the Consumption Request", async function () {
+                it("sets the response property of the Consumption Request to a ConsumptionResponseDraft", async function () {
                     const consumptionRequest =
                         await defaultAccount.consumptionController.requests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
-                                content: await Request.from(TestObjectFactory.createRequestWithOneItem()),
+                                content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
                                 source: await TestObjectFactory.createIncomingRelationshipTemplate()
                             })
                         )
@@ -217,7 +245,7 @@ export class RequestControllerTests extends IntegrationTest {
                     })
 
                     expect(acceptedRequest.response).to.exist
-                    expect(acceptedRequest.response).to.be.instanceOf(ConsumptionResponseDraft)
+                    expect(acceptedRequest.response).to.be.instanceOf(ConsumptionResponse)
                     expect(acceptedRequest.response!.content.requestId.toString()).to.equal(
                         consumptionRequest.id.toString()
                     )
@@ -227,7 +255,7 @@ export class RequestControllerTests extends IntegrationTest {
                     const consumptionRequest =
                         await defaultAccount.consumptionController.requests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
-                                content: await Request.from(TestObjectFactory.createRequestWithOneItem()),
+                                content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
                                 source: await TestObjectFactory.createIncomingRelationshipTemplate()
                             })
                         )
@@ -247,7 +275,7 @@ export class RequestControllerTests extends IntegrationTest {
                     const createdConsumptionRequest =
                         await defaultAccount.consumptionController.requests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
-                                content: await Request.from(TestObjectFactory.createRequestWithOneItem()),
+                                content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
                                 source: await TestObjectFactory.createIncomingRelationshipTemplate()
                             })
                         )
@@ -263,7 +291,7 @@ export class RequestControllerTests extends IntegrationTest {
 
                     expect(updatedConsumptionRequest).to.exist
                     expect(updatedConsumptionRequest!.response).to.exist
-                    expect(updatedConsumptionRequest!.response).to.be.instanceOf(ConsumptionResponseDraft)
+                    expect(updatedConsumptionRequest!.response).to.be.instanceOf(ConsumptionResponse)
                     expect(updatedConsumptionRequest!.response!.content.result).to.equal(ResponseResult.Accepted)
                 }).timeout(5000)
 
@@ -449,7 +477,7 @@ export class RequestControllerTests extends IntegrationTest {
                     const consumptionRequest =
                         await defaultAccount.consumptionController.requests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
-                                content: await Request.from(TestObjectFactory.createRequestWithOneItem()),
+                                content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
                                 source: await TestObjectFactory.createIncomingRelationshipTemplate()
                             })
                         )
@@ -460,7 +488,7 @@ export class RequestControllerTests extends IntegrationTest {
                     })
 
                     expect(rejectedRequest.response).to.exist
-                    expect(rejectedRequest.response).to.be.instanceOf(ConsumptionResponseDraft)
+                    expect(rejectedRequest.response).to.be.instanceOf(ConsumptionResponse)
                     expect(rejectedRequest.response!.content.requestId.toString()).to.equal(
                         consumptionRequest.id.toString()
                     )
@@ -470,7 +498,7 @@ export class RequestControllerTests extends IntegrationTest {
                     const consumptionRequest =
                         await defaultAccount.consumptionController.requests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
-                                content: await Request.from(TestObjectFactory.createRequestWithOneItem()),
+                                content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
                                 source: await TestObjectFactory.createIncomingRelationshipTemplate()
                             })
                         )
@@ -490,7 +518,7 @@ export class RequestControllerTests extends IntegrationTest {
                     const createdConsumptionRequest =
                         await defaultAccount.consumptionController.requests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
-                                content: await Request.from(TestObjectFactory.createRequestWithOneItem()),
+                                content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
                                 source: await TestObjectFactory.createIncomingRelationshipTemplate()
                             })
                         )
@@ -506,7 +534,7 @@ export class RequestControllerTests extends IntegrationTest {
 
                     expect(updatedConsumptionRequest).to.exist
                     expect(updatedConsumptionRequest!.response).to.exist
-                    expect(updatedConsumptionRequest!.response).to.be.instanceOf(ConsumptionResponseDraft)
+                    expect(updatedConsumptionRequest!.response).to.be.instanceOf(ConsumptionResponse)
                     expect(updatedConsumptionRequest!.response!.content.result).to.equal(ResponseResult.Rejected)
                 }).timeout(5000)
 

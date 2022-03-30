@@ -1,11 +1,12 @@
 import {
     ConsumptionRequest,
-    ConsumptionRequestJSON,
     ConsumptionRequestStatus,
     ConsumptionRequestStatusLogEntry,
-    ConsumptionResponse
+    ConsumptionResponse,
+    IConsumptionRequest
 } from "@nmshd/consumption"
 import { ResponseItem } from "@nmshd/content"
+import { CoreAddress, CoreDate, CoreId } from "@nmshd/transport"
 import { expect } from "chai"
 import { UnitTest } from "../../../core/UnitTest"
 import { TestObjectFactory } from "../testHelpers/TestObjectFactory"
@@ -15,30 +16,25 @@ export class ConsumptionRequestTest extends UnitTest {
     public run(): void {
         describe("ConsumptionRequest", function () {
             it("creates objects of all nested classes", async function () {
-                const requestJSON: ConsumptionRequestJSON = {
-                    "@type": "ConsumptionRequest",
-                    id: "CNSREQ1",
+                const requestJSON: IConsumptionRequest = {
+                    id: CoreId.from("CNSREQ1"),
                     isOwn: true,
-                    peer: "id11",
-                    createdAt: "2020-01-01T00:00:00.000Z",
-                    content: TestObjectFactory.createRequestWithOneItem(),
-                    sourceType: "Message",
-                    sourceReference: "MSG1",
+                    peer: CoreAddress.from("id11"),
+                    createdAt: CoreDate.from("2020-01-01T00:00:00.000Z"),
+                    content: await TestObjectFactory.createRequestWithOneItem(),
+                    source: { type: "Message", reference: CoreId.from("MSG1") },
                     response: {
-                        "@type": "ConsumptionResponse",
-                        createdAt: "2020-01-01T00:00:00.000Z",
-                        content: TestObjectFactory.createResponse(),
-                        sourceReference: "MSG2",
-                        sourceType: "Message"
+                        createdAt: CoreDate.from("2020-01-01T00:00:00.000Z"),
+                        content: await TestObjectFactory.createResponse(),
+                        source: { reference: CoreId.from("MSG2"), type: "Message" }
                     },
                     status: ConsumptionRequestStatus.Checked,
                     statusLog: [
-                        {
-                            "@type": "ConsumptionRequestStatusLogEntry",
-                            createdAt: "2020-01-01T00:00:00.000Z",
+                        ConsumptionRequestStatusLogEntry.from({
+                            createdAt: CoreDate.from("2020-01-01T00:00:00.000Z"),
                             oldStatus: ConsumptionRequestStatus.Checked,
                             newStatus: ConsumptionRequestStatus.DecisionRequired
-                        }
+                        })
                     ]
                 }
 
@@ -49,44 +45,6 @@ export class ConsumptionRequestTest extends UnitTest {
                 expect(request.response).to.be.instanceOf(ConsumptionResponse)
                 expect(request.response!.content.items[0]).to.be.instanceOf(ResponseItem)
                 expect(request.statusLog[0]).to.be.instanceOf(ConsumptionRequestStatusLogEntry)
-            })
-
-            it("keeps all properties during serialization and deserialization", async function () {
-                const requestJSON: ConsumptionRequestJSON = {
-                    "@type": "ConsumptionRequest",
-                    id: "CNSREQ1",
-                    isOwn: true,
-                    peer: "id11",
-                    createdAt: "2020-01-01T00:00:00.000Z",
-                    status: ConsumptionRequestStatus.Checked,
-                    sourceType: "Message",
-                    sourceReference: "MSG1",
-                    content: TestObjectFactory.createRequestWithOneItem(),
-                    response: {
-                        "@type": "ConsumptionResponse",
-                        createdAt: "2020-01-01T00:00:00.000Z",
-                        sourceReference: "MSG2",
-                        sourceType: "Message",
-                        content: TestObjectFactory.createResponse()
-                    },
-                    statusLog: [
-                        {
-                            "@type": "ConsumptionRequestStatusLogEntry",
-                            createdAt: "2020-01-01T00:00:00.000Z",
-                            oldStatus: ConsumptionRequestStatus.Checked,
-                            newStatus: ConsumptionRequestStatus.DecisionRequired,
-                            data: {},
-                            code: "irrelevant-for-this-test"
-                        }
-                    ]
-                }
-
-                const request = await ConsumptionRequest.from(requestJSON)
-
-                const serializedRequest = request.toJSON(true)
-
-                expect(serializedRequest).excludingEvery("@type").to.deep.equal(requestJSON)
-                expect((serializedRequest as any)["@type"]).to.equal("ConsumptionRequest")
             })
         })
     }
