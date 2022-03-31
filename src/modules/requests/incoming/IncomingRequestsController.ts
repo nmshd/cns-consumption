@@ -14,10 +14,6 @@ import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProce
 import { ConsumptionRequest } from "../local/ConsumptionRequest"
 import { ConsumptionRequestStatus } from "../local/ConsumptionRequestStatus"
 import { ConsumptionResponse } from "../local/ConsumptionResponse"
-import {
-    CreateIncomingRequestParameters,
-    ICreateIncomingRequestParameters
-} from "./createIncomingRequestParameters/CreateIncomingRequestParameters"
 import { AcceptRequestParameters, IAcceptRequestParameters } from "./decideRequestParameters/AcceptRequestParameters"
 import {
     DecideRequestItemGroupParameters,
@@ -29,12 +25,16 @@ import {
 } from "./decideRequestParameters/DecideRequestItemParameters"
 import { DecideRequestParameters } from "./decideRequestParameters/DecideRequestParameters"
 import { IRejectRequestParameters, RejectRequestParameters } from "./decideRequestParameters/RejectRequestParameters"
-import { DecideRequestParamarametersValidator } from "./DecideRequestParametersValidator"
+import { DecideRequestParametersValidator } from "./DecideRequestParametersValidator"
+import {
+    IReceivedIncomingRequestParameters,
+    ReceivedIncomingRequestParameters
+} from "./receivedIncomingRequestParameters/ReceivedIncomingRequestParameters"
 
 export class IncomingRequestsController extends ConsumptionBaseController {
     private consumptionRequests: IDatabaseCollection
-    private readonly decideRequestParamsValidator: DecideRequestParamarametersValidator =
-        new DecideRequestParamarametersValidator()
+    private readonly decideRequestParamsValidator: DecideRequestParametersValidator =
+        new DecideRequestParametersValidator()
     private readonly requestItemProcessorRegistry: RequestItemProcessorRegistry
 
     public constructor(parent: ConsumptionController) {
@@ -49,10 +49,10 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return this
     }
 
-    public async createIncomingRequest(params: ICreateIncomingRequestParameters): Promise<ConsumptionRequest> {
-        params = CreateIncomingRequestParameters.from(params)
+    public async received(params: IReceivedIncomingRequestParameters): Promise<ConsumptionRequest> {
+        const parsedParams = ReceivedIncomingRequestParameters.from(params)
 
-        const infoFromSource = this.extractInfoFromSource(params.source)
+        const infoFromSource = this.extractInfoFromSource(parsedParams.source)
 
         const consumptionRequest = await ConsumptionRequest.from({
             id: params.content.id ? CoreId.from(params.content.id) : await CoreId.generate(),
@@ -72,13 +72,13 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
     private extractInfoFromSource(source: Message | RelationshipTemplate) {
         if (source instanceof Message) {
-            return this.extractInfoFromIncomingMessage(source)
+            return this.extractInfoFromMessage(source)
         }
 
-        return this.extractInfoFromIncomingRelationshipTemplate(source)
+        return this.extractInfoFromRelationshipTemplate(source)
     }
 
-    private extractInfoFromIncomingMessage(message: Message) {
+    private extractInfoFromMessage(message: Message) {
         if (message.isOwn) throw new Error("Cannot create incoming Request from own Message")
 
         return {
@@ -89,7 +89,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         }
     }
 
-    private extractInfoFromIncomingRelationshipTemplate(template: RelationshipTemplate) {
+    private extractInfoFromRelationshipTemplate(template: RelationshipTemplate) {
         if (template.isOwn) throw new Error("Cannot create incoming Request from own Relationship Template")
 
         return {
@@ -98,25 +98,6 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             sourceReference: template.id,
             sourceType: "Relationship"
         }
-    }
-
-    public async incomingRequestAnswered(id: ICoreId): Promise<ConsumptionRequest> {
-        const requestDoc = await this.consumptionRequests.read(id.toString())
-        const request = await ConsumptionRequest.from(requestDoc)
-
-        if (request.isOwn) {
-            throw new Error("Cannot decide own Request")
-        }
-
-        if (request.status !== ConsumptionRequestStatus.Decided) {
-            throw new Error(`Can only decide Request in status '${ConsumptionRequestStatus.Decided}'`)
-        }
-
-        request.changeStatus(ConsumptionRequestStatus.Answered)
-
-        await this.consumptionRequests.update(requestDoc, request)
-
-        return request
     }
 
     public async accept(params: IAcceptRequestParameters): Promise<ConsumptionRequest> {
@@ -204,5 +185,24 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             metadata: requestItemGroup.responseMetadata
         })
         return group
+    }
+
+    public async complete(id: ICoreId): Promise<ConsumptionRequest> {
+        const requestDoc = await this.consumptionRequests.read(id.toString())
+        const request = await ConsumptionRequest.from(requestDoc)
+
+        if (request.isOwn) {
+            throw new Error("Cannot decide own Request")
+        }
+
+        if (request.status !== ConsumptionRequestStatus.Decided) {
+            throw new Error(`Can only decide Request in status '${ConsumptionRequestStatus.Decided}'`)
+        }
+
+        request.changeStatus(ConsumptionRequestStatus.Answered)
+
+        await this.consumptionRequests.update(requestDoc, request)
+
+        return request
     }
 }

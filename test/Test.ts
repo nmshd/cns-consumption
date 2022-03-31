@@ -3,7 +3,7 @@ import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import { IConfigOverwrite } from "@nmshd/transport"
 import { use } from "chai"
 import chaiExclude from "chai-exclude"
-import { DecideRequestParamsValidatorTests } from "./modules/requests/DecideRequestParamsValidator.test"
+import { DecideRequestParametersValidatorTests } from "./modules/requests/DecideRequestParamsValidator.test"
 import { IncomingRequestControllerTests } from "./modules/requests/IncomingRequestsController.test"
 import { ConsumptionRequestTest } from "./modules/requests/local/ConsumptionRequest.test"
 import { OutgoingRequestControllerTests } from "./modules/requests/OutgoingRequestsController.test"
@@ -44,6 +44,6 @@ export class Test {
 
     public static runUnitTests(logger: ILoggerFactory): void {
         new ConsumptionRequestTest(logger).run()
-        new DecideRequestParamsValidatorTests(logger).run()
+        new DecideRequestParametersValidatorTests(logger).run()
     }
 }

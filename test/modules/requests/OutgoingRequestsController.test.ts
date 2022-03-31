@@ -6,8 +6,7 @@ import {
     ConsumptionRequest,
     ConsumptionRequestStatus,
     ConsumptionResponse,
-    CreateIncomingRequestParameters,
-    DecideRequestParamsValidator,
+    DecideRequestParametersValidator,
     ICreateOutgoingRequestParameters,
     IDecideRequestParameters
 } from "@nmshd/consumption"
@@ -18,7 +17,7 @@ import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
 
-export class AlwaysTrueDecideRequestParamsValidator extends DecideRequestParamsValidator {
+export class AlwaysTrueDecideRequestParamsValidator extends DecideRequestParametersValidator {
     public validate(_params: IDecideRequestParameters, _request: ConsumptionRequest): Result<undefined> {
         return Result.ok(undefined)
     }
@@ -168,12 +167,10 @@ export class OutgoingRequestControllerTests extends IntegrationTest {
             describe("Get", function () {
                 it("returns a Request that was created before", async function () {
                     const createdConsumptionRequest =
-                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
-                            CreateIncomingRequestParameters.from({
-                                content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
-                                source: await TestObjectFactory.createIncomingRelationshipTemplate()
-                            })
-                        )
+                        await defaultAccount.consumptionController.incomingRequests.received({
+                            content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
+                            source: await TestObjectFactory.createIncomingRelationshipTemplate()
+                        })
 
                     const consumptionRequest = await defaultAccount.consumptionController.outgoingRequests.get(
                         createdConsumptionRequest.id

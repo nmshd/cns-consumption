@@ -3,7 +3,7 @@ import {
     AcceptRequestItemParameters,
     ConsumptionRequest,
     ConsumptionRequestStatus,
-    DecideRequestParamsValidator
+    DecideRequestParametersValidator
 } from "@nmshd/consumption"
 import { Request } from "@nmshd/content"
 import { CoreAddress, CoreDate, CoreId } from "@nmshd/transport"
@@ -11,19 +11,19 @@ import { expect } from "chai"
 import { UnitTest } from "../../core/UnitTest"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
 
-export class DecideRequestParamsValidatorTests extends UnitTest {
+export class DecideRequestParametersValidatorTests extends UnitTest {
     public constructor(protected loggerFactory: ILoggerFactory) {
         super(loggerFactory)
     }
 
     public run(): void {
-        let validator: DecideRequestParamsValidator
+        let validator: DecideRequestParametersValidator
 
         beforeEach(function () {
-            validator = new DecideRequestParamsValidator()
+            validator = new DecideRequestParametersValidator()
         })
 
-        describe("DecideRequestParamsValidator", function () {
+        describe("DecideRequestParametersValidator", function () {
             it("fails when number of items is too low", async function () {
                 const consumptionRequest = await ConsumptionRequest.from({
                     id: await CoreId.generate(),
