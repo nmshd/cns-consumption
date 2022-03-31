@@ -8,7 +8,7 @@ import { RelationshipInfoTest } from "./modules/relationships/RelationshipInfo.t
 import { RelationshipInfoNoTemplateTest } from "./modules/relationships/RelationshipInfoNoTemplate.test"
 import { RelationshipInfoOldTemplateTest } from "./modules/relationships/RelationshipInfoOldTemplate.test"
 import { RelationshipRequestorTest } from "./modules/relationships/RelationshipRequestor.test"
-import { CompleteRequestParamsValidatorTests } from "./modules/requests/CompleteRequestParamsValidator.test"
+import { DecideRequestParamsValidatorTests } from "./modules/requests/DecideRequestParamsValidator.test"
 import { ConsumptionRequestTest } from "./modules/requests/local/ConsumptionRequest.test"
 import { RequestItemProcessorTests } from "./modules/requests/RequestItemProcessor.test"
 import { RequestItemProcessorRegistryTests } from "./modules/requests/RequestItemProcessorRegistry.test"
@@ -49,6 +49,6 @@ export class Test {
 
     public static runUnitTests(logger: ILoggerFactory): void {
         new ConsumptionRequestTest(logger).run()
-        new CompleteRequestParamsValidatorTests(logger).run()
+        new DecideRequestParamsValidatorTests(logger).run()
     }
 }

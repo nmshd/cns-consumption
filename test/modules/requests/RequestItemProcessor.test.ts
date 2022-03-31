@@ -33,24 +33,24 @@ export class RequestItemProcessorTests extends IntegrationTest {
         // })
 
         describe("RequestItemProcessor", function () {
-            it("complete() delegates accepted item to accept method", async function () {
+            it("decide() delegates accepted item to accept method", async function () {
                 const processor = new MockRequestItemProcessor()
 
                 const item = await TestRequestItem.from({ mustBeAccepted: false })
                 const acceptParams = AcceptRequestItemParameters.from({})
 
-                await processor.complete(item, acceptParams)
+                await processor.processDecision(item, acceptParams)
 
                 expect(processor.numberOfAcceptCalls).to.equal(1)
             })
 
-            it("complete() delegates rejected item to reject method", async function () {
+            it("decide() delegates rejected item to reject method", async function () {
                 const processor = new MockRequestItemProcessor()
 
                 const item = await TestRequestItem.from({ mustBeAccepted: false })
                 const rejectParams = RejectRequestItemParameters.from({})
 
-                await processor.complete(item, rejectParams)
+                await processor.processDecision(item, rejectParams)
 
                 expect(processor.numberOfRejectCalls).to.equal(1)
             })

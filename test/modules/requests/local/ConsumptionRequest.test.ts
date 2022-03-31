@@ -33,7 +33,7 @@ export class ConsumptionRequestTest extends UnitTest {
                         ConsumptionRequestStatusLogEntry.from({
                             createdAt: CoreDate.from("2020-01-01T00:00:00.000Z"),
                             oldStatus: ConsumptionRequestStatus.Open,
-                            newStatus: ConsumptionRequestStatus.Completed
+                            newStatus: ConsumptionRequestStatus.Answered
                         })
                     ]
                 }

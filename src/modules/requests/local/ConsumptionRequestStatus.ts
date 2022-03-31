@@ -6,5 +6,5 @@ export enum ConsumptionRequestStatus {
     // ManualDecisionRequired = "ManualDecisionRequired",
     // Error = "Error",
     Decided = "Decided",
-    Completed = "Completed"
+    Answered = "Answered"
 }

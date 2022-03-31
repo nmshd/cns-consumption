@@ -2,6 +2,7 @@ import { IDatabaseCollection } from "@js-soft/docdb-access-abstractions"
 import { ISerializable, Serializable, type } from "@js-soft/ts-serval"
 import {
     IRequest,
+    IResponse,
     Request,
     RequestItem,
     RequestItemGroup,
@@ -13,22 +14,22 @@ import {
 import { CoreDate, CoreId, ICoreAddress, ICoreId, Message, RelationshipTemplate } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionIds } from "../../consumption"
 import { ConsumptionController } from "../../consumption/ConsumptionController"
-import { AcceptRequestParameters, IAcceptRequestParameters } from "./completeRequestParameters/AcceptRequestParameters"
-import {
-    CompleteRequestItemGroupParameters,
-    ICompleteRequestItemGroupParameters
-} from "./completeRequestParameters/CompleteRequestItemGroupParameters"
-import {
-    CompleteRequestItemParameters,
-    ICompleteRequestItemParameters
-} from "./completeRequestParameters/CompleteRequestItemParameters"
-import { CompleteRequestParameters } from "./completeRequestParameters/CompleteRequestParameters"
-import { IRejectRequestParameters, RejectRequestParameters } from "./completeRequestParameters/RejectRequestParameters"
-import { CompleteRequestParamsValidator } from "./CompleteRequestParamsValidator"
 import {
     CreateIncomingRequestParameters,
     ICreateIncomingRequestParameters
 } from "./createIncomingRequestParameters/CreateIncomingRequestParameters"
+import { AcceptRequestParameters, IAcceptRequestParameters } from "./decideRequestParameters/AcceptRequestParameters"
+import {
+    DecideRequestItemGroupParameters,
+    IDecideRequestItemGroupParameters
+} from "./decideRequestParameters/DecideRequestItemGroupParameters"
+import {
+    DecideRequestItemParameters,
+    IDecideRequestItemParameters
+} from "./decideRequestParameters/DecideRequestItemParameters"
+import { DecideRequestParameters } from "./decideRequestParameters/DecideRequestParameters"
+import { IRejectRequestParameters, RejectRequestParameters } from "./decideRequestParameters/RejectRequestParameters"
+import { DecideRequestParamsValidator } from "./DecideRequestParamsValidator"
 import { ConsumptionRequest } from "./local/ConsumptionRequest"
 import { ConsumptionRequestStatus } from "./local/ConsumptionRequestStatus"
 import { ConsumptionResponse } from "./local/ConsumptionResponse"
@@ -48,8 +49,7 @@ export class CreateOutgoingRequestParameters extends Serializable implements ICr
 
 export class RequestsController extends ConsumptionBaseController {
     private consumptionRequests: IDatabaseCollection
-    private readonly completeRequestParamsValidator: CompleteRequestParamsValidator =
-        new CompleteRequestParamsValidator()
+    private readonly decideRequestParamsValidator: DecideRequestParamsValidator = new DecideRequestParamsValidator()
     private readonly requestItemProcessorRegistry: RequestItemProcessorRegistry
 
     public constructor(parent: ConsumptionController) {
@@ -115,19 +115,19 @@ export class RequestsController extends ConsumptionBaseController {
         }
     }
 
-    public async completeIncomingRequest(id: ICoreId): Promise<ConsumptionRequest> {
+    public async incomingRequestAnswered(id: ICoreId): Promise<ConsumptionRequest> {
         const requestDoc = await this.consumptionRequests.read(id.toString())
         const request = await ConsumptionRequest.from(requestDoc)
 
         if (request.isOwn) {
-            throw new Error("Cannot complete own Request")
+            throw new Error("Cannot decide own Request")
         }
 
         if (request.status !== ConsumptionRequestStatus.Decided) {
-            throw new Error(`Can only complete Request in status '${ConsumptionRequestStatus.Decided}'`)
+            throw new Error(`Can only decide Request in status '${ConsumptionRequestStatus.Decided}'`)
         }
 
-        request.changeStatus(ConsumptionRequestStatus.Completed)
+        request.changeStatus(ConsumptionRequestStatus.Answered)
 
         await this.consumptionRequests.update(requestDoc, request)
 
@@ -154,11 +154,23 @@ export class RequestsController extends ConsumptionBaseController {
         return consumptionRequest
     }
 
-    public async completeOutgoingRequest(requestId: ICoreId): Promise<ConsumptionRequest> {
+    public async responseForOutgoingRequestReceived(
+        requestId: ICoreId,
+        source: Message,
+        response: IResponse
+    ): Promise<ConsumptionRequest> {
         const requestDoc = await this.consumptionRequests.read(requestId.toString())
         const request = await ConsumptionRequest.from(requestDoc)
 
-        request.changeStatus(ConsumptionRequestStatus.Completed)
+        const consumptionResponse = await ConsumptionResponse.from({
+            content: response,
+            createdAt: CoreDate.utc(),
+            source: { reference: source.id, type: "Message" }
+        })
+
+        request.response = consumptionResponse
+
+        request.changeStatus(ConsumptionRequestStatus.Answered)
 
         await this.consumptionRequests.update(requestDoc, request)
 
@@ -172,18 +184,18 @@ export class RequestsController extends ConsumptionBaseController {
     }
 
     public async accept(params: IAcceptRequestParameters): Promise<ConsumptionRequest> {
-        return await this.complete(AcceptRequestParameters.from(params))
+        return await this.decide(AcceptRequestParameters.from(params))
     }
 
     public async reject(params: IRejectRequestParameters): Promise<ConsumptionRequest> {
-        return await this.complete(RejectRequestParameters.from(params))
+        return await this.decide(RejectRequestParameters.from(params))
     }
 
-    private async complete(params: CompleteRequestParameters) {
+    private async decide(params: DecideRequestParameters) {
         const requestDoc = await this.consumptionRequests.read(params.requestId.toString())
         const consumptionRequest = await ConsumptionRequest.from(requestDoc)
 
-        const validationResult = this.completeRequestParamsValidator.validate(params, consumptionRequest)
+        const validationResult = this.decideRequestParamsValidator.validate(params, consumptionRequest)
         if (!validationResult.isSuccess) {
             throw new Error(validationResult.error.message)
         }
@@ -220,7 +232,7 @@ export class RequestsController extends ConsumptionBaseController {
     }
 
     private async createResponseItems(
-        params: (ICompleteRequestItemParameters | ICompleteRequestItemGroupParameters)[],
+        params: (IDecideRequestItemParameters | IDecideRequestItemGroupParameters)[],
         requestItems: (RequestItemGroup | RequestItem)[]
     ) {
         const responseItems: (ResponseItem | ResponseItemGroup)[] = []
@@ -228,9 +240,9 @@ export class RequestsController extends ConsumptionBaseController {
         for (let i = 0; i < params.length; i++) {
             const itemParam = params[i]
 
-            if (itemParam instanceof CompleteRequestItemParameters) {
+            if (itemParam instanceof DecideRequestItemParameters) {
                 responseItems.push(await this.createResponseItem(itemParam, requestItems[i] as RequestItem))
-            } else if (itemParam instanceof CompleteRequestItemGroupParameters) {
+            } else if (itemParam instanceof DecideRequestItemGroupParameters) {
                 responseItems.push(await this.createResponseItemGroup(itemParam, requestItems[i] as RequestItemGroup))
             }
         }
@@ -238,16 +250,15 @@ export class RequestsController extends ConsumptionBaseController {
     }
 
     private async createResponseItem(
-        params: CompleteRequestItemParameters,
+        params: DecideRequestItemParameters,
         requestItem: RequestItem
     ): Promise<ResponseItem> {
-        // TODO: router instead of registry?
         const processor = this.requestItemProcessorRegistry.getProcessorForItem(requestItem)
-        return await processor.complete(requestItem, params)
+        return await processor.processDecision(requestItem, params)
     }
 
     private async createResponseItemGroup(
-        groupItemParam: CompleteRequestItemGroupParameters,
+        groupItemParam: DecideRequestItemGroupParameters,
         requestItemGroup: RequestItemGroup
     ) {
         const items = (await this.createResponseItems(groupItemParam.items, requestItemGroup.items)) as ResponseItem[]

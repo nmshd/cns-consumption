@@ -1,9 +1,9 @@
 import { ApplicationError, Result } from "@js-soft/ts-utils"
-import { ICompleteRequestParameters } from "./completeRequestParameters/CompleteRequestParameters"
+import { IDecideRequestParameters } from "./decideRequestParameters/DecideRequestParameters"
 import { ConsumptionRequest } from "./local/ConsumptionRequest"
 
-export class CompleteRequestParamsValidator {
-    public validate(params: ICompleteRequestParameters, request: ConsumptionRequest): Result<undefined> {
+export class DecideRequestParamsValidator {
+    public validate(params: IDecideRequestParameters, request: ConsumptionRequest): Result<undefined> {
         if (params.items.length !== request.content.items.length) {
             return Result.fail(new ApplicationError("", "Number of items in Request and Response do not match"))
         }

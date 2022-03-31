@@ -1,28 +1,37 @@
-import { IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
+import { IDatabaseCollection, IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import { Result } from "@js-soft/ts-utils"
 import {
     AcceptRequestItemParameters,
-    CompleteRequestItemGroupParameters,
-    CompleteRequestParamsValidator,
     ConsumptionController,
     ConsumptionRequest,
     ConsumptionRequestStatus,
     ConsumptionResponse,
     CreateIncomingRequestParameters,
-    ICompleteRequestParameters,
+    DecideRequestItemGroupParameters,
+    DecideRequestParamsValidator,
     ICreateOutgoingRequestParameters,
+    IDecideRequestParameters,
     RejectRequestItemParameters
 } from "@nmshd/consumption"
-import { Request, ResponseItem, ResponseItemGroup, ResponseItemResult, ResponseResult } from "@nmshd/content"
+import {
+    AcceptResponseItem,
+    IResponse,
+    Request,
+    Response,
+    ResponseItem,
+    ResponseItemGroup,
+    ResponseItemResult,
+    ResponseResult
+} from "@nmshd/content"
 import { AccountController, CoreAddress, CoreId, IConfigOverwrite, Transport } from "@nmshd/transport"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
 
-export class AlwaysTrueCompleteRequestParamsValidator extends CompleteRequestParamsValidator {
-    public validate(_params: ICompleteRequestParameters, _request: ConsumptionRequest): Result<undefined> {
+export class AlwaysTrueDecideRequestParamsValidator extends DecideRequestParamsValidator {
+    public validate(_params: IDecideRequestParameters, _request: ConsumptionRequest): Result<undefined> {
         return Result.ok(undefined)
     }
 }
@@ -40,6 +49,7 @@ export class RequestControllerTests extends IntegrationTest {
         const that = this
         const transport = new Transport(that.connection, that.config, that.loggerFactory)
         let defaultAccount: Account
+        let requestsCollection: IDatabaseCollection
 
         describe("RequestController", function () {
             before(async function () {
@@ -54,6 +64,8 @@ export class RequestControllerTests extends IntegrationTest {
                     accountController,
                     consumptionController
                 }
+
+                requestsCollection = (consumptionController.requests as any).consumptionRequests as IDatabaseCollection
             })
 
             describe("CreateIncomingRequest", function () {
@@ -126,6 +138,22 @@ export class RequestControllerTests extends IntegrationTest {
                     expect(consumptionRequest.content.toJSON()).to.deep.equal(consumptionRequest.content.toJSON())
                 }).timeout(5000)
 
+                it("persists the created ConsumptionRequest", async function () {
+                    const requestSource = await TestObjectFactory.createIncomingRelationshipTemplate()
+                    const request = await Request.from(await TestObjectFactory.createRequestWithOneItem())
+
+                    const consumptionRequest =
+                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                            CreateIncomingRequestParameters.from({
+                                content: request,
+                                source: requestSource
+                            })
+                        )
+
+                    const requestFromDb = await requestsCollection.read(consumptionRequest.id.toString())
+                    expect(requestFromDb).to.exist
+                })
+
                 it("cannot create incoming Request from outgoing RelationshipTemplate", async function () {
                     const requestSource = await TestObjectFactory.createOutgoingRelationshipTemplate(
                         defaultAccount.accountController.identity.address
@@ -143,7 +171,7 @@ export class RequestControllerTests extends IntegrationTest {
                     )
                 }).timeout(5000)
 
-                it("throws on invalid input", async function () {
+                it("throws on syntactically invalid input", async function () {
                     const paramsWithoutSource = {
                         content: await Request.from(await TestObjectFactory.createRequestWithOneItem())
                     }
@@ -173,7 +201,7 @@ export class RequestControllerTests extends IntegrationTest {
                 }).timeout(5000)
             })
 
-            describe("CompleteIncomingRequest", function () {
+            describe("IncomingRequestAnswered", function () {
                 it("updates the status of the ConsumptionRequest", async function () {
                     const requestSource = await TestObjectFactory.createIncomingMessage(
                         defaultAccount.accountController.identity.address
@@ -193,15 +221,14 @@ export class RequestControllerTests extends IntegrationTest {
                         items: [AcceptRequestItemParameters.from({})]
                     })
 
-                    const completedRequest =
-                        await defaultAccount.consumptionController.requests.completeIncomingRequest(
-                            consumptionRequest.id
-                        )
+                    const answeredRequest = await defaultAccount.consumptionController.requests.incomingRequestAnswered(
+                        consumptionRequest.id
+                    )
 
-                    expect(completedRequest.status).to.equal(ConsumptionRequestStatus.Completed)
+                    expect(answeredRequest.status).to.equal(ConsumptionRequestStatus.Answered)
 
-                    const statusLogEntry = completedRequest.statusLog[completedRequest.statusLog.length - 1]
-                    expect(statusLogEntry.newStatus).to.equal(ConsumptionRequestStatus.Completed)
+                    const statusLogEntry = answeredRequest.statusLog[answeredRequest.statusLog.length - 1]
+                    expect(statusLogEntry.newStatus).to.equal(ConsumptionRequestStatus.Answered)
                 })
 
                 it("persists the updated ConsumptionRequest", async function () {
@@ -223,16 +250,16 @@ export class RequestControllerTests extends IntegrationTest {
                         items: [AcceptRequestItemParameters.from({})]
                     })
 
-                    await defaultAccount.consumptionController.requests.completeIncomingRequest(consumptionRequest.id)
+                    await defaultAccount.consumptionController.requests.incomingRequestAnswered(consumptionRequest.id)
 
-                    const completedRequest = (await defaultAccount.consumptionController.requests.get(
+                    const answeredRequest = (await defaultAccount.consumptionController.requests.get(
                         consumptionRequest.id
                     ))!
 
-                    expect(completedRequest.status).to.equal(ConsumptionRequestStatus.Completed)
+                    expect(answeredRequest.status).to.equal(ConsumptionRequestStatus.Answered)
                 })
 
-                it("cannot complete outgoing ConsumptionRequests", async function () {
+                it("cannot answer outgoing ConsumptionRequests", async function () {
                     const params: ICreateOutgoingRequestParameters = {
                         content: {
                             items: [
@@ -249,12 +276,12 @@ export class RequestControllerTests extends IntegrationTest {
                     )
 
                     await TestUtil.expectThrowsAsync(
-                        defaultAccount.consumptionController.requests.completeIncomingRequest(outgoingRequest.id),
-                        "*Cannot complete own Request*"
+                        defaultAccount.consumptionController.requests.incomingRequestAnswered(outgoingRequest.id),
+                        "*Cannot decide own Request*"
                     )
                 })
 
-                it("can only complete ConsumptionRequests in status 'Decided'", async function () {
+                it("can only answer ConsumptionRequests in status 'Decided'", async function () {
                     const requestSource = await TestObjectFactory.createIncomingMessage(
                         defaultAccount.accountController.identity.address
                     )
@@ -269,8 +296,8 @@ export class RequestControllerTests extends IntegrationTest {
                         )
 
                     await TestUtil.expectThrowsAsync(
-                        defaultAccount.consumptionController.requests.completeIncomingRequest(consumptionRequest.id),
-                        "*Can only complete Request in status 'Decided'*"
+                        defaultAccount.consumptionController.requests.incomingRequestAnswered(consumptionRequest.id),
+                        "*Can only decide Request in status 'Decided'*"
                     )
                 })
             })
@@ -322,8 +349,8 @@ export class RequestControllerTests extends IntegrationTest {
                 })
             })
 
-            describe("CompleteOutgoingRequest", function () {
-                it("updates the status of the ConsumptionRequest", async function () {
+            describe("AnswerForOutgoingRequestReceived", function () {
+                it("updates the ConsumptionRequest", async function () {
                     const request = await defaultAccount.consumptionController.requests.createOutgoingRequest({
                         content: {
                             items: [
@@ -334,14 +361,28 @@ export class RequestControllerTests extends IntegrationTest {
                         },
                         peer: CoreAddress.from("id1")
                     })
-                    const completedRequest =
-                        await defaultAccount.consumptionController.requests.completeOutgoingRequest(request.id)
 
-                    expect(completedRequest.status).to.equal(ConsumptionRequestStatus.Completed)
+                    const requestWithResponse =
+                        await defaultAccount.consumptionController.requests.responseForOutgoingRequestReceived(
+                            request.id,
+                            await TestObjectFactory.createIncomingMessage(
+                                defaultAccount.accountController.identity.address
+                            ),
+                            {
+                                result: ResponseResult.Accepted,
+                                requestId: request.id,
+                                items: [await AcceptResponseItem.from({ result: ResponseItemResult.Accepted })]
+                            } as IResponse
+                        )
 
-                    const statusLogEntry = completedRequest.statusLog[completedRequest.statusLog.length - 1]
+                    expect(requestWithResponse.response).to.be.instanceOf(ConsumptionResponse)
+                    expect(requestWithResponse.response!.content).to.be.instanceOf(Response)
+
+                    expect(requestWithResponse.status).to.equal(ConsumptionRequestStatus.Answered)
+
+                    const statusLogEntry = requestWithResponse.statusLog[requestWithResponse.statusLog.length - 1]
                     expect(statusLogEntry.oldStatus).to.equal(ConsumptionRequestStatus.Draft)
-                    expect(statusLogEntry.newStatus).to.equal(ConsumptionRequestStatus.Completed)
+                    expect(statusLogEntry.newStatus).to.equal(ConsumptionRequestStatus.Answered)
                 })
 
                 it("persists the updated ConsumptionRequest", async function () {
@@ -355,11 +396,21 @@ export class RequestControllerTests extends IntegrationTest {
                         },
                         peer: CoreAddress.from("id1")
                     })
-                    await defaultAccount.consumptionController.requests.completeOutgoingRequest(request.id)
+                    await defaultAccount.consumptionController.requests.responseForOutgoingRequestReceived(
+                        request.id,
+                        await TestObjectFactory.createIncomingMessage(
+                            defaultAccount.accountController.identity.address
+                        ),
+                        {
+                            result: ResponseResult.Accepted,
+                            requestId: request.id,
+                            items: [await AcceptResponseItem.from({ result: ResponseItemResult.Accepted })]
+                        } as IResponse
+                    )
 
-                    const completedRequest = (await defaultAccount.consumptionController.requests.get(request.id))!
+                    const answeredRequest = (await defaultAccount.consumptionController.requests.get(request.id))!
 
-                    expect(completedRequest.status).to.equal(ConsumptionRequestStatus.Completed)
+                    expect(answeredRequest.status).to.equal(ConsumptionRequestStatus.Answered)
                 })
             })
 
@@ -390,7 +441,7 @@ export class RequestControllerTests extends IntegrationTest {
             })
 
             describe("Accept", function () {
-                it("sets the response property of the Consumption Request to a ConsumptionResponseDraft", async function () {
+                it("sets the response property of the Consumption Request to a ConsumptionResponse", async function () {
                     const consumptionRequest =
                         await defaultAccount.consumptionController.requests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
@@ -486,7 +537,7 @@ export class RequestControllerTests extends IntegrationTest {
                         requestId: createdConsumptionRequest.id,
                         items: [
                             AcceptRequestItemParameters.from({}),
-                            CompleteRequestItemGroupParameters.from({
+                            DecideRequestItemGroupParameters.from({
                                 items: [RejectRequestItemParameters.from({})]
                             })
                         ]
@@ -540,7 +591,7 @@ export class RequestControllerTests extends IntegrationTest {
                         requestId: createdConsumptionRequest.id,
                         items: [
                             AcceptRequestItemParameters.from({}),
-                            CompleteRequestItemGroupParameters.from({
+                            DecideRequestItemGroupParameters.from({
                                 items: [RejectRequestItemParameters.from({})]
                             })
                         ]
@@ -596,7 +647,7 @@ export class RequestControllerTests extends IntegrationTest {
                         requestId: createdConsumptionRequest.id,
                         items: [
                             AcceptRequestItemParameters.from({}),
-                            CompleteRequestItemGroupParameters.from({
+                            DecideRequestItemGroupParameters.from({
                                 items: [RejectRequestItemParameters.from({})]
                             })
                         ]
@@ -620,7 +671,7 @@ export class RequestControllerTests extends IntegrationTest {
                     })
                 }).timeout(5000)
 
-                it("throws on invalid input", async function () {
+                it("throws on syntactically invalid input", async function () {
                     const paramsWithoutItems = {
                         requestId: CoreId.from("CNSREQ1")
                     }
@@ -729,7 +780,7 @@ export class RequestControllerTests extends IntegrationTest {
                         requestId: createdConsumptionRequest.id,
                         items: [
                             RejectRequestItemParameters.from({}),
-                            CompleteRequestItemGroupParameters.from({
+                            DecideRequestItemGroupParameters.from({
                                 items: [RejectRequestItemParameters.from({})]
                             })
                         ]
@@ -783,7 +834,7 @@ export class RequestControllerTests extends IntegrationTest {
                         requestId: createdConsumptionRequest.id,
                         items: [
                             RejectRequestItemParameters.from({}),
-                            CompleteRequestItemGroupParameters.from({
+                            DecideRequestItemGroupParameters.from({
                                 items: [RejectRequestItemParameters.from({})]
                             })
                         ]
@@ -839,7 +890,7 @@ export class RequestControllerTests extends IntegrationTest {
                         requestId: createdConsumptionRequest.id,
                         items: [
                             RejectRequestItemParameters.from({}),
-                            CompleteRequestItemGroupParameters.from({
+                            DecideRequestItemGroupParameters.from({
                                 items: [RejectRequestItemParameters.from({})]
                             })
                         ]
@@ -863,7 +914,7 @@ export class RequestControllerTests extends IntegrationTest {
                     })
                 }).timeout(5000)
 
-                it("throws on invalid input", async function () {
+                it("throws on syntactically invalid input", async function () {
                     const paramsWithoutItems = {
                         requestId: CoreId.from("CNSREQ1")
                     }

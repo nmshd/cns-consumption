@@ -1,9 +1,9 @@
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import {
     AcceptRequestItemParameters,
-    CompleteRequestParamsValidator,
     ConsumptionRequest,
-    ConsumptionRequestStatus
+    ConsumptionRequestStatus,
+    DecideRequestParamsValidator
 } from "@nmshd/consumption"
 import { Request } from "@nmshd/content"
 import { CoreAddress, CoreDate, CoreId } from "@nmshd/transport"
@@ -11,19 +11,19 @@ import { expect } from "chai"
 import { UnitTest } from "../../core/UnitTest"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
 
-export class CompleteRequestParamsValidatorTests extends UnitTest {
+export class DecideRequestParamsValidatorTests extends UnitTest {
     public constructor(protected loggerFactory: ILoggerFactory) {
         super(loggerFactory)
     }
 
     public run(): void {
-        let validator: CompleteRequestParamsValidator
+        let validator: DecideRequestParamsValidator
 
         beforeEach(function () {
-            validator = new CompleteRequestParamsValidator()
+            validator = new DecideRequestParamsValidator()
         })
 
-        describe("CompleteRequestParamsValidator", function () {
+        describe("DecideRequestParamsValidator", function () {
             it("fails when number of items is too low", async function () {
                 const consumptionRequest = await ConsumptionRequest.from({
                     id: await CoreId.generate(),

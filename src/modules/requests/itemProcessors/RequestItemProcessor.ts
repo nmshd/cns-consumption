@@ -1,7 +1,7 @@
 import { AcceptResponseItem, RejectResponseItem, RequestItem, ResponseItem, ResponseItemResult } from "@nmshd/content"
-import { AcceptRequestItemParameters } from "../completeRequestParameters/AcceptRequestItemParameters"
-import { CompleteRequestItemParameters } from "../completeRequestParameters/CompleteRequestItemParameters"
-import { RejectRequestItemParameters } from "../completeRequestParameters/RejectRequestItemParameters"
+import { AcceptRequestItemParameters } from "../decideRequestParameters/AcceptRequestItemParameters"
+import { DecideRequestItemParameters } from "../decideRequestParameters/DecideRequestItemParameters"
+import { RejectRequestItemParameters } from "../decideRequestParameters/RejectRequestItemParameters"
 
 export class RequestItemProcessor<
     TRequestItem extends RequestItem = RequestItem,
@@ -22,7 +22,10 @@ export class RequestItemProcessor<
         })
     }
 
-    public async complete(requestItem: TRequestItem, params: CompleteRequestItemParameters): Promise<ResponseItem> {
+    public async processDecision(
+        requestItem: TRequestItem,
+        params: DecideRequestItemParameters
+    ): Promise<ResponseItem> {
         if (params instanceof AcceptRequestItemParameters) {
             return await this.accept(requestItem, params as TAcceptParams)
         } else if (params instanceof RejectRequestItemParameters) {
