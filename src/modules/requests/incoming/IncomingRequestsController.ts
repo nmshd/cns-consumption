@@ -29,11 +29,12 @@ import {
 } from "./decideRequestParameters/DecideRequestItemParameters"
 import { DecideRequestParameters } from "./decideRequestParameters/DecideRequestParameters"
 import { IRejectRequestParameters, RejectRequestParameters } from "./decideRequestParameters/RejectRequestParameters"
-import { DecideRequestParamsValidator } from "./DecideRequestParamsValidator"
+import { DecideRequestParamarametersValidator } from "./DecideRequestParametersValidator"
 
 export class IncomingRequestsController extends ConsumptionBaseController {
     private consumptionRequests: IDatabaseCollection
-    private readonly decideRequestParamsValidator: DecideRequestParamsValidator = new DecideRequestParamsValidator()
+    private readonly decideRequestParamsValidator: DecideRequestParamarametersValidator =
+        new DecideRequestParamarametersValidator()
     private readonly requestItemProcessorRegistry: RequestItemProcessorRegistry
 
     public constructor(parent: ConsumptionController) {

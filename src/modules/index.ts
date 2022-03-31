@@ -12,7 +12,7 @@ export * from "./requests/incoming/decideRequestParameters/DecideRequestItemGrou
 export * from "./requests/incoming/decideRequestParameters/DecideRequestItemParameters"
 export * from "./requests/incoming/decideRequestParameters/DecideRequestParameters"
 export * from "./requests/incoming/decideRequestParameters/RejectRequestItemParameters"
-export * from "./requests/incoming/DecideRequestParamsValidator"
+export * from "./requests/incoming/DecideRequestParametersValidator"
 export * from "./requests/itemProcessors/RequestItemProcessor"
 export * from "./requests/itemProcessors/RequestItemProcessorRegistry"
 export * from "./requests/local/ConsumptionRequest"
