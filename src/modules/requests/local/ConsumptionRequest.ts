@@ -15,15 +15,15 @@ import { ConsumptionRequestStatusLogEntry, IConsumptionRequestStatusLogEntry } f
 import { ConsumptionResponse, IConsumptionResponse } from "./ConsumptionResponse"
 
 export interface IConsumptionRequestSource extends ICoreSerializableAsync {
-    type: string
+    type: "Message" | "RelationshipTemplate"
     reference: ICoreId
 }
 
 @type("ConsumptionRequestSource")
 export class ConsumptionRequestSource extends CoreSerializableAsync implements IConsumptionRequestSource {
-    @serialize()
+    @serialize({ type: String })
     @validate()
-    public type: string
+    public type: "Message" | "RelationshipTemplate"
 
     @serialize()
     @validate()

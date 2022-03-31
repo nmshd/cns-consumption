@@ -2,6 +2,7 @@ import {
     AcceptResponseItem,
     IRequest,
     IResponse,
+    Request,
     ResponseItemResult,
     ResponseJSON,
     ResponseResult
@@ -30,14 +31,19 @@ import {
 import { TestRequestItem } from "./TestRequestItem"
 
 export class TestObjectFactory {
-    public static async createRequestWithOneItem(): Promise<IRequest> {
-        return {
+    public static async createRequest(): Promise<IRequest> {
+        return await this.createRequestWithOneItem()
+    }
+
+    public static async createRequestWithOneItem(properties: Partial<Request> = {}): Promise<Request> {
+        return await Request.from({
             items: [
                 await TestRequestItem.from({
                     mustBeAccepted: false
                 })
-            ]
-        }
+            ],
+            ...properties
+        })
     }
 
     public static createResponseJSON(): ResponseJSON {

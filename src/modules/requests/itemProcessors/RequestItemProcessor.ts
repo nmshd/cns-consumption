@@ -8,14 +8,14 @@ export class RequestItemProcessor<
     TAcceptParams extends AcceptRequestItemParameters = AcceptRequestItemParameters,
     TRejectParams extends RejectRequestItemParameters = RejectRequestItemParameters
 > {
-    public async accept(requestItem: TRequestItem, _params: TAcceptParams): Promise<ResponseItem> {
+    public async accept(requestItem: TRequestItem, _params: TAcceptParams): Promise<AcceptResponseItem> {
         return await AcceptResponseItem.from({
             result: ResponseItemResult.Accepted,
             metadata: requestItem.responseMetadata
         })
     }
 
-    public async reject(requestItem: TRequestItem, _params: TRejectParams): Promise<ResponseItem> {
+    public async reject(requestItem: TRequestItem, _params: TRejectParams): Promise<RejectResponseItem> {
         return await RejectResponseItem.from({
             result: ResponseItemResult.Rejected,
             metadata: requestItem.responseMetadata

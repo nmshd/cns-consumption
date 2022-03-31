@@ -5,7 +5,6 @@ import {
     ConsumptionRequestStatus,
     DecideRequestParametersValidator
 } from "@nmshd/consumption"
-import { Request } from "@nmshd/content"
 import { CoreAddress, CoreDate, CoreId } from "@nmshd/transport"
 import { expect } from "chai"
 import { UnitTest } from "../../core/UnitTest"
@@ -27,7 +26,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
             it("fails when number of items is too low", async function () {
                 const consumptionRequest = await ConsumptionRequest.from({
                     id: await CoreId.generate(),
-                    content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
+                    content: await TestObjectFactory.createRequestWithOneItem(),
                     createdAt: CoreDate.utc(),
                     isOwn: true,
                     peer: CoreAddress.from("id1"),
@@ -46,7 +45,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
             it("fails when number of items is too high", async function () {
                 const consumptionRequest = await ConsumptionRequest.from({
                     id: await CoreId.generate(),
-                    content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
+                    content: await TestObjectFactory.createRequestWithOneItem(),
                     createdAt: CoreDate.utc(),
                     isOwn: true,
                     peer: CoreAddress.from("id1"),

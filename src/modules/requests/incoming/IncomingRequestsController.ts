@@ -7,7 +7,7 @@ import {
     ResponseItemGroup,
     ResponseResult
 } from "@nmshd/content"
-import { CoreDate, CoreId, ICoreId, Message, RelationshipTemplate } from "@nmshd/transport"
+import { CoreAddress, CoreDate, CoreId, ICoreId, Message, RelationshipTemplate } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName } from "../../../consumption"
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
 import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProcessorRegistry"
@@ -70,7 +70,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return consumptionRequest
     }
 
-    private extractInfoFromSource(source: Message | RelationshipTemplate) {
+    private extractInfoFromSource(source: Message | RelationshipTemplate): InfoFromSource {
         if (source instanceof Message) {
             return this.extractInfoFromMessage(source)
         }
@@ -78,7 +78,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return this.extractInfoFromRelationshipTemplate(source)
     }
 
-    private extractInfoFromMessage(message: Message) {
+    private extractInfoFromMessage(message: Message): InfoFromSource {
         if (message.isOwn) throw new Error("Cannot create incoming Request from own Message")
 
         return {
@@ -89,14 +89,14 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         }
     }
 
-    private extractInfoFromRelationshipTemplate(template: RelationshipTemplate) {
+    private extractInfoFromRelationshipTemplate(template: RelationshipTemplate): InfoFromSource {
         if (template.isOwn) throw new Error("Cannot create incoming Request from own Relationship Template")
 
         return {
             isOwn: this.parent.accountController.identity.isMe(template.cache!.createdBy),
             peer: template.cache!.createdBy,
             sourceReference: template.id,
-            sourceType: "Relationship"
+            sourceType: "RelationshipTemplate"
         }
     }
 
@@ -199,10 +199,17 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             throw new Error(`Can only decide Request in status '${ConsumptionRequestStatus.Decided}'`)
         }
 
-        request.changeStatus(ConsumptionRequestStatus.Answered)
+        request.changeStatus(ConsumptionRequestStatus.Completed)
 
         await this.consumptionRequests.update(requestDoc, request)
 
         return request
     }
+}
+
+interface InfoFromSource {
+    isOwn: boolean
+    peer: CoreAddress
+    sourceReference: CoreId
+    sourceType: "Message" | "RelationshipTemplate"
 }

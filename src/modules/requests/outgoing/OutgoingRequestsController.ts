@@ -69,7 +69,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
 
         request.response = consumptionResponse
 
-        request.changeStatus(ConsumptionRequestStatus.Answered)
+        request.changeStatus(ConsumptionRequestStatus.Completed)
 
         await this.consumptionRequests.update(requestDoc, request)
 
