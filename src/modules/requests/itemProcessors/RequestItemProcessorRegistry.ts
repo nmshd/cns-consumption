@@ -1,5 +1,5 @@
 import { RequestItem } from "@nmshd/content"
-import { RequestItemProcessor } from "./itemProcessors/RequestItemProcessor"
+import { RequestItemProcessor } from "./RequestItemProcessor"
 
 type ProcessorConstructor = new () => RequestItemProcessor
 type RequestItemConstructor = new () => RequestItem

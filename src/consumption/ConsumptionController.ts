@@ -2,11 +2,12 @@ import { AccountController, Transport } from "@nmshd/transport"
 import {
     ConsumptionAttributesController,
     DraftsController,
+    OutgoingRequestsController,
     RelationshipInfoController,
-    RequestsController,
     SettingsController,
     SharedItemsController
 } from "../modules"
+import { IncomingRequestsController } from "../modules/requests/incoming/IncomingRequestsController"
 
 export class ConsumptionController {
     public constructor(public readonly transport: Transport, public readonly accountController: AccountController) {}
@@ -21,9 +22,14 @@ export class ConsumptionController {
         return this._drafts
     }
 
-    private _requests: RequestsController
-    public get requests(): RequestsController {
-        return this._requests
+    private _outgoingRequests: OutgoingRequestsController
+    public get outgoingRequests(): OutgoingRequestsController {
+        return this._outgoingRequests
+    }
+
+    private _incomingRequests: IncomingRequestsController
+    public get incomingRequests(): IncomingRequestsController {
+        return this._incomingRequests
     }
 
     private _settings: SettingsController
@@ -44,7 +50,8 @@ export class ConsumptionController {
     public async init(): Promise<ConsumptionController> {
         this._attributes = await new ConsumptionAttributesController(this).init()
         this._drafts = await new DraftsController(this).init()
-        this._requests = await new RequestsController(this).init()
+        this._outgoingRequests = await new OutgoingRequestsController(this).init()
+        this._incomingRequests = await new IncomingRequestsController(this).init()
         this._settings = await new SettingsController(this).init()
         this._sharedItems = await new SharedItemsController(this).init()
         this._relationshipInfo = await new RelationshipInfoController(this).init()

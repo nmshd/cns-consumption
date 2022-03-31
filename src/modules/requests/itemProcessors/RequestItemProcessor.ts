@@ -1,7 +1,7 @@
 import { AcceptResponseItem, RejectResponseItem, RequestItem, ResponseItem, ResponseItemResult } from "@nmshd/content"
-import { AcceptRequestItemParameters } from "../decideRequestParameters/AcceptRequestItemParameters"
-import { DecideRequestItemParameters } from "../decideRequestParameters/DecideRequestItemParameters"
-import { RejectRequestItemParameters } from "../decideRequestParameters/RejectRequestItemParameters"
+import { AcceptRequestItemParameters } from "../incoming/decideRequestParameters/AcceptRequestItemParameters"
+import { DecideRequestItemParameters } from "../incoming/decideRequestParameters/DecideRequestItemParameters"
+import { RejectRequestItemParameters } from "../incoming/decideRequestParameters/RejectRequestItemParameters"
 
 export class RequestItemProcessor<
     TRequestItem extends RequestItem = RequestItem,

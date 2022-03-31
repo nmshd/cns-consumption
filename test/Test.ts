@@ -3,16 +3,10 @@ import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import { IConfigOverwrite } from "@nmshd/transport"
 import { use } from "chai"
 import chaiExclude from "chai-exclude"
-import { AttributeTest } from "./modules/attributes/Attribute.test"
-import { RelationshipInfoTest } from "./modules/relationships/RelationshipInfo.test"
-import { RelationshipInfoNoTemplateTest } from "./modules/relationships/RelationshipInfoNoTemplate.test"
-import { RelationshipInfoOldTemplateTest } from "./modules/relationships/RelationshipInfoOldTemplate.test"
-import { RelationshipRequestorTest } from "./modules/relationships/RelationshipRequestor.test"
 import { DecideRequestParamsValidatorTests } from "./modules/requests/DecideRequestParamsValidator.test"
+import { IncomingRequestControllerTests } from "./modules/requests/IncomingRequestsController.test"
 import { ConsumptionRequestTest } from "./modules/requests/local/ConsumptionRequest.test"
-import { RequestItemProcessorTests } from "./modules/requests/RequestItemProcessor.test"
-import { RequestItemProcessorRegistryTests } from "./modules/requests/RequestItemProcessorRegistry.test"
-import { RequestControllerTests } from "./modules/requests/RequestsController.test"
+import { OutgoingRequestControllerTests } from "./modules/requests/OutgoingRequestsController.test"
 
 use(chaiExclude)
 
@@ -37,14 +31,15 @@ export class Test {
         databaseConnection: IDatabaseConnection,
         logger: ILoggerFactory
     ): void {
-        new RelationshipInfoOldTemplateTest(config, databaseConnection, logger).run()
-        new RelationshipInfoNoTemplateTest(config, databaseConnection, logger).run()
-        new AttributeTest(config, databaseConnection, logger).run()
-        new RelationshipInfoTest(config, databaseConnection, logger).run()
-        new RelationshipRequestorTest(config, databaseConnection, logger).run()
-        new RequestControllerTests(config, databaseConnection, logger).run()
-        new RequestItemProcessorRegistryTests(config, databaseConnection, logger).run()
-        new RequestItemProcessorTests(config, databaseConnection, logger).run()
+        // new RelationshipInfoOldTemplateTest(config, databaseConnection, logger).run()
+        // new RelationshipInfoNoTemplateTest(config, databaseConnection, logger).run()
+        // new AttributeTest(config, databaseConnection, logger).run()
+        // new RelationshipInfoTest(config, databaseConnection, logger).run()
+        // new RelationshipRequestorTest(config, databaseConnection, logger).run()
+        new OutgoingRequestControllerTests(config, databaseConnection, logger).run()
+        new IncomingRequestControllerTests(config, databaseConnection, logger).run()
+        // new RequestItemProcessorRegistryTests(config, databaseConnection, logger).run()
+        // new RequestItemProcessorTests(config, databaseConnection, logger).run()
     }
 
     public static runUnitTests(logger: ILoggerFactory): void {

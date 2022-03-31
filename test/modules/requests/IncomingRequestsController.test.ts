@@ -14,16 +14,7 @@ import {
     IDecideRequestParameters,
     RejectRequestItemParameters
 } from "@nmshd/consumption"
-import {
-    AcceptResponseItem,
-    IResponse,
-    Request,
-    Response,
-    ResponseItem,
-    ResponseItemGroup,
-    ResponseItemResult,
-    ResponseResult
-} from "@nmshd/content"
+import { Request, ResponseItem, ResponseItemGroup, ResponseItemResult, ResponseResult } from "@nmshd/content"
 import { AccountController, CoreAddress, CoreId, IConfigOverwrite, Transport } from "@nmshd/transport"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
@@ -36,7 +27,7 @@ export class AlwaysTrueDecideRequestParamsValidator extends DecideRequestParamsV
     }
 }
 
-export class RequestControllerTests extends IntegrationTest {
+export class IncomingRequestControllerTests extends IntegrationTest {
     public constructor(
         protected config: IConfigOverwrite,
         protected connection: IDatabaseConnection,
@@ -65,7 +56,8 @@ export class RequestControllerTests extends IntegrationTest {
                     consumptionController
                 }
 
-                requestsCollection = (consumptionController.requests as any).consumptionRequests as IDatabaseCollection
+                requestsCollection = (consumptionController.outgoingRequests as any)
+                    .consumptionRequests as IDatabaseCollection
             })
 
             describe("CreateIncomingRequest", function () {
@@ -76,7 +68,7 @@ export class RequestControllerTests extends IntegrationTest {
                     const request = await Request.from(await TestObjectFactory.createRequestWithOneItem())
 
                     const consumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: request,
                                 source: requestSource
@@ -102,7 +94,7 @@ export class RequestControllerTests extends IntegrationTest {
                     const request = await Request.from(await TestObjectFactory.createRequestWithOneItem())
 
                     await TestUtil.expectThrowsAsync(
-                        defaultAccount.consumptionController.requests.createIncomingRequest(
+                        defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: request,
                                 source: requestSource
@@ -117,7 +109,7 @@ export class RequestControllerTests extends IntegrationTest {
                     const request = await Request.from(await TestObjectFactory.createRequestWithOneItem())
 
                     const consumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: request,
                                 source: requestSource
@@ -143,7 +135,7 @@ export class RequestControllerTests extends IntegrationTest {
                     const request = await Request.from(await TestObjectFactory.createRequestWithOneItem())
 
                     const consumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: request,
                                 source: requestSource
@@ -161,7 +153,7 @@ export class RequestControllerTests extends IntegrationTest {
                     const request = await Request.from(await TestObjectFactory.createRequestWithOneItem())
 
                     await TestUtil.expectThrowsAsync(
-                        defaultAccount.consumptionController.requests.createIncomingRequest(
+                        defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: request,
                                 source: requestSource
@@ -177,7 +169,9 @@ export class RequestControllerTests extends IntegrationTest {
                     }
 
                     await TestUtil.expectThrowsAsync(
-                        defaultAccount.consumptionController.requests.createIncomingRequest(paramsWithoutSource as any),
+                        defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
+                            paramsWithoutSource as any
+                        ),
                         "*source*Value is not defined*"
                     )
                 }).timeout(5000)
@@ -190,7 +184,7 @@ export class RequestControllerTests extends IntegrationTest {
                     request.id = await CoreId.generate()
 
                     const consumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: request,
                                 source: requestSource
@@ -209,21 +203,22 @@ export class RequestControllerTests extends IntegrationTest {
                     const request = await Request.from(await TestObjectFactory.createRequestWithOneItem())
 
                     const consumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: request,
                                 source: requestSource
                             })
                         )
 
-                    await defaultAccount.consumptionController.requests.accept({
+                    await defaultAccount.consumptionController.incomingRequests.accept({
                         requestId: consumptionRequest.id,
                         items: [AcceptRequestItemParameters.from({})]
                     })
 
-                    const answeredRequest = await defaultAccount.consumptionController.requests.incomingRequestAnswered(
-                        consumptionRequest.id
-                    )
+                    const answeredRequest =
+                        await defaultAccount.consumptionController.incomingRequests.incomingRequestAnswered(
+                            consumptionRequest.id
+                        )
 
                     expect(answeredRequest.status).to.equal(ConsumptionRequestStatus.Answered)
 
@@ -238,21 +233,23 @@ export class RequestControllerTests extends IntegrationTest {
                     const request = await Request.from(await TestObjectFactory.createRequestWithOneItem())
 
                     const consumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: request,
                                 source: requestSource
                             })
                         )
 
-                    await defaultAccount.consumptionController.requests.accept({
+                    await defaultAccount.consumptionController.incomingRequests.accept({
                         requestId: consumptionRequest.id,
                         items: [AcceptRequestItemParameters.from({})]
                     })
 
-                    await defaultAccount.consumptionController.requests.incomingRequestAnswered(consumptionRequest.id)
+                    await defaultAccount.consumptionController.incomingRequests.incomingRequestAnswered(
+                        consumptionRequest.id
+                    )
 
-                    const answeredRequest = (await defaultAccount.consumptionController.requests.get(
+                    const answeredRequest = (await defaultAccount.consumptionController.outgoingRequests.get(
                         consumptionRequest.id
                     ))!
 
@@ -271,12 +268,13 @@ export class RequestControllerTests extends IntegrationTest {
                         peer: CoreAddress.from("id1")
                     }
 
-                    const outgoingRequest = await defaultAccount.consumptionController.requests.createOutgoingRequest(
-                        params
-                    )
+                    const outgoingRequest =
+                        await defaultAccount.consumptionController.outgoingRequests.createOutgoingRequest(params)
 
                     await TestUtil.expectThrowsAsync(
-                        defaultAccount.consumptionController.requests.incomingRequestAnswered(outgoingRequest.id),
+                        defaultAccount.consumptionController.incomingRequests.incomingRequestAnswered(
+                            outgoingRequest.id
+                        ),
                         "*Cannot decide own Request*"
                     )
                 })
@@ -288,7 +286,7 @@ export class RequestControllerTests extends IntegrationTest {
                     const request = await Request.from(await TestObjectFactory.createRequestWithOneItem())
 
                     const consumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: request,
                                 source: requestSource
@@ -296,161 +294,25 @@ export class RequestControllerTests extends IntegrationTest {
                         )
 
                     await TestUtil.expectThrowsAsync(
-                        defaultAccount.consumptionController.requests.incomingRequestAnswered(consumptionRequest.id),
+                        defaultAccount.consumptionController.incomingRequests.incomingRequestAnswered(
+                            consumptionRequest.id
+                        ),
                         "*Can only decide Request in status 'Decided'*"
                     )
                 })
             })
 
-            describe("CreateOutgoingRequest", function () {
-                it("creates a new outgoing ConsumptionRequest", async function () {
-                    const params: ICreateOutgoingRequestParameters = {
-                        content: {
-                            items: [
-                                {
-                                    mustBeAccepted: false
-                                }
-                            ]
-                        },
-                        peer: CoreAddress.from("id1")
-                    }
-
-                    const createdRequest = await defaultAccount.consumptionController.requests.createOutgoingRequest(
-                        params
-                    )
-
-                    expect(createdRequest).to.exist
-                    expect(createdRequest.id).to.exist
-                    expect(createdRequest.status).to.equal(ConsumptionRequestStatus.Draft)
-                    expect(createdRequest.content).to.be.instanceOf(Request)
-                    expect(createdRequest.content.id).to.exist
-                    expect(createdRequest.source).to.be.undefined
-                })
-
-                it("persists the created Request", async function () {
-                    const params: ICreateOutgoingRequestParameters = {
-                        content: {
-                            items: [
-                                {
-                                    mustBeAccepted: false
-                                }
-                            ]
-                        },
-                        peer: CoreAddress.from("id1")
-                    }
-
-                    const createdRequest = await defaultAccount.consumptionController.requests.createOutgoingRequest(
-                        params
-                    )
-
-                    const request = await defaultAccount.consumptionController.requests.get(createdRequest.id)
-
-                    expect(request).to.be.instanceOf(ConsumptionRequest)
-                })
-            })
-
-            describe("AnswerForOutgoingRequestReceived", function () {
-                it("updates the ConsumptionRequest", async function () {
-                    const request = await defaultAccount.consumptionController.requests.createOutgoingRequest({
-                        content: {
-                            items: [
-                                {
-                                    mustBeAccepted: false
-                                }
-                            ]
-                        },
-                        peer: CoreAddress.from("id1")
-                    })
-
-                    const requestWithResponse =
-                        await defaultAccount.consumptionController.requests.responseForOutgoingRequestReceived(
-                            request.id,
-                            await TestObjectFactory.createIncomingMessage(
-                                defaultAccount.accountController.identity.address
-                            ),
-                            {
-                                result: ResponseResult.Accepted,
-                                requestId: request.id,
-                                items: [await AcceptResponseItem.from({ result: ResponseItemResult.Accepted })]
-                            } as IResponse
-                        )
-
-                    expect(requestWithResponse.response).to.be.instanceOf(ConsumptionResponse)
-                    expect(requestWithResponse.response!.content).to.be.instanceOf(Response)
-
-                    expect(requestWithResponse.status).to.equal(ConsumptionRequestStatus.Answered)
-
-                    const statusLogEntry = requestWithResponse.statusLog[requestWithResponse.statusLog.length - 1]
-                    expect(statusLogEntry.oldStatus).to.equal(ConsumptionRequestStatus.Draft)
-                    expect(statusLogEntry.newStatus).to.equal(ConsumptionRequestStatus.Answered)
-                })
-
-                it("persists the updated ConsumptionRequest", async function () {
-                    const request = await defaultAccount.consumptionController.requests.createOutgoingRequest({
-                        content: {
-                            items: [
-                                {
-                                    mustBeAccepted: false
-                                }
-                            ]
-                        },
-                        peer: CoreAddress.from("id1")
-                    })
-                    await defaultAccount.consumptionController.requests.responseForOutgoingRequestReceived(
-                        request.id,
-                        await TestObjectFactory.createIncomingMessage(
-                            defaultAccount.accountController.identity.address
-                        ),
-                        {
-                            result: ResponseResult.Accepted,
-                            requestId: request.id,
-                            items: [await AcceptResponseItem.from({ result: ResponseItemResult.Accepted })]
-                        } as IResponse
-                    )
-
-                    const answeredRequest = (await defaultAccount.consumptionController.requests.get(request.id))!
-
-                    expect(answeredRequest.status).to.equal(ConsumptionRequestStatus.Answered)
-                })
-            })
-
-            describe("Get", function () {
-                it("returns a Request that was created before", async function () {
-                    const createdConsumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
-                            CreateIncomingRequestParameters.from({
-                                content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
-                                source: await TestObjectFactory.createIncomingRelationshipTemplate()
-                            })
-                        )
-
-                    const consumptionRequest = await defaultAccount.consumptionController.requests.get(
-                        createdConsumptionRequest.id
-                    )
-
-                    expect(consumptionRequest).to.exist
-                }).timeout(5000)
-
-                it("returns undefined when the given id does not exist", async function () {
-                    const consumptionRequest = await defaultAccount.consumptionController.requests.get(
-                        await CoreId.generate()
-                    )
-
-                    expect(consumptionRequest).to.be.undefined
-                }).timeout(5000)
-            })
-
             describe("Accept", function () {
                 it("sets the response property of the Consumption Request to a ConsumptionResponse", async function () {
                     const consumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
                                 source: await TestObjectFactory.createIncomingRelationshipTemplate()
                             })
                         )
 
-                    const acceptedRequest = await defaultAccount.consumptionController.requests.accept({
+                    const acceptedRequest = await defaultAccount.consumptionController.incomingRequests.accept({
                         requestId: consumptionRequest.id,
                         items: [AcceptRequestItemParameters.from({})]
                     })
@@ -464,14 +326,14 @@ export class RequestControllerTests extends IntegrationTest {
 
                 it("updates the status of the Consumption Request", async function () {
                     const consumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
                                 source: await TestObjectFactory.createIncomingRelationshipTemplate()
                             })
                         )
 
-                    const acceptedRequest = await defaultAccount.consumptionController.requests.accept({
+                    const acceptedRequest = await defaultAccount.consumptionController.incomingRequests.accept({
                         requestId: consumptionRequest.id,
                         items: [AcceptRequestItemParameters.from({})]
                     })
@@ -484,19 +346,19 @@ export class RequestControllerTests extends IntegrationTest {
 
                 it("persists the updated Consumption Request", async function () {
                     const createdConsumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
                                 source: await TestObjectFactory.createIncomingRelationshipTemplate()
                             })
                         )
 
-                    await defaultAccount.consumptionController.requests.accept({
+                    await defaultAccount.consumptionController.incomingRequests.accept({
                         requestId: createdConsumptionRequest.id,
                         items: [AcceptRequestItemParameters.from({})]
                     })
 
-                    const updatedConsumptionRequest = await defaultAccount.consumptionController.requests.get(
+                    const updatedConsumptionRequest = await defaultAccount.consumptionController.outgoingRequests.get(
                         createdConsumptionRequest.id
                     )
 
@@ -508,7 +370,7 @@ export class RequestControllerTests extends IntegrationTest {
 
                 it("creates Response Items and Groups with the correct structure", async function () {
                     const createdConsumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: await Request.from({
                                     "@type": "Request",
@@ -533,7 +395,7 @@ export class RequestControllerTests extends IntegrationTest {
                             })
                         )
 
-                    const acceptedRequest = await defaultAccount.consumptionController.requests.accept({
+                    const acceptedRequest = await defaultAccount.consumptionController.incomingRequests.accept({
                         requestId: createdConsumptionRequest.id,
                         items: [
                             AcceptRequestItemParameters.from({}),
@@ -553,7 +415,7 @@ export class RequestControllerTests extends IntegrationTest {
 
                 it("creates Response Items with the correct result", async function () {
                     const createdConsumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: await Request.from({
                                     "@type": "Request",
@@ -587,7 +449,7 @@ export class RequestControllerTests extends IntegrationTest {
                             })
                         )
 
-                    const acceptedRequest = await defaultAccount.consumptionController.requests.accept({
+                    const acceptedRequest = await defaultAccount.consumptionController.incomingRequests.accept({
                         requestId: createdConsumptionRequest.id,
                         items: [
                             AcceptRequestItemParameters.from({}),
@@ -609,7 +471,7 @@ export class RequestControllerTests extends IntegrationTest {
 
                 it("writes responseMetadata from Request Items and Groups into the corresponding Response Items and Groups", async function () {
                     const createdConsumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: await Request.from({
                                     "@type": "Request",
@@ -643,7 +505,7 @@ export class RequestControllerTests extends IntegrationTest {
                             })
                         )
 
-                    const acceptedRequest = await defaultAccount.consumptionController.requests.accept({
+                    const acceptedRequest = await defaultAccount.consumptionController.incomingRequests.accept({
                         requestId: createdConsumptionRequest.id,
                         items: [
                             AcceptRequestItemParameters.from({}),
@@ -677,7 +539,7 @@ export class RequestControllerTests extends IntegrationTest {
                     }
 
                     await TestUtil.expectThrowsAsync(
-                        defaultAccount.consumptionController.requests.accept(paramsWithoutItems as any),
+                        defaultAccount.consumptionController.incomingRequests.accept(paramsWithoutItems as any),
                         "*items*Value is not defined*"
                     )
                 }).timeout(5000)
@@ -686,14 +548,14 @@ export class RequestControllerTests extends IntegrationTest {
             describe("Reject", function () {
                 it("sets the response property of the Consumption Request", async function () {
                     const consumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
                                 source: await TestObjectFactory.createIncomingRelationshipTemplate()
                             })
                         )
 
-                    const rejectedRequest = await defaultAccount.consumptionController.requests.reject({
+                    const rejectedRequest = await defaultAccount.consumptionController.incomingRequests.reject({
                         requestId: consumptionRequest.id,
                         items: [RejectRequestItemParameters.from({})]
                     })
@@ -707,14 +569,14 @@ export class RequestControllerTests extends IntegrationTest {
 
                 it("updates the status of the Consumption Request", async function () {
                     const consumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
                                 source: await TestObjectFactory.createIncomingRelationshipTemplate()
                             })
                         )
 
-                    const rejectedRequest = await defaultAccount.consumptionController.requests.reject({
+                    const rejectedRequest = await defaultAccount.consumptionController.incomingRequests.reject({
                         requestId: consumptionRequest.id,
                         items: [RejectRequestItemParameters.from({})]
                     })
@@ -727,19 +589,19 @@ export class RequestControllerTests extends IntegrationTest {
 
                 it("persists the updated Consumption Request", async function () {
                     const createdConsumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: await Request.from(await TestObjectFactory.createRequestWithOneItem()),
                                 source: await TestObjectFactory.createIncomingRelationshipTemplate()
                             })
                         )
 
-                    await defaultAccount.consumptionController.requests.reject({
+                    await defaultAccount.consumptionController.incomingRequests.reject({
                         requestId: createdConsumptionRequest.id,
                         items: [RejectRequestItemParameters.from({})]
                     })
 
-                    const updatedConsumptionRequest = await defaultAccount.consumptionController.requests.get(
+                    const updatedConsumptionRequest = await defaultAccount.consumptionController.outgoingRequests.get(
                         createdConsumptionRequest.id
                     )
 
@@ -751,7 +613,7 @@ export class RequestControllerTests extends IntegrationTest {
 
                 it("creates Response Items and Groups with the correct structure", async function () {
                     const createdConsumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: await Request.from({
                                     "@type": "Request",
@@ -776,7 +638,7 @@ export class RequestControllerTests extends IntegrationTest {
                             })
                         )
 
-                    const rejectedRequest = await defaultAccount.consumptionController.requests.reject({
+                    const rejectedRequest = await defaultAccount.consumptionController.incomingRequests.reject({
                         requestId: createdConsumptionRequest.id,
                         items: [
                             RejectRequestItemParameters.from({}),
@@ -796,7 +658,7 @@ export class RequestControllerTests extends IntegrationTest {
 
                 it("creates Response Items with the correct result", async function () {
                     const createdConsumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: await Request.from({
                                     "@type": "Request",
@@ -830,7 +692,7 @@ export class RequestControllerTests extends IntegrationTest {
                             })
                         )
 
-                    const rejectedRequest = await defaultAccount.consumptionController.requests.reject({
+                    const rejectedRequest = await defaultAccount.consumptionController.incomingRequests.reject({
                         requestId: createdConsumptionRequest.id,
                         items: [
                             RejectRequestItemParameters.from({}),
@@ -852,7 +714,7 @@ export class RequestControllerTests extends IntegrationTest {
 
                 it("writes responseMetadata from Request Items and Groups into the corresponding Response Items and Groups", async function () {
                     const createdConsumptionRequest =
-                        await defaultAccount.consumptionController.requests.createIncomingRequest(
+                        await defaultAccount.consumptionController.incomingRequests.createIncomingRequest(
                             CreateIncomingRequestParameters.from({
                                 content: await Request.from({
                                     "@type": "Request",
@@ -886,7 +748,7 @@ export class RequestControllerTests extends IntegrationTest {
                             })
                         )
 
-                    const rejectedRequest = await defaultAccount.consumptionController.requests.reject({
+                    const rejectedRequest = await defaultAccount.consumptionController.incomingRequests.reject({
                         requestId: createdConsumptionRequest.id,
                         items: [
                             RejectRequestItemParameters.from({}),
@@ -920,7 +782,7 @@ export class RequestControllerTests extends IntegrationTest {
                     }
 
                     await TestUtil.expectThrowsAsync(
-                        defaultAccount.consumptionController.requests.reject(paramsWithoutItems as any),
+                        defaultAccount.consumptionController.incomingRequests.reject(paramsWithoutItems as any),
                         "*items*Value is not defined*"
                     )
                 }).timeout(5000)
