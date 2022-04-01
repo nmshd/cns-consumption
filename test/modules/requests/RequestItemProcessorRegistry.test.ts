@@ -1,7 +1,7 @@
 import { IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import { RequestItemProcessor, RequestItemProcessorRegistry } from "@nmshd/consumption"
-import { IRequestItem, RequestItem, ResponseItem } from "@nmshd/content"
+import { AcceptResponseItem, IRequestItem, RejectResponseItem, RequestItem } from "@nmshd/content"
 import { IConfigOverwrite } from "@nmshd/transport"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
@@ -9,21 +9,21 @@ import { TestUtil } from "../../core/TestUtil"
 import { TestRequestItem } from "./testHelpers/TestRequestItem"
 
 class TestRequestItemProcessor extends RequestItemProcessor<TestRequestItem> {
-    public accept(): Promise<ResponseItem> {
+    public accept(): Promise<AcceptResponseItem> {
         throw new Error("Method not implemented.")
     }
 
-    public reject(): Promise<ResponseItem> {
+    public reject(): Promise<RejectResponseItem> {
         throw new Error("Method not implemented.")
     }
 }
 
 class TestRequestItemProcessor2 extends RequestItemProcessor<TestRequestItem> {
-    public accept(): Promise<ResponseItem> {
+    public accept(): Promise<AcceptResponseItem> {
         throw new Error("Method not implemented.")
     }
 
-    public reject(): Promise<ResponseItem> {
+    public reject(): Promise<RejectResponseItem> {
         throw new Error("Method not implemented.")
     }
 }

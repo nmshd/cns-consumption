@@ -7,6 +7,8 @@ import { DecideRequestParametersValidatorTests } from "./modules/requests/Decide
 import { IncomingRequestControllerTests } from "./modules/requests/IncomingRequestsController.test"
 import { ConsumptionRequestTest } from "./modules/requests/local/ConsumptionRequest.test"
 import { OutgoingRequestControllerTests } from "./modules/requests/OutgoingRequestsController.test"
+import { RequestItemProcessorTests } from "./modules/requests/RequestItemProcessor.test"
+import { RequestItemProcessorRegistryTests } from "./modules/requests/RequestItemProcessorRegistry.test"
 
 use(chaiExclude)
 
@@ -38,8 +40,8 @@ export class Test {
         // new RelationshipRequestorTest(config, databaseConnection, logger).run()
         new OutgoingRequestControllerTests(config, databaseConnection, logger).run()
         new IncomingRequestControllerTests(config, databaseConnection, logger).run()
-        // new RequestItemProcessorRegistryTests(config, databaseConnection, logger).run()
-        // new RequestItemProcessorTests(config, databaseConnection, logger).run()
+        new RequestItemProcessorRegistryTests(config, databaseConnection, logger).run()
+        new RequestItemProcessorTests(config, databaseConnection, logger).run()
     }
 
     public static runUnitTests(logger: ILoggerFactory): void {
