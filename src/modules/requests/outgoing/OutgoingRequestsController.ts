@@ -43,7 +43,6 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
             content: request,
             createdAt: CoreDate.utc(),
             isOwn: true,
-            peer: params.peer,
             status: ConsumptionRequestStatus.Draft,
             statusLog: []
         })

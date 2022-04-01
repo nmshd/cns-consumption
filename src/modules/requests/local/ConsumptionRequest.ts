@@ -33,7 +33,7 @@ export class ConsumptionRequestSource extends CoreSerializableAsync implements I
 export interface IConsumptionRequest extends ICoreSerializableAsync {
     id: ICoreId
     isOwn: boolean
-    peer: ICoreAddress
+    peer?: ICoreAddress
     createdAt: ICoreDate
     content: IRequest
     source?: IConsumptionRequestSource
@@ -53,8 +53,8 @@ export class ConsumptionRequest extends CoreSerializableAsync implements IConsum
     public isOwn: boolean
 
     @serialize()
-    @validate()
-    public peer: CoreAddress
+    @validate({ nullable: true })
+    public peer?: CoreAddress
 
     @serialize()
     @validate()

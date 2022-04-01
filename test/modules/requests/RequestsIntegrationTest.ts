@@ -348,7 +348,7 @@ export class RequestsThen {
         expect(this.context.consumptionRequestAfterAction).to.be.instanceOf(ConsumptionRequest)
         expect(this.context.consumptionRequestAfterAction!.id).to.exist
         expect(this.context.consumptionRequestAfterAction!.isOwn).to.be.false
-        expect(this.context.consumptionRequestAfterAction!.peer.toString()).to.equal(createdBy.toString())
+        expect(this.context.consumptionRequestAfterAction!.peer!.toString()).to.equal(createdBy.toString())
         expect(this.context.consumptionRequestAfterAction!.source).to.exist
         expect(this.context.consumptionRequestAfterAction!.source!.reference.toString()).to.equal(sourceId.toString())
         expect(this.context.consumptionRequestAfterAction!.source!.type).to.equal(sourceType)
@@ -361,11 +361,10 @@ export class RequestsThen {
 
     public theCreatedOutgoingRequestHasAllProperties(): Promise<void> {
         expect(this.context.consumptionRequestAfterAction).to.exist
+
         expect(this.context.consumptionRequestAfterAction!.id).to.exist
-        expect(this.context.consumptionRequestAfterAction!.status).to.equal(ConsumptionRequestStatus.Draft)
-        expect(this.context.consumptionRequestAfterAction!.content).to.be.instanceOf(Request)
-        expect(this.context.consumptionRequestAfterAction!.content.id).to.exist
-        expect(this.context.consumptionRequestAfterAction!.source).to.be.undefined
+        expect(this.context.consumptionRequestAfterAction!.createdAt).to.exist
+        expect(this.context.consumptionRequestAfterAction!.isOwn).to.equal(true)
 
         return Promise.resolve()
     }
@@ -378,6 +377,17 @@ export class RequestsThen {
             this.context.givenConsumptionRequest!.id.toString()
         )
 
+        return Promise.resolve()
+    }
+
+    public theRequestIsInStatus(status: ConsumptionRequestStatus): Promise<void> {
+        expect(this.context.consumptionRequestAfterAction!.status).to.equal(status)
+        return Promise.resolve()
+    }
+
+    public theRequestDoesNotHaveSourceAndPeerSet(): Promise<void> {
+        expect(this.context.consumptionRequestAfterAction!.peer).to.be.undefined
+        expect(this.context.consumptionRequestAfterAction!.source).to.be.undefined
         return Promise.resolve()
     }
 

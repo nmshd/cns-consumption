@@ -63,6 +63,8 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                 it("creates a new outgoing ConsumptionRequest", async function () {
                     await When.iCreateAnOutgoingRequest()
                     await Then.theCreatedOutgoingRequestHasAllProperties()
+                    await Then.theRequestIsInStatus(ConsumptionRequestStatus.Draft)
+                    await Then.theRequestDoesNotHaveSourceAndPeerSet()
                 })
 
                 it("persists the created Request", async function () {
