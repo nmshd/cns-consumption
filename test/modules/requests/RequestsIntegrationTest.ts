@@ -53,7 +53,7 @@ export class RequestsTestsContext {
     }
 
     public givenConsumptionRequest?: ConsumptionRequest
-    public consumptionRequestAfterAction: ConsumptionRequest
+    public consumptionRequestAfterAction?: ConsumptionRequest
     public actionToTry: () => Promise<void>
 }
 
@@ -151,15 +151,15 @@ export class RequestsGiven {
         }
     }
 
-    public async anOutgoingRequest(): Promise<void> {
-        await this.anOutgoingRequestWith({})
+    public async anOutgoingRequest(): Promise<ConsumptionRequest> {
+        return await this.anOutgoingRequestWith({})
     }
 
     public async anOutgoingRequestInStatus(status: ConsumptionRequestStatus): Promise<void> {
         await this.anOutgoingRequestWith({ status: status })
     }
 
-    public async anOutgoingRequestWith(params: { status?: ConsumptionRequestStatus }): Promise<void> {
+    public async anOutgoingRequestWith(params: { status?: ConsumptionRequestStatus }): Promise<ConsumptionRequest> {
         params.status ??= ConsumptionRequestStatus.Open
 
         this.context.givenConsumptionRequest =
@@ -173,6 +173,8 @@ export class RequestsGiven {
                 },
                 peer: CoreAddress.from("id1")
             })
+
+        return this.context.givenConsumptionRequest
     }
 }
 
@@ -272,14 +274,16 @@ export class RequestsWhen {
             )
     }
 
-    public async iGetTheRequest(): Promise<void> {
-        this.context.consumptionRequestAfterAction = (await this.context.consumptionController.outgoingRequests.get(
-            this.context.givenConsumptionRequest!.id
-        ))!
+    public async iGetTheIncomingRequestWith(id: CoreId): Promise<void> {
+        this.context.consumptionRequestAfterAction = await this.context.consumptionController.incomingRequests.get(id)
+    }
+
+    public async iGetTheOutgoingRequestWith(id: CoreId): Promise<void> {
+        this.context.consumptionRequestAfterAction = await this.context.consumptionController.outgoingRequests.get(id)
     }
 
     public async iTryToGetARequestWithANonExistentId(): Promise<void> {
-        this.context.consumptionRequestAfterAction = (await this.context.consumptionController.outgoingRequests.get(
+        this.context.consumptionRequestAfterAction = (await this.context.consumptionController.incomingRequests.get(
             await CoreId.generate()
         ))!
     }
@@ -320,16 +324,20 @@ export class RequestsWhen {
 export class RequestsThen {
     public constructor(private readonly context: RequestsTestsContext) {}
 
-    public iExpectTheRequestToBeReturned(): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    public get And(): this {
+        return this
+    }
+
+    public theReturnedRequestHasTheId(id: CoreId): Promise<void> {
         expect(this.context.consumptionRequestAfterAction).to.exist
+        expect(this.context.consumptionRequestAfterAction!.id.toString()).to.equal(id.toString())
         return Promise.resolve()
     }
 
-    public async iExpectUndefinedToBeReturned(): Promise<void> {
-        const request = await this.context.consumptionController.outgoingRequests.get(
-            this.context.givenConsumptionRequest!.id
-        )
-        expect(request).to.exist
+    public iExpectUndefinedToBeReturned(): Promise<void> {
+        expect(this.context.consumptionRequestAfterAction).to.be.undefined
+        return Promise.resolve()
     }
 
     public theCreatedRequestHasAllProperties(
@@ -338,35 +346,35 @@ export class RequestsThen {
         sourceType: "Message" | "RelationshipTemplate"
     ): Promise<void> {
         expect(this.context.consumptionRequestAfterAction).to.be.instanceOf(ConsumptionRequest)
-        expect(this.context.consumptionRequestAfterAction.id).to.exist
-        expect(this.context.consumptionRequestAfterAction.isOwn).to.be.false
-        expect(this.context.consumptionRequestAfterAction.peer.toString()).to.equal(createdBy.toString())
-        expect(this.context.consumptionRequestAfterAction.source).to.exist
-        expect(this.context.consumptionRequestAfterAction.source!.reference.toString()).to.equal(sourceId.toString())
-        expect(this.context.consumptionRequestAfterAction.source!.type).to.equal(sourceType)
-        expect(this.context.consumptionRequestAfterAction.response).to.be.undefined
-        expect(this.context.consumptionRequestAfterAction.status).to.equal(ConsumptionRequestStatus.Open)
-        expect(this.context.consumptionRequestAfterAction.statusLog).to.be.empty
+        expect(this.context.consumptionRequestAfterAction!.id).to.exist
+        expect(this.context.consumptionRequestAfterAction!.isOwn).to.be.false
+        expect(this.context.consumptionRequestAfterAction!.peer.toString()).to.equal(createdBy.toString())
+        expect(this.context.consumptionRequestAfterAction!.source).to.exist
+        expect(this.context.consumptionRequestAfterAction!.source!.reference.toString()).to.equal(sourceId.toString())
+        expect(this.context.consumptionRequestAfterAction!.source!.type).to.equal(sourceType)
+        expect(this.context.consumptionRequestAfterAction!.response).to.be.undefined
+        expect(this.context.consumptionRequestAfterAction!.status).to.equal(ConsumptionRequestStatus.Open)
+        expect(this.context.consumptionRequestAfterAction!.statusLog).to.be.empty
 
         return Promise.resolve()
     }
 
     public theCreatedOutgoingRequestHasAllProperties(): Promise<void> {
         expect(this.context.consumptionRequestAfterAction).to.exist
-        expect(this.context.consumptionRequestAfterAction.id).to.exist
-        expect(this.context.consumptionRequestAfterAction.status).to.equal(ConsumptionRequestStatus.Draft)
-        expect(this.context.consumptionRequestAfterAction.content).to.be.instanceOf(Request)
-        expect(this.context.consumptionRequestAfterAction.content.id).to.exist
-        expect(this.context.consumptionRequestAfterAction.source).to.be.undefined
+        expect(this.context.consumptionRequestAfterAction!.id).to.exist
+        expect(this.context.consumptionRequestAfterAction!.status).to.equal(ConsumptionRequestStatus.Draft)
+        expect(this.context.consumptionRequestAfterAction!.content).to.be.instanceOf(Request)
+        expect(this.context.consumptionRequestAfterAction!.content.id).to.exist
+        expect(this.context.consumptionRequestAfterAction!.source).to.be.undefined
 
         return Promise.resolve()
     }
 
     public theRequestHasItsResponsePropertySet(): Promise<void> {
-        expect(this.context.consumptionRequestAfterAction.response).to.exist
-        expect(this.context.consumptionRequestAfterAction.response).to.be.instanceOf(ConsumptionResponse)
-        expect(this.context.consumptionRequestAfterAction.response!.content).to.be.instanceOf(Response)
-        expect(this.context.consumptionRequestAfterAction.response!.content.requestId.toString()).to.equal(
+        expect(this.context.consumptionRequestAfterAction!.response).to.exist
+        expect(this.context.consumptionRequestAfterAction!.response).to.be.instanceOf(ConsumptionResponse)
+        expect(this.context.consumptionRequestAfterAction!.response!.content).to.be.instanceOf(Response)
+        expect(this.context.consumptionRequestAfterAction!.response!.content.requestId.toString()).to.equal(
             this.context.givenConsumptionRequest!.id.toString()
         )
 
@@ -374,7 +382,7 @@ export class RequestsThen {
     }
 
     public theRequestMovesToStatus(status: ConsumptionRequestStatus): Promise<void> {
-        const modifiedRequest = this.context.consumptionRequestAfterAction
+        const modifiedRequest = this.context.consumptionRequestAfterAction!
 
         expect(modifiedRequest.status).to.equal(status)
 
@@ -386,30 +394,30 @@ export class RequestsThen {
 
     public async theNewRequestIsPersistedInTheDatabase(): Promise<void> {
         const requestDoc = await this.context.requestsCollection.read(
-            this.context.consumptionRequestAfterAction.id.toString()
+            this.context.consumptionRequestAfterAction!.id.toString()
         )
         const requestInDatabase = await ConsumptionRequest.from(requestDoc)
 
         expect(requestInDatabase).to.exist
-        expect(requestInDatabase.toJSON()).to.deep.equal(this.context.consumptionRequestAfterAction.toJSON())
+        expect(requestInDatabase.toJSON()).to.deep.equal(this.context.consumptionRequestAfterAction!.toJSON())
     }
 
     public async theChangesArePersistedInTheDatabase(): Promise<void> {
         const requestDoc = await this.context.requestsCollection.read(
-            this.context.consumptionRequestAfterAction.id.toString()
+            this.context.consumptionRequestAfterAction!.id.toString()
         )
         const requestInDatabase = await ConsumptionRequest.from(requestDoc)
 
-        expect(requestInDatabase.toJSON()).to.deep.equal(this.context.consumptionRequestAfterAction.toJSON())
+        expect(requestInDatabase.toJSON()).to.deep.equal(this.context.consumptionRequestAfterAction!.toJSON())
     }
 
     public theCreatedRequestHasTheId(id: CoreId): Promise<void> {
-        expect(this.context.consumptionRequestAfterAction.id.toString()).to.equal(id.toString())
+        expect(this.context.consumptionRequestAfterAction!.id.toString()).to.equal(id.toString())
         return Promise.resolve()
     }
 
     public iExpectTheResponseContent(customExpects: (responseContent: Response) => void): Promise<void> {
-        customExpects(this.context.consumptionRequestAfterAction.response!.content)
+        customExpects(this.context.consumptionRequestAfterAction!.response!.content)
         return Promise.resolve()
     }
 

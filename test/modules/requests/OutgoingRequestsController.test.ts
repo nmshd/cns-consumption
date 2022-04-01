@@ -3,6 +3,7 @@ import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import { Result } from "@js-soft/ts-utils"
 import {
     ConsumptionController,
+    ConsumptionIds,
     ConsumptionRequest,
     ConsumptionRequestStatus,
     DecideRequestParametersValidator,
@@ -88,6 +89,27 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     await When.iSaveTheResponseForTheOutgoingRequest()
                     await Then.theNewRequestIsPersistedInTheDatabase()
                 })
+            })
+
+            describe("Get", function () {
+                it("returns the Request with the given id if it exists", async function () {
+                    const outgoingRequest = await Given.anOutgoingRequest()
+                    await When.iGetTheOutgoingRequestWith(outgoingRequest.id)
+                    await Then.theReturnedRequestHasTheId(outgoingRequest.id)
+                }).timeout(5000)
+
+                it("returns undefined when the given id does not exist", async function () {
+                    const aNonExistentId = await ConsumptionIds.request.generate()
+                    await When.iGetTheOutgoingRequestWith(aNonExistentId)
+                    await Then.iExpectUndefinedToBeReturned()
+                }).timeout(5000)
+
+                it("returns undefined when the given id belongs to an outgoing Request", async function () {
+                    const theIdOfTheRequest = await ConsumptionIds.request.generate()
+                    await Given.anIncomingRequestWith({ id: theIdOfTheRequest })
+                    await When.iGetTheOutgoingRequestWith(theIdOfTheRequest)
+                    await Then.iExpectUndefinedToBeReturned()
+                }).timeout(5000)
             })
         })
     }

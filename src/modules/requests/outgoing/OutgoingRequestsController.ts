@@ -77,7 +77,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     }
 
     public async get(id: ICoreId): Promise<ConsumptionRequest | undefined> {
-        const requestDoc = await this.consumptionRequests.read(id.toString())
+        const requestDoc = await this.consumptionRequests.findOne({ id: id.toString(), isOwn: true })
         const request = requestDoc ? await ConsumptionRequest.from(requestDoc) : undefined
         return request
     }

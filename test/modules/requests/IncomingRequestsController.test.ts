@@ -4,6 +4,7 @@ import { Result } from "@js-soft/ts-utils"
 import {
     AcceptRequestItemParameters,
     ConsumptionController,
+    ConsumptionIds,
     ConsumptionRequest,
     ConsumptionRequestStatus,
     DecideRequestItemGroupParameters,
@@ -75,7 +76,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
                 it("creates an incoming Request with an incoming RelationshipTemplate as source", async function () {
                     const incomingTemplate = await TestObjectFactory.createIncomingRelationshipTemplate()
-                    await When.iCreateAnIncomingRequestWithSource(incomingTemplate)
+                    await When.iCreateAnIncomingRequestWith({ source: incomingTemplate })
                     await Then.theCreatedRequestHasAllProperties(
                         incomingTemplate.cache!.createdBy,
                         incomingTemplate.id,
@@ -85,7 +86,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
                 it("persists the created ConsumptionRequest", async function () {
                     const incomingTemplate = await TestObjectFactory.createIncomingRelationshipTemplate()
-                    await When.iCreateAnIncomingRequestWithSource(incomingTemplate)
+                    await When.iCreateAnIncomingRequestWith({ source: incomingTemplate })
                     await Then.theNewRequestIsPersistedInTheDatabase()
                 })
 
@@ -114,32 +115,6 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await When.iCreateAnIncomingRequestWith({ content: request })
                     await Then.theCreatedRequestHasTheId(request.id!)
                 }).timeout(5000)
-            })
-
-            describe("Complete", function () {
-                it("moves the ConsumptionRequest to status 'Completed'", async function () {
-                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Decided)
-                    await When.iCompleteTheRequest()
-                    await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Completed)
-                })
-
-                it("persists the updated ConsumptionRequest", async function () {
-                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Decided)
-                    await When.iCompleteTheRequest()
-                    await Then.theChangesArePersistedInTheDatabase()
-                })
-
-                it("cannot complete outgoing ConsumptionRequests", async function () {
-                    await Given.anOutgoingRequest()
-                    await When.iTryToCompleteTheRequest()
-                    await Then.itFailsWithTheErrorMessage("*Cannot decide own Request*")
-                })
-
-                it("can only complete ConsumptionRequests in status 'Decided'", async function () {
-                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
-                    await When.iTryToCompleteTheRequest()
-                    await Then.itFailsWithTheErrorMessage("*Can only decide Request in status 'Decided'*")
-                })
             })
 
             describe("Accept", function () {
@@ -326,16 +301,49 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
             describe("Get", function () {
                 it("returns the Request with the given id if it exists", async function () {
-                    await Given.anIncomingRequest()
-                    await When.iGetTheRequest()
-                    await Then.iExpectTheRequestToBeReturned()
+                    const requestId = await ConsumptionIds.request.generate()
+                    await Given.anIncomingRequestWith({ id: requestId })
+                    await When.iGetTheIncomingRequestWith(requestId)
+                    await Then.theReturnedRequestHasTheId(requestId)
                 }).timeout(5000)
 
                 it("returns undefined when the given id does not exist", async function () {
-                    await Given.anIncomingRequest()
-                    await When.iGetTheRequest()
+                    const aNonExistentId = await ConsumptionIds.request.generate()
+                    await When.iGetTheIncomingRequestWith(aNonExistentId)
                     await Then.iExpectUndefinedToBeReturned()
                 }).timeout(5000)
+
+                it("returns undefined when the given id belongs to an outgoing Request", async function () {
+                    const outgoingRequest = await Given.anOutgoingRequest()
+                    await When.iGetTheIncomingRequestWith(outgoingRequest.id)
+                    await Then.iExpectUndefinedToBeReturned()
+                }).timeout(5000)
+            })
+
+            describe("Complete", function () {
+                it("moves the ConsumptionRequest to status 'Completed'", async function () {
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Decided)
+                    await When.iCompleteTheRequest()
+                    await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Completed)
+                })
+
+                it("persists the updated ConsumptionRequest", async function () {
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Decided)
+                    await When.iCompleteTheRequest()
+                    await Then.theChangesArePersistedInTheDatabase()
+                })
+
+                it("cannot complete outgoing ConsumptionRequests", async function () {
+                    await Given.anOutgoingRequest()
+                    await When.iTryToCompleteTheRequest()
+                    await Then.itFailsWithTheErrorMessage("*Cannot decide own Request*")
+                })
+
+                it("can only complete ConsumptionRequests in status 'Decided'", async function () {
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
+                    await When.iTryToCompleteTheRequest()
+                    await Then.itFailsWithTheErrorMessage("*Can only decide Request in status 'Decided'*")
+                })
             })
         })
     }

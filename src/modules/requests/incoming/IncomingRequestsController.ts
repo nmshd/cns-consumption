@@ -205,6 +205,12 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
         return request
     }
+
+    public async get(id: ICoreId): Promise<ConsumptionRequest | undefined> {
+        const requestDoc = await this.consumptionRequests.findOne({ id: id.toString(), isOwn: false })
+        const request = requestDoc ? await ConsumptionRequest.from(requestDoc) : undefined
+        return request
+    }
 }
 
 interface InfoFromSource {
