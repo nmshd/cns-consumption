@@ -73,22 +73,22 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                 })
             })
 
-            describe("ResponseForOutgoingRequestReceived", function () {
+            describe("CompleteOutgoingRequest", function () {
                 it("moves the ConsumptionRequest to status 'Completed'", async function () {
                     await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
-                    await When.iSaveTheResponseForTheOutgoingRequest()
+                    await When.iCompleteTheOutgoingRequest()
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Completed)
                 })
 
                 it("sets the response property of the Consumption Request to a ConsumptionResponse", async function () {
                     await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
-                    await When.iSaveTheResponseForTheOutgoingRequest()
+                    await When.iCompleteTheOutgoingRequest()
                     await Then.theRequestHasItsResponsePropertySet()
                 })
 
                 it("persists the updated ConsumptionRequest", async function () {
                     await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
-                    await When.iSaveTheResponseForTheOutgoingRequest()
+                    await When.iCompleteTheOutgoingRequest()
                     await Then.theNewRequestIsPersistedInTheDatabase()
                 })
             })

@@ -52,11 +52,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         return consumptionRequest
     }
 
-    public async responseForOutgoingRequestReceived(
-        requestId: ICoreId,
-        source: Message,
-        response: IResponse
-    ): Promise<ConsumptionRequest> {
+    public async complete(requestId: ICoreId, source: Message, response: IResponse): Promise<ConsumptionRequest> {
         const requestDoc = await this.consumptionRequests.read(requestId.toString())
         const request = await ConsumptionRequest.from(requestDoc)
 

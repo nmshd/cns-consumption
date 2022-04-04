@@ -256,7 +256,7 @@ export class RequestsWhen {
         })
     }
 
-    public async iSaveTheResponseForTheOutgoingRequest(): Promise<void> {
+    public async iCompleteTheOutgoingRequest(): Promise<void> {
         const responseSource = await TestObjectFactory.createIncomingMessage(
             this.context.accountController.identity.address
         )
@@ -266,12 +266,11 @@ export class RequestsWhen {
             items: [await AcceptResponseItem.from({ result: ResponseItemResult.Accepted })]
         } as IResponse
 
-        this.context.consumptionRequestAfterAction =
-            await this.context.consumptionController.outgoingRequests.responseForOutgoingRequestReceived(
-                this.context.givenConsumptionRequest!.id,
-                responseSource,
-                responseContent
-            )
+        this.context.consumptionRequestAfterAction = await this.context.consumptionController.outgoingRequests.complete(
+            this.context.givenConsumptionRequest!.id,
+            responseSource,
+            responseContent
+        )
     }
 
     public async iGetTheIncomingRequestWith(id: CoreId): Promise<void> {
