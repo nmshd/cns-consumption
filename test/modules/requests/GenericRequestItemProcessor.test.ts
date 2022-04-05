@@ -2,10 +2,9 @@ import { IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import {
     AcceptRequestItemParameters,
-    DecideRequestItemValidationError,
-    DecideRequestItemValidationResult,
     GenericRequestItemProcessor,
-    RejectRequestItemParameters
+    RejectRequestItemParameters,
+    ValidationResult
 } from "@nmshd/consumption"
 import { IConfigOverwrite } from "@nmshd/transport"
 import { expect } from "chai"
@@ -48,7 +47,7 @@ export class RequestItemProcessorTests extends IntegrationTest {
                     const params = new AcceptRequestItemParameters()
                     const result = await processor.canAccept(requestItem, params)
 
-                    expect(result.isSuccess).to.be.true
+                    expect(result.isSuccess()).to.be.true
                 })
             })
 
@@ -60,7 +59,7 @@ export class RequestItemProcessorTests extends IntegrationTest {
                     const params = new RejectRequestItemParameters()
                     const result = await processor.canReject(requestItem, params)
 
-                    expect(result.isSuccess).to.be.true
+                    expect(result.isSuccess()).to.be.true
                 })
             })
 
@@ -88,22 +87,13 @@ export class RequestItemProcessorTests extends IntegrationTest {
         })
     }
 }
+
 class FailingTestItemProcessor extends TestRequestItemProcessor {
-    public canAccept(
-        _requestItem: TestRequestItem,
-        _params: AcceptRequestItemParameters
-    ): Promise<DecideRequestItemValidationResult> {
-        return Promise.resolve(
-            DecideRequestItemValidationResult.fail(new DecideRequestItemValidationError("aCode", "aMessage"))
-        )
+    public canAccept(_requestItem: TestRequestItem, _params: AcceptRequestItemParameters): Promise<ValidationResult> {
+        return Promise.resolve(ValidationResult.error("aCode", "aMessage"))
     }
 
-    public canReject(
-        _requestItem: TestRequestItem,
-        _params: AcceptRequestItemParameters
-    ): Promise<DecideRequestItemValidationResult> {
-        return Promise.resolve(
-            DecideRequestItemValidationResult.fail(new DecideRequestItemValidationError("aCode", "aMessage"))
-        )
+    public canReject(_requestItem: TestRequestItem, _params: AcceptRequestItemParameters): Promise<ValidationResult> {
+        return Promise.resolve(ValidationResult.error("aCode", "aMessage"))
     }
 }
