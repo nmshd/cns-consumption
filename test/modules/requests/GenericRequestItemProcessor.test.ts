@@ -2,8 +2,8 @@ import { IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import {
     AcceptRequestItemParameters,
-    DecideRequestValidationError,
-    DecideRequestValidationResult,
+    DecideRequestItemValidationError,
+    DecideRequestItemValidationResult,
     GenericRequestItemProcessor,
     RejectRequestItemParameters
 } from "@nmshd/consumption"
@@ -92,18 +92,18 @@ class FailingTestItemProcessor extends TestRequestItemProcessor {
     public canAccept(
         _requestItem: TestRequestItem,
         _params: AcceptRequestItemParameters
-    ): Promise<DecideRequestValidationResult> {
+    ): Promise<DecideRequestItemValidationResult> {
         return Promise.resolve(
-            DecideRequestValidationResult.fail(new DecideRequestValidationError("aCode", "aMessage"))
+            DecideRequestItemValidationResult.fail(new DecideRequestItemValidationError("aCode", "aMessage"))
         )
     }
 
     public canReject(
         _requestItem: TestRequestItem,
         _params: AcceptRequestItemParameters
-    ): Promise<DecideRequestValidationResult> {
+    ): Promise<DecideRequestItemValidationResult> {
         return Promise.resolve(
-            DecideRequestValidationResult.fail(new DecideRequestValidationError("aCode", "aMessage"))
+            DecideRequestItemValidationResult.fail(new DecideRequestItemValidationError("aCode", "aMessage"))
         )
     }
 }
