@@ -1,4 +1,5 @@
 import { AcceptResponseItem, RejectResponseItem, RequestItem, ResponseItemResult } from "@nmshd/content"
+import { TestRequestItem } from "../../../../test/modules/requests/testHelpers/TestRequestItem"
 import { AcceptRequestItemParameters } from "../incoming/decideRequestParameters/AcceptRequestItemParameters"
 import { RejectRequestItemParameters } from "../incoming/decideRequestParameters/RejectRequestItemParameters"
 import { IRequestItemProcessor } from "./IRequestItemProcessor"
@@ -10,6 +11,10 @@ export class GenericRequestItemProcessor<
     TRejectParams extends RejectRequestItemParameters = RejectRequestItemParameters
 > implements IRequestItemProcessor<TRequestItem, TAcceptParams, TRejectParams>
 {
+    public checkPrerequisitesOfIncomingRequestItem(_requestItem: TestRequestItem): Promise<boolean> {
+        return Promise.resolve(true)
+    }
+
     public canAccept(_requestItem: TRequestItem, _params: TAcceptParams): Promise<ValidationResult> {
         return Promise.resolve(ValidationResult.success())
     }
@@ -22,8 +27,9 @@ export class GenericRequestItemProcessor<
         const canAcceptResult = await this.canAccept(requestItem, params)
 
         if (canAcceptResult.isError()) {
-            throw new Error(canAcceptResult.code + canAcceptResult.message)
+            throw new Error(`Error while accepting a RequestItem: ${canAcceptResult.code} - ${canAcceptResult.message}`)
         }
+
         return await AcceptResponseItem.from({
             result: ResponseItemResult.Accepted,
             metadata: requestItem.responseMetadata
@@ -34,12 +40,28 @@ export class GenericRequestItemProcessor<
         const canRejectResult = await this.canReject(requestItem, params)
 
         if (canRejectResult.isError()) {
-            throw new Error(canRejectResult.code + canRejectResult.message)
+            throw new Error(`Error while rejecting a RequestItem: ${canRejectResult.code} - ${canRejectResult.message}`)
         }
 
         return await RejectResponseItem.from({
             result: ResponseItemResult.Rejected,
             metadata: requestItem.responseMetadata
         })
+    }
+
+    public validateIncomingResponseItem(
+        _responseItem: AcceptResponseItem,
+        _requestItem: TRequestItem
+    ): Promise<boolean> {
+        return Promise.resolve(true)
+    }
+
+    public validateOutgoingRequestItem(_requestItem: TestRequestItem): Promise<ValidationResult> {
+        return Promise.resolve(ValidationResult.success())
+    }
+
+    public applyIncomingResponseItem(_responseItem: AcceptResponseItem, _requestItem: TestRequestItem): Promise<void> {
+        // do nothing
+        return Promise.resolve()
     }
 }

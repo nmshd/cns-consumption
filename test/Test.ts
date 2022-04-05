@@ -4,7 +4,7 @@ import { IConfigOverwrite } from "@nmshd/transport"
 import { use } from "chai"
 import chaiExclude from "chai-exclude"
 import { DecideRequestParametersValidatorTests } from "./modules/requests/DecideRequestParamsValidator.test"
-import { RequestItemProcessorTests } from "./modules/requests/GenericRequestItemProcessor.test"
+import { GenericRequestItemProcessorTests } from "./modules/requests/GenericRequestItemProcessor.test"
 import { IncomingRequestControllerTests } from "./modules/requests/IncomingRequestsController.test"
 import { ConsumptionRequestTest } from "./modules/requests/local/ConsumptionRequest.test"
 import { OutgoingRequestControllerTests } from "./modules/requests/OutgoingRequestsController.test"
@@ -41,7 +41,7 @@ export class Test {
         new OutgoingRequestControllerTests(config, databaseConnection, logger).run()
         new IncomingRequestControllerTests(config, databaseConnection, logger).run()
         new RequestItemProcessorRegistryTests(config, databaseConnection, logger).run()
-        new RequestItemProcessorTests(config, databaseConnection, logger).run()
+        new GenericRequestItemProcessorTests(config, databaseConnection, logger).run()
     }
 
     public static runUnitTests(logger: ILoggerFactory): void {

@@ -6,6 +6,7 @@ import {
     RejectRequestItemParameters,
     ValidationResult
 } from "@nmshd/consumption"
+import { AcceptResponseItem, RejectResponseItem } from "@nmshd/content"
 import { IConfigOverwrite } from "@nmshd/transport"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
@@ -13,7 +14,7 @@ import { TestUtil } from "../../core/TestUtil"
 import { TestRequestItem } from "./testHelpers/TestRequestItem"
 import { TestRequestItemProcessor } from "./testHelpers/TestRequestItemProcessor"
 
-export class RequestItemProcessorTests extends IntegrationTest {
+export class GenericRequestItemProcessorTests extends IntegrationTest {
     public constructor(
         protected config: IConfigOverwrite,
         protected connection: IDatabaseConnection,
@@ -39,8 +40,20 @@ export class RequestItemProcessorTests extends IntegrationTest {
         // })
 
         describe("RequestItemProcessor", function () {
+            /* ****** Incoming RequestItems ******* */
+            describe("CheckPrerequisitesOfIncomingRequestItem", function () {
+                it("returns true", async function () {
+                    const processor = new GenericRequestItemProcessor()
+                    const requestItem = new TestRequestItem()
+
+                    const actual = await processor.checkPrerequisitesOfIncomingRequestItem(requestItem)
+
+                    expect(actual).to.be.true
+                })
+            })
+
             describe("CanAccept", function () {
-                it("defaults to true", async function () {
+                it("returns 'success'", async function () {
                     const processor = new GenericRequestItemProcessor()
 
                     const requestItem = new TestRequestItem()
@@ -52,7 +65,7 @@ export class RequestItemProcessorTests extends IntegrationTest {
             })
 
             describe("CanReject", function () {
-                it("defaults to true", async function () {
+                it("returns 'success'", async function () {
                     const processor = new GenericRequestItemProcessor()
 
                     const requestItem = new TestRequestItem()
@@ -64,6 +77,16 @@ export class RequestItemProcessorTests extends IntegrationTest {
             })
 
             describe("Accept", function () {
+                it("returns an AcceptResponseItem", async function () {
+                    const processor = new GenericRequestItemProcessor()
+
+                    const requestItem = new TestRequestItem()
+                    const params = new AcceptRequestItemParameters()
+                    const result = await processor.accept(requestItem, params)
+
+                    expect(result).to.be.instanceOf(AcceptResponseItem)
+                })
+
                 it("throws when canAccept returns a validation error", async function () {
                     const processor = new FailingTestItemProcessor()
 
@@ -75,6 +98,16 @@ export class RequestItemProcessorTests extends IntegrationTest {
             })
 
             describe("Reject", function () {
+                it("returns a RejectResponseItem", async function () {
+                    const processor = new GenericRequestItemProcessor()
+
+                    const requestItem = new TestRequestItem()
+                    const params = new AcceptRequestItemParameters()
+                    const result = await processor.reject(requestItem, params)
+
+                    expect(result).to.be.instanceOf(RejectResponseItem)
+                })
+
                 it("throws when canReject returns a validation error", async function () {
                     const processor = new FailingTestItemProcessor()
 
@@ -82,6 +115,30 @@ export class RequestItemProcessorTests extends IntegrationTest {
                         processor.reject(new TestRequestItem(), RejectRequestItemParameters.from({})),
                         "*aCode*aMessage*"
                     )
+                })
+            })
+
+            /* ****** Outgoing RequestItems ******* */
+            describe("ValidateOutgoingRequestItem", function () {
+                it("returns true", async function () {
+                    const processor = new GenericRequestItemProcessor()
+                    const requestItem = new TestRequestItem()
+
+                    const actual = await processor.validateOutgoingRequestItem(requestItem)
+
+                    expect(actual.isSuccess()).to.be.true
+                })
+            })
+
+            describe("ValidateIncomingResponseItem", function () {
+                it("returns true", async function () {
+                    const processor = new GenericRequestItemProcessor()
+                    const requestItem = new TestRequestItem()
+                    const responseItem = new AcceptResponseItem()
+
+                    const actual = await processor.validateIncomingResponseItem(responseItem, requestItem)
+
+                    expect(actual).to.be.true
                 })
             })
         })
