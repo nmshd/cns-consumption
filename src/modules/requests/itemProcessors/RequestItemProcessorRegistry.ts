@@ -1,16 +1,16 @@
 import { RequestItem } from "@nmshd/content"
-import { RequestItemProcessor } from "./RequestItemProcessor"
+import { IRequestItemProcessor } from "./IRequestItemProcessor"
 
-type ProcessorConstructor = new () => RequestItemProcessor
+type ProcessorConstructor = new () => IRequestItemProcessor
 type RequestItemConstructor = new () => RequestItem
 
 export class RequestItemProcessorRegistry {
     private readonly registry: Record<string, ProcessorConstructor | undefined> = {}
 
-    public getProcessorForItem(item: RequestItem): RequestItemProcessor {
+    public getProcessorForItem(item: RequestItem): IRequestItemProcessor {
         const constructor = this.registry[item.constructor.name]
         if (!constructor) {
-            return new RequestItemProcessor()
+            throw new Error(`There was no processor registered for '${item.constructor.name}'.`)
         }
         return new constructor()
     }

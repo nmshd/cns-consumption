@@ -1,6 +1,6 @@
 import { IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
-import { RequestItemProcessor, RequestItemProcessorRegistry } from "@nmshd/consumption"
+import { GenericRequestItemProcessor, RequestItemProcessorRegistry } from "@nmshd/consumption"
 import { AcceptResponseItem, IRequestItem, RejectResponseItem, RequestItem } from "@nmshd/content"
 import { IConfigOverwrite } from "@nmshd/transport"
 import { expect } from "chai"
@@ -8,7 +8,7 @@ import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
 import { TestRequestItem } from "./testHelpers/TestRequestItem"
 
-class TestRequestItemProcessor extends RequestItemProcessor<TestRequestItem> {
+class TestRequestItemProcessor extends GenericRequestItemProcessor<TestRequestItem> {
     public accept(): Promise<AcceptResponseItem> {
         throw new Error("Method not implemented.")
     }
@@ -18,7 +18,7 @@ class TestRequestItemProcessor extends RequestItemProcessor<TestRequestItem> {
     }
 }
 
-class TestRequestItemProcessor2 extends RequestItemProcessor<TestRequestItem> {
+class TestRequestItemProcessor2 extends GenericRequestItemProcessor<TestRequestItem> {
     public accept(): Promise<AcceptResponseItem> {
         throw new Error("Method not implemented.")
     }
@@ -116,15 +116,17 @@ export class RequestItemProcessorRegistryTests extends IntegrationTest {
                 expect(processor1).to.not.equal(processor2)
             })
 
-            it("getProcessorForItem defaults to RequestItemProcessor if no Processor was registered for the given Request Item", async function () {
+            it("getProcessorForItem throws if no Processor was registered for the given Request Item", async function () {
                 registry.registerProcessorForType(TestRequestItemProcessor, TestRequestItem)
 
                 const item = await TestRequestItemWithNoProcessor.from({
                     mustBeAccepted: true
                 })
 
-                const processor = registry.getProcessorForItem(item)
-                expect(processor).to.be.instanceOf(RequestItemProcessor)
+                TestUtil.expectThrows(
+                    () => registry.getProcessorForItem(item),
+                    "There was no processor registered for 'TestRequestItemWithNoProcessor'"
+                )
             })
         })
     }

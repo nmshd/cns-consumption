@@ -16,7 +16,7 @@ export * from "./requests/incoming/decideRequestParameters/RejectRequestParamete
 export * from "./requests/incoming/DecideRequestParametersValidator"
 export * from "./requests/incoming/IncomingRequestsController"
 export * from "./requests/incoming/receivedIncomingRequestParameters/ReceivedIncomingRequestParameters"
-export * from "./requests/itemProcessors/RequestItemProcessor"
+export * from "./requests/itemProcessors/GenericRequestItemProcessor"
 export * from "./requests/itemProcessors/RequestItemProcessorRegistry"
 export * from "./requests/local/ConsumptionRequest"
 export * from "./requests/local/ConsumptionRequestStatus"

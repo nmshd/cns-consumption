@@ -24,6 +24,8 @@ import {
     RequestsWhen
 } from "./RequestsIntegrationTest"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
+import { TestRequestItem } from "./testHelpers/TestRequestItem"
+import { TestRequestItemProcessor } from "./testHelpers/TestRequestItemProcessor"
 
 export class IncomingRequestControllerTests extends RequestsIntegrationTest {
     public constructor(config: IConfigOverwrite, connection: IDatabaseConnection, loggerFactory: ILoggerFactory) {
@@ -49,6 +51,12 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 await transport.init()
                 accountController = (await TestUtil.provideAccounts(transport, 1))[0]
                 consumptionController = await new ConsumptionController(transport, accountController).init()
+
+                consumptionController.incomingRequests.requestItemProcessorRegistry.registerProcessorForType(
+                    TestRequestItemProcessor,
+                    TestRequestItem
+                )
+
                 currentIdentity = accountController.identity.address
 
                 that.init(new RequestsTestsContext(accountController, consumptionController))

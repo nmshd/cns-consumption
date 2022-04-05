@@ -14,6 +14,7 @@ import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProce
 import { ConsumptionRequest } from "../local/ConsumptionRequest"
 import { ConsumptionRequestStatus } from "../local/ConsumptionRequestStatus"
 import { ConsumptionResponse } from "../local/ConsumptionResponse"
+import { AcceptRequestItemParameters } from "./decideRequestParameters/AcceptRequestItemParameters"
 import { AcceptRequestParameters, IAcceptRequestParameters } from "./decideRequestParameters/AcceptRequestParameters"
 import {
     DecideRequestItemGroupParameters,
@@ -24,6 +25,7 @@ import {
     IDecideRequestItemParameters
 } from "./decideRequestParameters/DecideRequestItemParameters"
 import { DecideRequestParameters } from "./decideRequestParameters/DecideRequestParameters"
+import { RejectRequestItemParameters } from "./decideRequestParameters/RejectRequestItemParameters"
 import { IRejectRequestParameters, RejectRequestParameters } from "./decideRequestParameters/RejectRequestParameters"
 import { DecideRequestParametersValidator } from "./DecideRequestParametersValidator"
 import {
@@ -35,7 +37,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     private consumptionRequests: IDatabaseCollection
     private readonly decideRequestParamsValidator: DecideRequestParametersValidator =
         new DecideRequestParametersValidator()
-    private readonly requestItemProcessorRegistry: RequestItemProcessorRegistry
+    public readonly requestItemProcessorRegistry: RequestItemProcessorRegistry
 
     public constructor(parent: ConsumptionController) {
         super(ConsumptionControllerName.RequestsController, parent)
@@ -171,7 +173,14 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         requestItem: RequestItem
     ): Promise<ResponseItem> {
         const processor = this.requestItemProcessorRegistry.getProcessorForItem(requestItem)
-        return await processor.processDecision(requestItem, params)
+
+        if (params instanceof AcceptRequestItemParameters) {
+            return await processor.accept(requestItem, params)
+        } else if (params instanceof RejectRequestItemParameters) {
+            return await processor.reject(requestItem, params)
+        }
+
+        throw new Error("Unknown params type")
     }
 
     private async createResponseItemGroup(

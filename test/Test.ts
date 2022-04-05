@@ -4,10 +4,10 @@ import { IConfigOverwrite } from "@nmshd/transport"
 import { use } from "chai"
 import chaiExclude from "chai-exclude"
 import { DecideRequestParametersValidatorTests } from "./modules/requests/DecideRequestParamsValidator.test"
+import { RequestItemProcessorTests } from "./modules/requests/GenericRequestItemProcessor.test"
 import { IncomingRequestControllerTests } from "./modules/requests/IncomingRequestsController.test"
 import { ConsumptionRequestTest } from "./modules/requests/local/ConsumptionRequest.test"
 import { OutgoingRequestControllerTests } from "./modules/requests/OutgoingRequestsController.test"
-import { RequestItemProcessorTests } from "./modules/requests/RequestItemProcessor.test"
 import { RequestItemProcessorRegistryTests } from "./modules/requests/RequestItemProcessorRegistry.test"
 
 use(chaiExclude)
