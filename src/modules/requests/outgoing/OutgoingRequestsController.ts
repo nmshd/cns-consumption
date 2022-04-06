@@ -1,29 +1,41 @@
 import { IDatabaseCollection } from "@js-soft/docdb-access-abstractions"
-import { ISerializable, Serializable, type } from "@js-soft/ts-serval"
-import { IRequest, IResponse, Request } from "@nmshd/content"
+import { ISerializable, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval"
+import { IRequest, IResponse, Request, RequestItem, RequestItemGroup } from "@nmshd/content"
 import { CoreDate, ICoreAddress, ICoreId, Message } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionIds } from "../../../consumption"
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
+import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProcessorRegistry"
+import { ValidationResult } from "../itemProcessors/ValidationResult"
 import { ConsumptionRequest } from "../local/ConsumptionRequest"
 import { ConsumptionRequestStatus } from "../local/ConsumptionRequestStatus"
 import { ConsumptionResponse } from "../local/ConsumptionResponse"
 
+export type IRequestWithoutId = Omit<IRequest, "id">
+
 export interface ICreateOutgoingRequestParameters extends ISerializable {
-    content: Omit<IRequest, "id">
+    request: IRequestWithoutId
     peer: ICoreAddress
 }
 
 @type("CreateOutgoingRequestParameters")
-export class CreateOutgoingRequestParameters extends Serializable implements ICreateOutgoingRequestParameters {
-    public source: Message
-    public content: Omit<Request, "id">
+export class CreateOutgoingRequestParameters extends SerializableAsync implements ICreateOutgoingRequestParameters {
+    @serialize()
+    @validate()
+    public request: Request
+
+    @serialize()
+    @validate()
     public peer: ICoreAddress
+
+    public static async from(value: ICreateOutgoingRequestParameters): Promise<CreateOutgoingRequestParameters> {
+        return await super.fromT(value, CreateOutgoingRequestParameters)
+    }
 }
 
 export class OutgoingRequestsController extends ConsumptionBaseController {
     private consumptionRequests: IDatabaseCollection
 
-    public constructor(parent: ConsumptionController) {
+    public constructor(parent: ConsumptionController, public readonly processorRegistry: RequestItemProcessorRegistry) {
         super(ConsumptionControllerName.RequestsController, parent)
     }
 
@@ -33,10 +45,56 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         return this
     }
 
-    public async createOutgoingRequest(params: ICreateOutgoingRequestParameters): Promise<ConsumptionRequest> {
+    public async canCreate(params: ICreateOutgoingRequestParameters): Promise<ValidationResult> {
+        const parsedParams = await CreateOutgoingRequestParameters.from(params)
+
+        const innerResults = await this.canCreateItems(parsedParams)
+
+        const result = ValidationResult.fromItems(innerResults)
+
+        return result
+    }
+
+    private async canCreateItems(parsedParams: CreateOutgoingRequestParameters) {
+        const results: ValidationResult[] = []
+
+        for (const requestItem of parsedParams.request.items) {
+            if (requestItem instanceof RequestItem) {
+                const canCreateItem = await this.canCreateRequestItem(requestItem)
+                results.push(canCreateItem)
+            } else {
+                const result = await this.canCreateRequestItemGroup(requestItem)
+                results.push(result)
+            }
+        }
+
+        return results
+    }
+
+    private async canCreateRequestItem(requestItem: RequestItem) {
+        const processor = this.processorRegistry.getProcessorForItem(requestItem)
+        return await processor.canCreateOutgoingRequestItem(requestItem)
+    }
+
+    private async canCreateRequestItemGroup(requestItem: RequestItemGroup) {
+        const innerResults: ValidationResult[] = []
+
+        for (const innerRequestItem of requestItem.items) {
+            const canCreateItem = await this.canCreateRequestItem(innerRequestItem)
+            innerResults.push(canCreateItem)
+        }
+
+        const result = ValidationResult.fromItems(innerResults)
+
+        return result
+    }
+
+    public async create(params: ICreateOutgoingRequestParameters): Promise<ConsumptionRequest> {
+        params = await CreateOutgoingRequestParameters.from(params)
+
         const consumptionRequestId = await ConsumptionIds.request.generate()
 
-        const request = await Request.from({ id: consumptionRequestId, ...params.content })
+        const request = await Request.from({ id: consumptionRequestId, ...params.request })
 
         const consumptionRequest = await ConsumptionRequest.from({
             id: consumptionRequestId,

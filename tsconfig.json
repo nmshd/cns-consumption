@@ -6,6 +6,7 @@
         "declaration": true,
         "outDir": "dist",
         "strict": true,
+        "noImplicitOverride": true,
         "allowSyntheticDefaultImports": true,
         "emitDecoratorMetadata": true,
         "esModuleInterop": true,

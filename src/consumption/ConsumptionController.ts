@@ -4,6 +4,7 @@ import {
     DraftsController,
     OutgoingRequestsController,
     RelationshipInfoController,
+    RequestItemProcessorRegistry,
     SettingsController,
     SharedItemsController
 } from "../modules"
@@ -50,8 +51,9 @@ export class ConsumptionController {
     public async init(): Promise<ConsumptionController> {
         this._attributes = await new ConsumptionAttributesController(this).init()
         this._drafts = await new DraftsController(this).init()
-        this._outgoingRequests = await new OutgoingRequestsController(this).init()
-        this._incomingRequests = await new IncomingRequestsController(this).init()
+        const processorRegistry = new RequestItemProcessorRegistry()
+        this._outgoingRequests = await new OutgoingRequestsController(this, processorRegistry).init()
+        this._incomingRequests = await new IncomingRequestsController(this, processorRegistry).init()
         this._settings = await new SettingsController(this).init()
         this._sharedItems = await new SharedItemsController(this).init()
         this._relationshipInfo = await new RelationshipInfoController(this).init()

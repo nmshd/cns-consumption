@@ -37,12 +37,9 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     private consumptionRequests: IDatabaseCollection
     private readonly decideRequestParamsValidator: DecideRequestParametersValidator =
         new DecideRequestParametersValidator()
-    public readonly requestItemProcessorRegistry: RequestItemProcessorRegistry
 
-    public constructor(parent: ConsumptionController) {
+    public constructor(parent: ConsumptionController, public readonly processorRegistry: RequestItemProcessorRegistry) {
         super(ConsumptionControllerName.RequestsController, parent)
-
-        this.requestItemProcessorRegistry = new RequestItemProcessorRegistry()
     }
 
     public async init(): Promise<IncomingRequestsController> {
@@ -172,7 +169,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         params: DecideRequestItemParameters,
         requestItem: RequestItem
     ): Promise<ResponseItem> {
-        const processor = this.requestItemProcessorRegistry.getProcessorForItem(requestItem)
+        const processor = this.processorRegistry.getProcessorForItem(requestItem)
 
         if (params instanceof AcceptRequestItemParameters) {
             return await processor.accept(requestItem, params)

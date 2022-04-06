@@ -1,5 +1,4 @@
-import { AcceptResponseItem, RejectResponseItem, RequestItem, ResponseItemResult } from "@nmshd/content"
-import { TestRequestItem } from "../../../../test/modules/requests/testHelpers/TestRequestItem"
+import { AcceptResponseItem, RejectResponseItem, RequestItem, ResponseItem, ResponseItemResult } from "@nmshd/content"
 import { AcceptRequestItemParameters } from "../incoming/decideRequestParameters/AcceptRequestItemParameters"
 import { RejectRequestItemParameters } from "../incoming/decideRequestParameters/RejectRequestItemParameters"
 import { IRequestItemProcessor } from "./IRequestItemProcessor"
@@ -11,7 +10,7 @@ export class GenericRequestItemProcessor<
     TRejectParams extends RejectRequestItemParameters = RejectRequestItemParameters
 > implements IRequestItemProcessor<TRequestItem, TAcceptParams, TRejectParams>
 {
-    public checkPrerequisitesOfIncomingRequestItem(_requestItem: TestRequestItem): Promise<boolean> {
+    public checkPrerequisitesOfIncomingRequestItem(_requestItem: TRequestItem): Promise<boolean> {
         return Promise.resolve(true)
     }
 
@@ -56,11 +55,11 @@ export class GenericRequestItemProcessor<
         return Promise.resolve(true)
     }
 
-    public validateOutgoingRequestItem(_requestItem: TestRequestItem): Promise<ValidationResult> {
+    public canCreateOutgoingRequestItem(_requestItem: TRequestItem): Promise<ValidationResult> {
         return Promise.resolve(ValidationResult.success())
     }
 
-    public applyIncomingResponseItem(_responseItem: AcceptResponseItem, _requestItem: TestRequestItem): Promise<void> {
+    public applyIncomingResponseItem(_responseItem: ResponseItem, _requestItem: TRequestItem): Promise<void> {
         // do nothing
         return Promise.resolve()
     }

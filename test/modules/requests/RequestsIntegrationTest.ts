@@ -10,9 +10,18 @@ import {
     IAcceptRequestParameters,
     ICreateOutgoingRequestParameters,
     IRejectRequestParameters,
-    RejectRequestItemParameters
+    RejectRequestItemParameters,
+    ValidationResult
 } from "@nmshd/consumption"
-import { AcceptResponseItem, IResponse, Request, Response, ResponseItemResult, ResponseResult } from "@nmshd/content"
+import {
+    AcceptResponseItem,
+    IResponse,
+    Request,
+    RequestItemGroup,
+    Response,
+    ResponseItemResult,
+    ResponseResult
+} from "@nmshd/content"
 import {
     AccountController,
     CoreAddress,
@@ -25,6 +34,7 @@ import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
+import { TestRequestItem } from "./testHelpers/TestRequestItem"
 
 export abstract class RequestsIntegrationTest extends IntegrationTest {
     public Given: RequestsGiven // eslint-disable-line @typescript-eslint/naming-convention
@@ -54,6 +64,7 @@ export class RequestsTestsContext {
 
     public givenConsumptionRequest?: ConsumptionRequest
     public consumptionRequestAfterAction?: ConsumptionRequest
+    public validationResult: ValidationResult
     public actionToTry: () => Promise<void>
 }
 
@@ -80,29 +91,27 @@ export class RequestsGiven {
         const content = await Request.from({
             "@type": "Request",
             items: [
-                {
-                    "@type": "TestRequestItem",
+                await TestRequestItem.from({
                     mustBeAccepted: false,
                     responseMetadata: {
                         outerItemMetaKey: "outerItemMetaValue"
                     }
-                },
-                {
+                }),
+                await RequestItemGroup.from({
                     "@type": "RequestItemGroup",
+                    mustBeAccepted: false,
                     responseMetadata: {
                         groupMetaKey: "groupMetaValue"
                     },
-                    mustBeAccepted: false,
                     items: [
-                        {
-                            "@type": "TestRequestItem",
+                        await TestRequestItem.from({
                             responseMetadata: {
                                 innerItemMetaKey: "innerItemMetaValue"
                             },
                             mustBeAccepted: false
-                        }
+                        })
                     ]
-                }
+                })
             ]
         })
 
@@ -162,39 +171,57 @@ export class RequestsGiven {
     public async anOutgoingRequestWith(params: { status?: ConsumptionRequestStatus }): Promise<ConsumptionRequest> {
         params.status ??= ConsumptionRequestStatus.Open
 
-        this.context.givenConsumptionRequest =
-            await this.context.consumptionController.outgoingRequests.createOutgoingRequest({
-                content: {
-                    items: [
-                        {
-                            mustBeAccepted: false
-                        }
-                    ]
-                },
-                peer: CoreAddress.from("id1")
-            })
+        this.context.givenConsumptionRequest = await this.context.consumptionController.outgoingRequests.create({
+            request: {
+                items: [
+                    await TestRequestItem.from({
+                        mustBeAccepted: false
+                    })
+                ]
+            },
+            peer: CoreAddress.from("id1")
+        })
 
         return this.context.givenConsumptionRequest
     }
 }
 
 export class RequestsWhen {
+    public async iCallCanCreateForAnOutgoingRequest(
+        params?: Partial<ICreateOutgoingRequestParameters>
+    ): Promise<ValidationResult> {
+        const realParams: ICreateOutgoingRequestParameters = {
+            request: params?.request ?? {
+                items: [
+                    await TestRequestItem.from({
+                        mustBeAccepted: false
+                    })
+                ]
+            },
+            peer: params?.peer ?? CoreAddress.from("id1")
+        }
+
+        this.context.validationResult = await this.context.consumptionController.outgoingRequests.canCreate(realParams)
+
+        return this.context.validationResult
+    }
     public constructor(private readonly context: RequestsTestsContext) {}
 
     public async iCreateAnOutgoingRequest(): Promise<void> {
         const params: ICreateOutgoingRequestParameters = {
-            content: {
+            request: {
                 items: [
-                    {
+                    await TestRequestItem.from({
                         mustBeAccepted: false
-                    }
+                    })
                 ]
             },
             peer: CoreAddress.from("id1")
         }
 
-        this.context.consumptionRequestAfterAction =
-            await this.context.consumptionController.outgoingRequests.createOutgoingRequest(params)
+        this.context.consumptionRequestAfterAction = await this.context.consumptionController.outgoingRequests.create(
+            params
+        )
     }
 
     public async iCreateAnIncomingRequestWithSource(source: Message | RelationshipTemplate): Promise<void> {
@@ -295,13 +322,25 @@ export class RequestsWhen {
         return Promise.resolve()
     }
 
-    public iTryToAcceptARequestWithSyntacticallyInvalidInput(): Promise<void> {
+    public iTryToAcceptARequestWithoutItemsParameters(): Promise<void> {
         const paramsWithoutItems: Omit<IAcceptRequestParameters, "items"> = {
             requestId: CoreId.from("CNSREQ1")
         }
 
         this.context.actionToTry = async () => {
             await this.context.consumptionController.incomingRequests.accept(paramsWithoutItems as any)
+        }
+
+        return Promise.resolve()
+    }
+
+    public iTryToCreateAnOutgoingRequestWithoutRequest(): Promise<void> {
+        const paramsWithoutItems: Omit<ICreateOutgoingRequestParameters, "request"> = {
+            peer: CoreAddress.from("id1")
+        }
+
+        this.context.actionToTry = async () => {
+            await this.context.consumptionController.outgoingRequests.create(paramsWithoutItems as any)
         }
 
         return Promise.resolve()
@@ -398,6 +437,16 @@ export class RequestsThen {
         const statusLogEntry = modifiedRequest.statusLog[modifiedRequest.statusLog.length - 1]
         expect(statusLogEntry.newStatus).to.equal(status)
 
+        return Promise.resolve()
+    }
+
+    public itReturnsASuccessfulValidationResult(): Promise<void> {
+        expect(this.context.validationResult.isSuccess()).to.be.true
+        return Promise.resolve()
+    }
+
+    public itReturnsAnErrorValidationResult(): Promise<void> {
+        expect(this.context.validationResult.isError()).to.be.true
         return Promise.resolve()
     }
 

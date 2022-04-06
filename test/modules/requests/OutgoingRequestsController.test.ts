@@ -1,3 +1,4 @@
+/* eslint-disable mocha/no-async-describe */
 import { IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import { Result } from "@js-soft/ts-utils"
@@ -7,9 +8,13 @@ import {
     ConsumptionRequest,
     ConsumptionRequestStatus,
     DecideRequestParametersValidator,
-    IDecideRequestParameters
+    ErrorValidationResult,
+    IDecideRequestParameters,
+    IRequestWithoutId
 } from "@nmshd/consumption"
 import { AccountController, IConfigOverwrite, Transport } from "@nmshd/transport"
+import { expect } from "chai"
+import itParam from "mocha-param"
 import { TestUtil } from "../../core/TestUtil"
 import {
     RequestsGiven,
@@ -18,6 +23,8 @@ import {
     RequestsThen,
     RequestsWhen
 } from "./RequestsIntegrationTest"
+import { TestRequestItem } from "./testHelpers/TestRequestItem"
+import { TestRequestItemProcessor } from "./testHelpers/TestRequestItemProcessor"
 
 export class AlwaysTrueDecideRequestParamsValidator extends DecideRequestParametersValidator {
     public validate(_params: IDecideRequestParameters, _request: ConsumptionRequest): Result<undefined> {
@@ -53,10 +60,156 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                 accountController = (await TestUtil.provideAccounts(transport, 1))[0]
                 consumptionController = await new ConsumptionController(transport, accountController).init()
 
+                consumptionController.incomingRequests.processorRegistry.registerProcessorForType(
+                    TestRequestItemProcessor,
+                    TestRequestItem
+                )
+
                 that.init(new RequestsTestsContext(accountController, consumptionController))
                 Given = that.Given
                 When = that.When
                 Then = that.Then
+            })
+
+            describe.only("CanCreate", function () {
+                it("returns 'success' on valid parameters", async function () {
+                    await When.iCallCanCreateForAnOutgoingRequest()
+                    await Then.itReturnsASuccessfulValidationResult()
+                })
+
+                const requestsWithOneInvalidItem: IRequestWithoutId[] = [
+                    {
+                        items: [
+                            {
+                                // @ts-expect-error
+                                "@type": "TestRequestItem",
+                                mustBeAccepted: false,
+                                shouldFailAtValidation: true
+                            }
+                        ]
+                    },
+                    {
+                        items: [
+                            {
+                                // @ts-expect-error
+                                "@type": "TestRequestItem",
+                                mustBeAccepted: false,
+                                shouldFailAtValidation: false
+                            },
+                            {
+                                // @ts-expect-error
+                                "@type": "TestRequestItem",
+                                mustBeAccepted: false,
+                                shouldFailAtValidation: true
+                            }
+                        ]
+                    },
+                    {
+                        items: [
+                            {
+                                "@type": "RequestItemGroup",
+                                mustBeAccepted: false,
+                                items: [
+                                    {
+                                        // @ts-expect-error
+                                        "@type": "TestRequestItem",
+                                        mustBeAccepted: false,
+                                        shouldFailAtValidation: true
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+                itParam(
+                    "returns 'error' when at least one RequestItem is invalid",
+                    requestsWithOneInvalidItem,
+                    async function (request: IRequestWithoutId) {
+                        await When.iCallCanCreateForAnOutgoingRequest({
+                            request: request
+                        })
+                        await Then.itReturnsAnErrorValidationResult()
+                    }
+                )
+
+                it("returns a validation result that contains each error (simple)", async function () {
+                    const validationResult = await When.iCallCanCreateForAnOutgoingRequest({
+                        request: {
+                            items: [
+                                {
+                                    // @ts-expect-error
+                                    "@type": "TestRequestItem",
+                                    mustBeAccepted: false,
+                                    shouldFailAtValidation: true
+                                },
+                                {
+                                    // @ts-expect-error
+                                    "@type": "TestRequestItem",
+                                    mustBeAccepted: false,
+                                    shouldFailAtValidation: true
+                                }
+                            ]
+                        }
+                    })
+                    expect(validationResult.isError()).to.be.true
+                    expect((validationResult as ErrorValidationResult).code).to.equal("inheritedFromItem")
+                    expect((validationResult as ErrorValidationResult).message).to.equal(
+                        "Some child items have errors."
+                    )
+                    expect(validationResult.items).to.have.lengthOf(2)
+
+                    expect(validationResult.items[0].isError()).to.be.true
+                    expect((validationResult.items[0] as ErrorValidationResult).code).to.equal("aCode")
+                    expect((validationResult.items[0] as ErrorValidationResult).message).to.equal("aMessage")
+
+                    expect(validationResult.items[1].isError()).to.be.true
+                    expect((validationResult.items[1] as ErrorValidationResult).code).to.equal("aCode")
+                    expect((validationResult.items[1] as ErrorValidationResult).message).to.equal("aMessage")
+                })
+
+                it("returns a validation result that contains each error (complex)", async function () {
+                    const validationResult = await When.iCallCanCreateForAnOutgoingRequest({
+                        request: {
+                            items: [
+                                {
+                                    // @ts-expect-error
+                                    "@type": "TestRequestItem",
+                                    mustBeAccepted: false,
+                                    shouldFailAtValidation: false
+                                },
+                                {
+                                    "@type": "RequestItemGroup",
+                                    mustBeAccepted: false,
+                                    items: [
+                                        {
+                                            // @ts-expect-error
+                                            "@type": "TestRequestItem",
+                                            mustBeAccepted: false,
+                                            shouldFailAtValidation: true
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    })
+                    expect(validationResult.isError()).to.be.true
+                    expect((validationResult as ErrorValidationResult).code).to.equal("inheritedFromItem")
+                    expect((validationResult as ErrorValidationResult).message).to.equal(
+                        "Some child items have errors."
+                    )
+                    expect(validationResult.items).to.have.lengthOf(2)
+
+                    expect(validationResult.items[0].isError()).to.be.false
+
+                    expect(validationResult.items[1].isError()).to.be.true
+                    expect((validationResult.items[1] as ErrorValidationResult).code).to.equal("inheritedFromItem")
+                    expect((validationResult.items[1] as ErrorValidationResult).message).to.equal(
+                        "Some child items have errors."
+                    )
+
+                    expect(validationResult.items[1].items).to.have.lengthOf(1)
+                    expect(validationResult.items[1].items[0].isError()).to.be.true
+                })
             })
 
             describe("CreateOutgoingRequest", function () {
@@ -65,6 +218,11 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.theCreatedOutgoingRequestHasAllProperties()
                     await Then.theRequestIsInStatus(ConsumptionRequestStatus.Draft)
                     await Then.theRequestDoesNotHaveSourceAndPeerSet()
+                })
+
+                it("throws on syntactically invalid input", async function () {
+                    await When.iTryToCreateAnOutgoingRequestWithoutRequest()
+                    await Then.itFailsWithTheErrorMessage("*request*Value is not defined*")
                 })
 
                 it("persists the created Request", async function () {

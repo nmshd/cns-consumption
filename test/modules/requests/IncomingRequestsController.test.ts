@@ -52,7 +52,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 accountController = (await TestUtil.provideAccounts(transport, 1))[0]
                 consumptionController = await new ConsumptionController(transport, accountController).init()
 
-                consumptionController.incomingRequests.requestItemProcessorRegistry.registerProcessorForType(
+                consumptionController.incomingRequests.processorRegistry.registerProcessorForType(
                     TestRequestItemProcessor,
                     TestRequestItem
                 )
@@ -211,7 +211,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 }).timeout(5000)
 
                 it("throws on syntactically invalid input", async function () {
-                    await When.iTryToAcceptARequestWithSyntacticallyInvalidInput()
+                    await When.iTryToAcceptARequestWithoutItemsParameters()
                     await Then.itFailsWithTheErrorMessage("*items*Value is not defined*")
                 }).timeout(5000)
             })

@@ -16,6 +16,12 @@ export abstract class ValidationResult {
     public static error(code: string, message: string, items: ValidationResult[] = []): ErrorValidationResult {
         return new ErrorValidationResult(code, message, items)
     }
+
+    public static fromItems(items: ValidationResult[]): ValidationResult {
+        return items.some((r) => r.isError())
+            ? ValidationResult.error("inheritedFromItem", "Some child items have errors.", items)
+            : ValidationResult.success(items)
+    }
 }
 
 export class SuccessfulValidatonResult extends ValidationResult {
