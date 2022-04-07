@@ -92,7 +92,7 @@ export class ConsumptionRequest extends CoreSerializableAsync implements IConsum
         this.status = newStatus
     }
 
-    public static async from(value: IConsumptionRequest): Promise<ConsumptionRequest> {
+    public static override async from(value: IConsumptionRequest): Promise<ConsumptionRequest> {
         return await super.fromT<ConsumptionRequest>(value, ConsumptionRequest)
     }
 }

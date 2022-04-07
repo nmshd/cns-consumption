@@ -38,7 +38,7 @@ export class ConsumptionResponse extends CoreSerializableAsync implements IConsu
     @validate()
     public content: Response
 
-    public static async from(value: IConsumptionResponse): Promise<ConsumptionResponse> {
+    public static override async from(value: IConsumptionResponse): Promise<ConsumptionResponse> {
         return await super.fromT<ConsumptionResponse>(value, ConsumptionResponse)
     }
 }

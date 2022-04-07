@@ -6,7 +6,7 @@ export class OffboardingFlowController extends ConsumptionBaseController {
         super(ConsumptionControllerName.OffboardingFlowController, parent)
     }
 
-    public async init(): Promise<OffboardingFlowController> {
+    public override async init(): Promise<OffboardingFlowController> {
         await super.init()
 
         return this

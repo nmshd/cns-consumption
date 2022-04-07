@@ -25,7 +25,7 @@ export abstract class ValidationResult {
 }
 
 export class SuccessfulValidatonResult extends ValidationResult {
-    public constructor(public readonly items: ValidationResult[]) {
+    public constructor(items: ValidationResult[]) {
         super(items)
     }
 }

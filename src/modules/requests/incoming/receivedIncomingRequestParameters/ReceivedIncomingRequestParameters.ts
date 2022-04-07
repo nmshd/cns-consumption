@@ -17,7 +17,7 @@ export class ReceivedIncomingRequestParameters extends Serializable implements I
     @validate()
     public source: Message | RelationshipTemplate
 
-    public static from(params: IReceivedIncomingRequestParameters): ReceivedIncomingRequestParameters {
+    public static override from(params: IReceivedIncomingRequestParameters): ReceivedIncomingRequestParameters {
         return super.fromT(params, ReceivedIncomingRequestParameters)
     }
 }

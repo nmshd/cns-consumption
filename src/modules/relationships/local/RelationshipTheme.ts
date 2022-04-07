@@ -25,7 +25,7 @@ export class RelationshipTheme extends SerializableAsync implements IRelationshi
     @serialize()
     public foregroundColor: string
 
-    public static async from(value: IRelationshipTheme): Promise<RelationshipTheme> {
+    public static override async from(value: IRelationshipTheme): Promise<RelationshipTheme> {
         return await super.fromT(value, RelationshipTheme)
     }
 }

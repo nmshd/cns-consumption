@@ -22,7 +22,7 @@ export enum ConsumptionRequestStatusOld {
 
 @type("ConsumptionRequestOld")
 export class ConsumptionRequestOld extends CoreSynchronizable implements IConsumptionRequestOld {
-    public readonly technicalProperties = [
+    public override readonly technicalProperties = [
         "@type",
         "@context",
         nameof<ConsumptionRequestOld>((r) => r.isOwn),
@@ -32,7 +32,7 @@ export class ConsumptionRequestOld extends CoreSynchronizable implements IConsum
         nameof<ConsumptionRequestOld>((r) => r.status)
     ]
 
-    public readonly metadataProperties = [
+    public override readonly metadataProperties = [
         nameof<ConsumptionRequestOld>((r) => r.processingMetadata),
         nameof<ConsumptionRequestOld>((r) => r.metadata),
         nameof<ConsumptionRequestOld>((r) => r.metadataModifiedAt)
@@ -77,7 +77,7 @@ export class ConsumptionRequestOld extends CoreSynchronizable implements IConsum
     @serialize()
     public metadataModifiedAt?: CoreDate
 
-    public static async from(value: IConsumptionRequestOld): Promise<ConsumptionRequestOld> {
+    public static override async from(value: IConsumptionRequestOld): Promise<ConsumptionRequestOld> {
         return (await super.from(value, ConsumptionRequestOld)) as ConsumptionRequestOld
     }
 }

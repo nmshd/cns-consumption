@@ -18,12 +18,12 @@ export class Signature extends CoreSerializableAsync {
     @serialize()
     public signature: CryptoSignature
 
-    public static async from(value: ISignature): Promise<Signature> {
+    public static override async from(value: ISignature): Promise<Signature> {
         const signature = await CryptoSignature.fromBase64(value.signature)
         return await super.fromT<Signature>({ content: value.content, signature: signature }, Signature)
     }
 
-    public static async deserialize(value: string): Promise<Signature> {
+    public static override async deserialize(value: string): Promise<Signature> {
         return await super.deserializeT<Signature>(value, Signature)
     }
 
@@ -35,11 +35,11 @@ export class Signature extends CoreSerializableAsync {
         return correct
     }
 
-    public toJSON(): object {
+    public override toJSON(): object {
         return { content: this.content.toJSON(), signature: this.signature.toBase64() }
     }
 
-    public serialize(): string {
+    public override serialize(): string {
         return JSON.stringify(this.toJSON())
     }
 }

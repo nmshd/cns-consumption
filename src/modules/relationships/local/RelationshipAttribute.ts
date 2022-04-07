@@ -22,7 +22,7 @@ export class RelationshipAttribute extends SerializableAsync implements IRelatio
     @serialize()
     public sharedItem: CoreId
 
-    public static async from(value: IRelationshipAttribute): Promise<RelationshipAttribute> {
+    public static override async from(value: IRelationshipAttribute): Promise<RelationshipAttribute> {
         return await super.fromT(value, RelationshipAttribute)
     }
 }

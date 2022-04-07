@@ -23,7 +23,7 @@ export interface ISetting extends ICoreSynchronizable {
 
 @type("Setting")
 export class Setting extends CoreSynchronizable implements ISetting {
-    public readonly technicalProperties = [
+    public override readonly technicalProperties = [
         "@type",
         "@context",
         nameof<Setting>((r) => r.key),
@@ -35,9 +35,9 @@ export class Setting extends CoreSynchronizable implements ISetting {
         nameof<Setting>((r) => r.succeedsAt)
     ]
 
-    public readonly userdataProperties = [nameof<Setting>((r) => r.value)]
+    public override readonly userdataProperties = [nameof<Setting>((r) => r.value)]
 
-    public readonly metadataProperties = [
+    public override readonly metadataProperties = [
         nameof<Setting>((r) => r.metadata),
         nameof<Setting>((r) => r.metadataModifiedAt)
     ]
@@ -82,7 +82,7 @@ export class Setting extends CoreSynchronizable implements ISetting {
     @serialize()
     public metadataModifiedAt?: CoreDate
 
-    public static async from(value: ISetting): Promise<Setting> {
+    public static override async from(value: ISetting): Promise<Setting> {
         return await super.fromT(value, Setting)
     }
 }

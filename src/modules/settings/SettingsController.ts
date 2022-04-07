@@ -11,7 +11,7 @@ export class SettingsController extends ConsumptionBaseController {
         super(ConsumptionControllerName.SettingsController, parent)
     }
 
-    public async init(): Promise<SettingsController> {
+    public override async init(): Promise<SettingsController> {
         await super.init()
 
         this.settings = await this.parent.accountController.getSynchronizedCollection("Settings")

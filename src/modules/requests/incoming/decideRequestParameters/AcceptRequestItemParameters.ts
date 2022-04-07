@@ -5,7 +5,7 @@ export interface IAcceptRequestItemParameters extends ISerializable {}
 
 @type("AcceptRequestItemParameters")
 export class AcceptRequestItemParameters extends DecideRequestItemParameters implements IAcceptRequestItemParameters {
-    public static from(params: IAcceptRequestItemParameters): AcceptRequestItemParameters {
+    public static override from(params: IAcceptRequestItemParameters): AcceptRequestItemParameters {
         return super.fromT(params, AcceptRequestItemParameters)
     }
 }

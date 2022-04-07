@@ -16,7 +16,7 @@ export class RejectRequestItemParameters extends DecideRequestItemParameters imp
     @validate({ nullable: true })
     public message?: string
 
-    public static from(params: IRejectRequestItemParameters): RejectRequestItemParameters {
+    public static override from(params: IRejectRequestItemParameters): RejectRequestItemParameters {
         return super.fromT(params, RejectRequestItemParameters)
     }
 }

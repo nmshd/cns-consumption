@@ -27,7 +27,9 @@ export class CreateOutgoingRequestParameters extends SerializableAsync implement
     @validate()
     public peer: ICoreAddress
 
-    public static async from(value: ICreateOutgoingRequestParameters): Promise<CreateOutgoingRequestParameters> {
+    public static override async from(
+        value: ICreateOutgoingRequestParameters
+    ): Promise<CreateOutgoingRequestParameters> {
         return await super.fromT(value, CreateOutgoingRequestParameters)
     }
 }
@@ -39,7 +41,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         super(ConsumptionControllerName.RequestsController, parent)
     }
 
-    public async init(): Promise<OutgoingRequestsController> {
+    public override async init(): Promise<OutgoingRequestsController> {
         await super.init()
         this.consumptionRequests = await this.parent.accountController.getSynchronizedCollection("Requests")
         return this

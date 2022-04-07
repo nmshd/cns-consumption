@@ -11,7 +11,7 @@ export class DecideRequestItemGroupParameters extends Serializable implements ID
     @validate()
     public items: DecideRequestItemParameters[]
 
-    public static from(params: IDecideRequestItemGroupParameters): DecideRequestItemGroupParameters {
+    public static override from(params: IDecideRequestItemGroupParameters): DecideRequestItemGroupParameters {
         return super.fromT(params, DecideRequestItemGroupParameters)
     }
 }

@@ -19,7 +19,7 @@ export class CreateTemplateBodyParams extends SerializableAsync implements ICrea
     @validate({ nullable: true })
     public requestOptionalAttributes: string[]
 
-    public static async from(value: ICreateTemplateBodyParams): Promise<CreateTemplateBodyParams> {
+    public static override async from(value: ICreateTemplateBodyParams): Promise<CreateTemplateBodyParams> {
         return await super.fromT(value, CreateTemplateBodyParams)
     }
 }
