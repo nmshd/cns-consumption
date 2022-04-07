@@ -95,8 +95,8 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     "throws on syntactically invalid input",
                     syntacticallyInvalidParams,
                     async function (testParams) {
-                        await When.iTryToCallCanCreate(testParams.params as any)
-                        await Then.itFailsWithTheErrorMessage(testParams.expectedErrorMessage)
+                        await When.iTryToCallCanCreateForAnOutgoingRequest(testParams.params as any)
+                        await Then.itThrowsAnErrorWithTheErrorMessage(testParams.expectedErrorMessage)
                     }
                 )
 
@@ -245,7 +245,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
 
                 it("throws on syntactically invalid input", async function () {
                     await When.iTryToCreateAnOutgoingRequestWithoutRequest()
-                    await Then.itFailsWithTheErrorMessage("*request*Value is not defined*")
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*request*Value is not defined*")
                 })
 
                 it("persists the created Request", async function () {

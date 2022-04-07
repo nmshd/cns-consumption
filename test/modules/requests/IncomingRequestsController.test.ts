@@ -79,7 +79,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 it("cannot create incoming Request from outgoing Message", async function () {
                     const outgoingMessage = await TestObjectFactory.createOutgoingMessage(currentIdentity)
                     await When.iTryToCreateAnIncomingRequestWith({ source: outgoingMessage })
-                    await Then.itFailsWithTheErrorMessage("Cannot create incoming Request from own Message")
+                    await Then.itThrowsAnErrorWithTheErrorMessage("Cannot create incoming Request from own Message")
                 }).timeout(5000)
 
                 it("creates an incoming Request with an incoming RelationshipTemplate as source", async function () {
@@ -101,7 +101,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 it("cannot create incoming Request from outgoing RelationshipTemplate", async function () {
                     const outgoingTemplate = await TestObjectFactory.createOutgoingRelationshipTemplate(currentIdentity)
                     await When.iTryToCreateAnIncomingRequestWith({ source: outgoingTemplate })
-                    await Then.itFailsWithTheErrorMessage(
+                    await Then.itThrowsAnErrorWithTheErrorMessage(
                         "Cannot create incoming Request from own Relationship Template"
                     )
                 }).timeout(5000)
@@ -212,7 +212,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
                 it("throws on syntactically invalid input", async function () {
                     await When.iTryToAcceptARequestWithoutItemsParameters()
-                    await Then.itFailsWithTheErrorMessage("*items*Value is not defined*")
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*items*Value is not defined*")
                 }).timeout(5000)
             })
 
@@ -303,7 +303,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
                 it("throws on syntactically invalid input", async function () {
                     await When.iTryToRejectARequestWithSyntacticallyInvalidInput()
-                    await Then.itFailsWithTheErrorMessage("*items*Value is not defined*")
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*items*Value is not defined*")
                 }).timeout(5000)
             })
 
@@ -344,13 +344,13 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 it("cannot complete outgoing ConsumptionRequests", async function () {
                     await Given.anOutgoingRequest()
                     await When.iTryToCompleteTheRequest()
-                    await Then.itFailsWithTheErrorMessage("*Cannot decide own Request*")
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*Cannot decide own Request*")
                 })
 
                 it("can only complete ConsumptionRequests in status 'Decided'", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iTryToCompleteTheRequest()
-                    await Then.itFailsWithTheErrorMessage("*Can only decide Request in status 'Decided'*")
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*Can only decide Request in status 'Decided'*")
                 })
             })
         })

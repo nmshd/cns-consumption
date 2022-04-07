@@ -322,7 +322,7 @@ export class RequestsWhen {
         return Promise.resolve()
     }
 
-    public iTryToCallCanCreate(params: ICreateOutgoingRequestParameters): Promise<void> {
+    public iTryToCallCanCreateForAnOutgoingRequest(params: ICreateOutgoingRequestParameters): Promise<void> {
         this.context.actionToTry = async () => {
             await this.context.consumptionController.outgoingRequests.canCreate(params)
         }
@@ -487,7 +487,7 @@ export class RequestsThen {
         return Promise.resolve()
     }
 
-    public async itFailsWithTheErrorMessage(errorMessage: string): Promise<void> {
+    public async itThrowsAnErrorWithTheErrorMessage(errorMessage: string): Promise<void> {
         await TestUtil.expectThrowsAsync(this.context.actionToTry, errorMessage)
     }
 }
