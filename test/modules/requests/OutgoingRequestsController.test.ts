@@ -11,7 +11,7 @@ import {
     IDecideRequestParameters,
     IRequestWithoutId
 } from "@nmshd/consumption"
-import { AccountController, IConfigOverwrite, Transport } from "@nmshd/transport"
+import { AccountController, CoreId, IConfigOverwrite, Transport } from "@nmshd/transport"
 import { expect } from "chai"
 import itParam from "mocha-param"
 import { TestUtil } from "../../core/TestUtil"
@@ -26,16 +26,16 @@ import { TestRequestItem } from "./testHelpers/TestRequestItem"
 import { TestRequestItemProcessor } from "./testHelpers/TestRequestItemProcessor"
 
 export class AlwaysTrueDecideRequestParamsValidator extends DecideRequestParametersValidator {
-    public validate(_params: IDecideRequestParameters, _request: ConsumptionRequest): Result<undefined> {
+    public override validate(_params: IDecideRequestParameters, _request: ConsumptionRequest): Result<undefined> {
         return Result.ok(undefined)
     }
 }
 
 export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
     public constructor(
-        protected config: IConfigOverwrite,
-        protected connection: IDatabaseConnection,
-        protected loggerFactory: ILoggerFactory
+        protected override config: IConfigOverwrite,
+        protected override connection: IDatabaseConnection,
+        protected override loggerFactory: ILoggerFactory
     ) {
         super(config, connection, loggerFactory)
     }
@@ -70,11 +70,35 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                 Then = that.Then
             })
 
-            describe("CanCreate", function () {
+            describe.only("CanCreate", function () {
                 it("returns 'success' on valid parameters", async function () {
                     await When.iCallCanCreateForAnOutgoingRequest()
                     await Then.itReturnsASuccessfulValidationResult()
                 })
+
+                const syntacticallyInvalidParams = [
+                    {
+                        params: {
+                            peer: CoreId.from("")
+                        },
+                        expectedErrorMessage: "*request*Value is not defined*"
+                    },
+                    {
+                        params: {
+                            peer: CoreId.from(""),
+                            request: {}
+                        },
+                        expectedErrorMessage: "*Request.items*Value is not defined*"
+                    }
+                ]
+                itParam(
+                    "throws on syntactically invalid input",
+                    syntacticallyInvalidParams,
+                    async function (testParams) {
+                        await When.iTryToCallCanCreate(testParams.params as any)
+                        await Then.itFailsWithTheErrorMessage(testParams.expectedErrorMessage)
+                    }
+                )
 
                 const requestsWithOneInvalidItem: IRequestWithoutId[] = [
                     {

@@ -322,6 +322,14 @@ export class RequestsWhen {
         return Promise.resolve()
     }
 
+    public iTryToCallCanCreate(params: ICreateOutgoingRequestParameters): Promise<void> {
+        this.context.actionToTry = async () => {
+            await this.context.consumptionController.outgoingRequests.canCreate(params)
+        }
+
+        return Promise.resolve()
+    }
+
     public iTryToAcceptARequestWithoutItemsParameters(): Promise<void> {
         const paramsWithoutItems: Omit<IAcceptRequestParameters, "items"> = {
             requestId: CoreId.from("CNSREQ1")
