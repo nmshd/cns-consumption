@@ -8,8 +8,10 @@ import {
     ConsumptionRequestStatus,
     DecideRequestParametersValidator,
     ErrorValidationResult,
+    ICreateOutgoingRequestParameters,
     IDecideRequestParameters,
-    IRequestWithoutId
+    IRequestWithoutId,
+    ValidationResult
 } from "@nmshd/consumption"
 import { AccountController, CoreId, IConfigOverwrite, Transport } from "@nmshd/transport"
 import { expect } from "chai"
@@ -45,6 +47,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
         const transport = new Transport(that.connection, that.config, that.loggerFactory)
         let accountController: AccountController
         let consumptionController: ConsumptionController
+        let context: RequestsTestsContext | undefined
 
         describe("OutgoingRequestController", function () {
             let Given: RequestsGiven // eslint-disable-line @typescript-eslint/naming-convention
@@ -64,13 +67,18 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     TestRequestItem
                 )
 
-                that.init(new RequestsTestsContext(accountController, consumptionController))
+                context = new RequestsTestsContext(accountController, consumptionController)
+                that.init(context)
                 Given = that.Given
                 When = that.When
                 Then = that.Then
             })
 
-            describe.only("CanCreate", function () {
+            afterEach(function () {
+                context?.reset()
+            })
+
+            describe("CanCreate", function () {
                 it("returns 'success' on valid parameters", async function () {
                     await When.iCallCanCreateForAnOutgoingRequest()
                     await Then.itReturnsASuccessfulValidationResult()
@@ -235,12 +243,18 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                 })
             })
 
-            describe("CreateOutgoingRequest", function () {
+            describe("Create", function () {
                 it("creates a new outgoing ConsumptionRequest", async function () {
                     await When.iCreateAnOutgoingRequest()
                     await Then.theCreatedOutgoingRequestHasAllProperties()
                     await Then.theRequestIsInStatus(ConsumptionRequestStatus.Draft)
-                    await Then.theRequestDoesNotHaveSourceAndPeerSet()
+                    await Then.theRequestDoesNotHaveSourceSet()
+                    await Then.theNewRequestIsPersistedInTheDatabase()
+                })
+
+                it("calls canCreate", async function () {
+                    await When.iCreateAnOutgoingRequest()
+                    await Then.canAcceptIsBeingCalled()
                 })
 
                 it("throws on syntactically invalid input", async function () {
@@ -248,9 +262,16 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.itThrowsAnErrorWithTheErrorMessage("*request*Value is not defined*")
                 })
 
-                it("persists the created Request", async function () {
-                    await When.iCreateAnOutgoingRequest()
-                    await Then.theNewRequestIsPersistedInTheDatabase()
+                it("throws when canCreate returns an error", async function () {
+                    const oldCanCreate = consumptionController.outgoingRequests.canCreate
+                    consumptionController.outgoingRequests.canCreate = (_: ICreateOutgoingRequestParameters) => {
+                        return Promise.resolve(ValidationResult.error("aCode", "aMessage"))
+                    }
+
+                    await When.iTryToCreateAnOutgoingRequest()
+                    await Then.itThrowsAnErrorWithTheErrorMessage("aMessage")
+
+                    consumptionController.outgoingRequests.canCreate = oldCanCreate
                 })
             })
 

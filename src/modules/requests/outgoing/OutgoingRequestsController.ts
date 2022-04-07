@@ -1,5 +1,5 @@
 import { IDatabaseCollection } from "@js-soft/docdb-access-abstractions"
-import { IResponse, Request, RequestItem, RequestItemGroup } from "@nmshd/content"
+import { IRequest, IResponse, Request, RequestItem, RequestItemGroup } from "@nmshd/content"
 import { CoreDate, ICoreId, Message } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionIds } from "../../../consumption"
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
@@ -71,17 +71,23 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     }
 
     public async create(params: ICreateOutgoingRequestParameters): Promise<ConsumptionRequest> {
-        params = await CreateOutgoingRequestParameters.from(params)
+        const parsedParams = await CreateOutgoingRequestParameters.from(params)
 
-        const consumptionRequestId = await ConsumptionIds.request.generate()
+        const canCreateResult = await this.canCreate(parsedParams)
+        if (canCreateResult.isError()) {
+            throw new Error(canCreateResult.message)
+        }
 
-        const request = await Request.from({ id: consumptionRequestId, ...params.request })
+        const id = await ConsumptionIds.request.generate()
+
+        const request = await Request.from({ id, ...parsedParams.request.toJSON() } as IRequest)
 
         const consumptionRequest = await ConsumptionRequest.from({
-            id: consumptionRequestId,
+            id: id,
             content: request,
             createdAt: CoreDate.utc(),
             isOwn: true,
+            peer: parsedParams.peer,
             status: ConsumptionRequestStatus.Draft,
             statusLog: []
         })

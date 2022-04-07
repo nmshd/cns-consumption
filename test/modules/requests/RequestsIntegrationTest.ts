@@ -60,12 +60,27 @@ export class RequestsTestsContext {
     ) {
         this.requestsCollection = (consumptionController.outgoingRequests as any)
             .consumptionRequests as IDatabaseCollection
+
+        const oldCanCreate = this.consumptionController.outgoingRequests.canCreate
+        this.consumptionController.outgoingRequests.canCreate = (params: ICreateOutgoingRequestParameters) => {
+            this.canAcceptWasCalled = true
+            return oldCanCreate.call(this.consumptionController.outgoingRequests, params)
+        }
+    }
+
+    public reset(): void {
+        this.canAcceptWasCalled = false
+        this.givenConsumptionRequest = undefined
+        this.consumptionRequestAfterAction = undefined
+        this.validationResult = undefined
+        this.actionToTry = undefined
     }
 
     public givenConsumptionRequest?: ConsumptionRequest
     public consumptionRequestAfterAction?: ConsumptionRequest
-    public validationResult: ValidationResult
-    public actionToTry: () => Promise<void>
+    public validationResult?: ValidationResult
+    public canAcceptWasCalled = false
+    public actionToTry?: () => Promise<void>
 }
 
 export class RequestsGiven {
@@ -342,6 +357,23 @@ export class RequestsWhen {
         return Promise.resolve()
     }
 
+    public async iTryToCreateAnOutgoingRequest(): Promise<void> {
+        const params: ICreateOutgoingRequestParameters = {
+            request: {
+                items: [
+                    await TestRequestItem.from({
+                        mustBeAccepted: false
+                    })
+                ]
+            },
+            peer: CoreAddress.from("id1")
+        }
+
+        this.context.actionToTry = async () => {
+            await this.context.consumptionController.outgoingRequests.create(params as any)
+        }
+    }
+
     public iTryToCreateAnOutgoingRequestWithoutRequest(): Promise<void> {
         const paramsWithoutItems: Omit<ICreateOutgoingRequestParameters, "request"> = {
             peer: CoreAddress.from("id1")
@@ -370,9 +402,9 @@ export class RequestsWhen {
 export class RequestsThen {
     public constructor(private readonly context: RequestsTestsContext) {}
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    public get And(): this {
-        return this
+    public canAcceptIsBeingCalled(): Promise<void> {
+        expect(this.context.canAcceptWasCalled).to.equal(true)
+        return Promise.resolve()
     }
 
     public theReturnedRequestHasTheId(id: CoreId): Promise<void> {
@@ -394,7 +426,7 @@ export class RequestsThen {
         expect(this.context.consumptionRequestAfterAction).to.be.instanceOf(ConsumptionRequest)
         expect(this.context.consumptionRequestAfterAction!.id).to.exist
         expect(this.context.consumptionRequestAfterAction!.isOwn).to.be.false
-        expect(this.context.consumptionRequestAfterAction!.peer!.toString()).to.equal(createdBy.toString())
+        expect(this.context.consumptionRequestAfterAction!.peer.toString()).to.equal(createdBy.toString())
         expect(this.context.consumptionRequestAfterAction!.source).to.exist
         expect(this.context.consumptionRequestAfterAction!.source!.reference.toString()).to.equal(sourceId.toString())
         expect(this.context.consumptionRequestAfterAction!.source!.type).to.equal(sourceType)
@@ -431,8 +463,7 @@ export class RequestsThen {
         return Promise.resolve()
     }
 
-    public theRequestDoesNotHaveSourceAndPeerSet(): Promise<void> {
-        expect(this.context.consumptionRequestAfterAction!.peer).to.be.undefined
+    public theRequestDoesNotHaveSourceSet(): Promise<void> {
         expect(this.context.consumptionRequestAfterAction!.source).to.be.undefined
         return Promise.resolve()
     }
@@ -449,12 +480,12 @@ export class RequestsThen {
     }
 
     public itReturnsASuccessfulValidationResult(): Promise<void> {
-        expect(this.context.validationResult.isSuccess()).to.be.true
+        expect(this.context.validationResult!.isSuccess()).to.be.true
         return Promise.resolve()
     }
 
     public itReturnsAnErrorValidationResult(): Promise<void> {
-        expect(this.context.validationResult.isError()).to.be.true
+        expect(this.context.validationResult!.isError()).to.be.true
         return Promise.resolve()
     }
 
@@ -488,6 +519,6 @@ export class RequestsThen {
     }
 
     public async itThrowsAnErrorWithTheErrorMessage(errorMessage: string): Promise<void> {
-        await TestUtil.expectThrowsAsync(this.context.actionToTry, errorMessage)
+        await TestUtil.expectThrowsAsync(this.context.actionToTry!, errorMessage)
     }
 }
