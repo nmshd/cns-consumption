@@ -1,7 +1,6 @@
 import { IDatabaseCollection } from "@js-soft/docdb-access-abstractions"
-import { ISerializable, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval"
-import { IRequest, IResponse, Request, RequestItem, RequestItemGroup } from "@nmshd/content"
-import { CoreDate, ICoreAddress, ICoreId, Message } from "@nmshd/transport"
+import { IResponse, Request, RequestItem, RequestItemGroup } from "@nmshd/content"
+import { CoreDate, ICoreId, Message } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionIds } from "../../../consumption"
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
 import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProcessorRegistry"
@@ -9,30 +8,10 @@ import { ValidationResult } from "../itemProcessors/ValidationResult"
 import { ConsumptionRequest } from "../local/ConsumptionRequest"
 import { ConsumptionRequestStatus } from "../local/ConsumptionRequestStatus"
 import { ConsumptionResponse } from "../local/ConsumptionResponse"
-
-export type IRequestWithoutId = Omit<IRequest, "id">
-
-export interface ICreateOutgoingRequestParameters extends ISerializable {
-    request: IRequestWithoutId
-    peer: ICoreAddress
-}
-
-@type("CreateOutgoingRequestParameters")
-export class CreateOutgoingRequestParameters extends SerializableAsync implements ICreateOutgoingRequestParameters {
-    @serialize()
-    @validate()
-    public request: Request
-
-    @serialize()
-    @validate()
-    public peer: ICoreAddress
-
-    public static override async from(
-        value: ICreateOutgoingRequestParameters
-    ): Promise<CreateOutgoingRequestParameters> {
-        return await super.fromT(value, CreateOutgoingRequestParameters)
-    }
-}
+import {
+    CreateOutgoingRequestParameters,
+    ICreateOutgoingRequestParameters
+} from "./createOutgoingRequest/CreateOutgoingRequestParameters"
 
 export class OutgoingRequestsController extends ConsumptionBaseController {
     private consumptionRequests: IDatabaseCollection

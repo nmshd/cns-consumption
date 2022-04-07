@@ -11,7 +11,7 @@ import { UnitTest } from "../../core/UnitTest"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
 
 export class DecideRequestParametersValidatorTests extends UnitTest {
-    public constructor(protected loggerFactory: ILoggerFactory) {
+    public constructor(protected override loggerFactory: ILoggerFactory) {
         super(loggerFactory)
     }
 

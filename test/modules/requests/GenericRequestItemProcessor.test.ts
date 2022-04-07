@@ -16,9 +16,9 @@ import { TestRequestItemProcessor } from "./testHelpers/TestRequestItemProcessor
 
 export class GenericRequestItemProcessorTests extends IntegrationTest {
     public constructor(
-        protected config: IConfigOverwrite,
-        protected connection: IDatabaseConnection,
-        protected loggerFactory: ILoggerFactory
+        protected override config: IConfigOverwrite,
+        protected override connection: IDatabaseConnection,
+        protected override loggerFactory: ILoggerFactory
     ) {
         super(config, connection, loggerFactory)
     }
@@ -146,11 +146,17 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
 }
 
 class FailingTestItemProcessor extends TestRequestItemProcessor {
-    public canAccept(_requestItem: TestRequestItem, _params: AcceptRequestItemParameters): Promise<ValidationResult> {
+    public override canAccept(
+        _requestItem: TestRequestItem,
+        _params: AcceptRequestItemParameters
+    ): Promise<ValidationResult> {
         return Promise.resolve(ValidationResult.error("aCode", "aMessage"))
     }
 
-    public canReject(_requestItem: TestRequestItem, _params: AcceptRequestItemParameters): Promise<ValidationResult> {
+    public override canReject(
+        _requestItem: TestRequestItem,
+        _params: AcceptRequestItemParameters
+    ): Promise<ValidationResult> {
         return Promise.resolve(ValidationResult.error("aCode", "aMessage"))
     }
 }

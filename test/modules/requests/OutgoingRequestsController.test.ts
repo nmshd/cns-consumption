@@ -1,4 +1,3 @@
-/* eslint-disable mocha/no-async-describe */
 import { IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import { Result } from "@js-soft/ts-utils"
@@ -71,7 +70,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                 Then = that.Then
             })
 
-            describe.only("CanCreate", function () {
+            describe("CanCreate", function () {
                 it("returns 'success' on valid parameters", async function () {
                     await When.iCallCanCreateForAnOutgoingRequest()
                     await Then.itReturnsASuccessfulValidationResult()

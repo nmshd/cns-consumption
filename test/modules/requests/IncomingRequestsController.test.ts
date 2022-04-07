@@ -358,7 +358,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 }
 
 export class AlwaysTrueDecideRequestParamsValidator extends DecideRequestParametersValidator {
-    public validate(_params: IDecideRequestParameters, _request: ConsumptionRequest): Result<undefined> {
+    public override validate(_params: IDecideRequestParameters, _request: ConsumptionRequest): Result<undefined> {
         return Result.ok(undefined)
     }
 }

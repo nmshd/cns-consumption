@@ -9,21 +9,21 @@ import { TestUtil } from "../../core/TestUtil"
 import { TestRequestItem } from "./testHelpers/TestRequestItem"
 
 class TestRequestItemProcessor extends GenericRequestItemProcessor<TestRequestItem> {
-    public accept(): Promise<AcceptResponseItem> {
+    public override accept(): Promise<AcceptResponseItem> {
         throw new Error("Method not implemented.")
     }
 
-    public reject(): Promise<RejectResponseItem> {
+    public override reject(): Promise<RejectResponseItem> {
         throw new Error("Method not implemented.")
     }
 }
 
 class TestRequestItemProcessor2 extends GenericRequestItemProcessor<TestRequestItem> {
-    public accept(): Promise<AcceptResponseItem> {
+    public override accept(): Promise<AcceptResponseItem> {
         throw new Error("Method not implemented.")
     }
 
-    public reject(): Promise<RejectResponseItem> {
+    public override reject(): Promise<RejectResponseItem> {
         throw new Error("Method not implemented.")
     }
 }
@@ -31,16 +31,16 @@ class TestRequestItemProcessor2 extends GenericRequestItemProcessor<TestRequestI
 interface ITestRequestItemWithNoProcessor extends IRequestItem {}
 
 class TestRequestItemWithNoProcessor extends RequestItem {
-    public static async from(item: ITestRequestItemWithNoProcessor): Promise<TestRequestItemWithNoProcessor> {
+    public static override async from(item: ITestRequestItemWithNoProcessor): Promise<TestRequestItemWithNoProcessor> {
         return await super.fromT(item, TestRequestItemWithNoProcessor)
     }
 }
 
 export class RequestItemProcessorRegistryTests extends IntegrationTest {
     public constructor(
-        protected config: IConfigOverwrite,
-        protected connection: IDatabaseConnection,
-        protected loggerFactory: ILoggerFactory
+        protected override config: IConfigOverwrite,
+        protected override connection: IDatabaseConnection,
+        protected override loggerFactory: ILoggerFactory
     ) {
         super(config, connection, loggerFactory)
     }

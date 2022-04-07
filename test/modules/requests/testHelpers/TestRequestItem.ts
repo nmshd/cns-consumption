@@ -11,7 +11,7 @@ export class TestRequestItem extends RequestItem implements ITestRequestItem {
     @validate({ nullable: true })
     public shouldFailAtValidation?: true
 
-    public static async from(item: ITestRequestItem): Promise<TestRequestItem> {
+    public static override async from(item: ITestRequestItem): Promise<TestRequestItem> {
         return await super.fromT(item, TestRequestItem)
     }
 }
