@@ -45,8 +45,6 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
             let Then: RequestsThen // eslint-disable-line @typescript-eslint/naming-convention
 
             before(async function () {
-                this.timeout(5000)
-
                 await TestUtil.clearAccounts(that.connection)
                 await transport.init()
                 accountController = (await TestUtil.provideAccounts(transport, 1))[0]
@@ -74,13 +72,13 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         incomingMessage.id,
                         "Message"
                     )
-                }).timeout(5000)
+                })
 
                 it("cannot create incoming Request from outgoing Message", async function () {
                     const outgoingMessage = await TestObjectFactory.createOutgoingMessage(currentIdentity)
                     await When.iTryToCreateAnIncomingRequestWith({ source: outgoingMessage })
                     await Then.itThrowsAnErrorWithTheErrorMessage("Cannot create incoming Request from own Message")
-                }).timeout(5000)
+                })
 
                 it("creates an incoming Request with an incoming RelationshipTemplate as source", async function () {
                     const incomingTemplate = await TestObjectFactory.createIncomingRelationshipTemplate()
@@ -90,7 +88,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         incomingTemplate.id,
                         "RelationshipTemplate"
                     )
-                }).timeout(5000)
+                })
 
                 it("persists the created ConsumptionRequest", async function () {
                     const incomingTemplate = await TestObjectFactory.createIncomingRelationshipTemplate()
@@ -104,7 +102,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.itThrowsAnErrorWithTheErrorMessage(
                         "Cannot create incoming Request from own Relationship Template"
                     )
-                }).timeout(5000)
+                })
 
                 it("throws on syntactically invalid input", async function () {
                     const paramsWithoutSource = {
@@ -115,34 +113,24 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         consumptionController.incomingRequests.received(paramsWithoutSource as any),
                         "*source*Value is not defined*"
                     )
-                }).timeout(5000)
+                })
 
                 it("created Consumption Request has ID of Request if one exists", async function () {
                     const request = await TestObjectFactory.createRequestWithOneItem({ id: await CoreId.generate() })
 
                     await When.iCreateAnIncomingRequestWith({ content: request })
                     await Then.theCreatedRequestHasTheId(request.id!)
-                }).timeout(5000)
+                })
             })
 
             describe("Accept", function () {
-                it("sets the response property of the Consumption Request to a ConsumptionResponse", async function () {
+                it("can handle valid input", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iAcceptTheRequest()
                     await Then.theRequestHasItsResponsePropertySetCorrectly()
-                }).timeout(5000)
-
-                it("updates the status of the Consumption Request", async function () {
-                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
-                    await When.iAcceptTheRequest()
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Decided)
-                }).timeout(5000)
-
-                it("persists the updated Consumption Request", async function () {
-                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
-                    await When.iAcceptTheRequest()
                     await Then.theChangesArePersistedInTheDatabase()
-                }).timeout(5000)
+                })
 
                 it("creates Response Items and Groups with the correct structure", async function () {
                     await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.Open)
@@ -160,7 +148,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         expect(responseContent.items[1]).to.be.instanceOf(ResponseItemGroup)
                         expect((responseContent.items[1] as ResponseItemGroup).items[0]).to.be.instanceOf(ResponseItem)
                     })
-                }).timeout(5000)
+                })
 
                 it("creates Response Items with the correct result", async function () {
                     await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.Open)
@@ -180,7 +168,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         const innerResponseItem = responseGroup.items[0]
                         expect(innerResponseItem.result).to.equal(ResponseItemResult.Rejected)
                     })
-                }).timeout(5000)
+                })
 
                 it("writes responseMetadata from Request Items and Groups into the corresponding Response Items and Groups", async function () {
                     await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.Open)
@@ -208,32 +196,22 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                             innerItemMetaKey: "innerItemMetaValue"
                         })
                     })
-                }).timeout(5000)
+                })
 
                 it("throws on syntactically invalid input", async function () {
                     await When.iTryToAcceptARequestWithoutItemsParameters()
                     await Then.itThrowsAnErrorWithTheErrorMessage("*items*Value is not defined*")
-                }).timeout(5000)
+                })
             })
 
             describe("Reject", function () {
-                it("sets the response property of the Consumption Request to a ConsumptionResponse", async function () {
+                it("can handle valid input", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iRejectTheRequest()
                     await Then.theRequestHasItsResponsePropertySetCorrectly()
-                }).timeout(5000)
-
-                it("updates the status of the Consumption Request", async function () {
-                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
-                    await When.iRejectTheRequest()
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Decided)
-                }).timeout(5000)
-
-                it("persists the updated Consumption Request", async function () {
-                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
-                    await When.iRejectTheRequest()
                     await Then.theChangesArePersistedInTheDatabase()
-                }).timeout(5000)
+                })
 
                 it("creates Response Items and Groups with the correct structure", async function () {
                     await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.Open)
@@ -251,7 +229,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         expect(responseContent.items[1]).to.be.instanceOf(ResponseItemGroup)
                         expect((responseContent.items[1] as ResponseItemGroup).items[0]).to.be.instanceOf(ResponseItem)
                     })
-                }).timeout(5000)
+                })
 
                 it("creates Response Items with the correct result", async function () {
                     await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.Open)
@@ -271,7 +249,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         const innerResponseItem = responseGroup.items[0]
                         expect(innerResponseItem.result).to.equal(ResponseItemResult.Rejected)
                     })
-                }).timeout(5000)
+                })
 
                 it("writes responseMetadata from Request Items and Groups into the corresponding Response Items and Groups", async function () {
                     await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.Open)
@@ -299,12 +277,12 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                             innerItemMetaKey: "innerItemMetaValue"
                         })
                     })
-                }).timeout(5000)
+                })
 
                 it("throws on syntactically invalid input", async function () {
                     await When.iTryToRejectARequestWithSyntacticallyInvalidInput()
                     await Then.itThrowsAnErrorWithTheErrorMessage("*items*Value is not defined*")
-                }).timeout(5000)
+                })
             })
 
             describe("Get", function () {
@@ -313,31 +291,26 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestWith({ id: requestId })
                     await When.iGetTheIncomingRequestWith(requestId)
                     await Then.theReturnedRequestHasTheId(requestId)
-                }).timeout(5000)
+                })
 
                 it("returns undefined when the given id does not exist", async function () {
                     const aNonExistentId = await ConsumptionIds.request.generate()
                     await When.iGetTheIncomingRequestWith(aNonExistentId)
                     await Then.iExpectUndefinedToBeReturned()
-                }).timeout(5000)
+                })
 
                 it("returns undefined when the given id belongs to an outgoing Request", async function () {
                     const outgoingRequest = await Given.anOutgoingRequest()
                     await When.iGetTheIncomingRequestWith(outgoingRequest.id)
                     await Then.iExpectUndefinedToBeReturned()
-                }).timeout(5000)
+                })
             })
 
             describe("Complete", function () {
-                it("moves the ConsumptionRequest to status 'Completed'", async function () {
+                it("can handle valid input", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Decided)
                     await When.iCompleteTheRequest()
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Completed)
-                })
-
-                it("persists the updated ConsumptionRequest", async function () {
-                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Decided)
-                    await When.iCompleteTheRequest()
                     await Then.theChangesArePersistedInTheDatabase()
                 })
 
