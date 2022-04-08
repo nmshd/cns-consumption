@@ -48,11 +48,11 @@ export class GenericRequestItemProcessor<
         })
     }
 
-    public validateIncomingResponseItem(
+    public canApplyIncomingResponseItem(
         _responseItem: AcceptResponseItem,
         _requestItem: TRequestItem
-    ): Promise<boolean> {
-        return Promise.resolve(true)
+    ): Promise<ValidationResult> {
+        return Promise.resolve(ValidationResult.success())
     }
 
     public canCreateOutgoingRequestItem(_requestItem: TRequestItem): Promise<ValidationResult> {

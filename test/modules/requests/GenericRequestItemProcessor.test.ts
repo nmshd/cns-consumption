@@ -119,7 +119,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
             })
 
             /* ****** Outgoing RequestItems ******* */
-            describe("ValidateOutgoingRequestItem", function () {
+            describe("CanCreateOutgoingRequestItem", function () {
                 it("returns true", async function () {
                     const processor = new GenericRequestItemProcessor()
                     const requestItem = new TestRequestItem()
@@ -130,15 +130,15 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                 })
             })
 
-            describe("ValidateIncomingResponseItem", function () {
-                it("returns true", async function () {
+            describe("CanApplyIncomingResponseItem", function () {
+                it("returns 'success'", async function () {
                     const processor = new GenericRequestItemProcessor()
                     const requestItem = new TestRequestItem()
                     const responseItem = new AcceptResponseItem()
 
-                    const actual = await processor.validateIncomingResponseItem(responseItem, requestItem)
+                    const actual = await processor.canApplyIncomingResponseItem(responseItem, requestItem)
 
-                    expect(actual).to.be.true
+                    expect(actual.isSuccess()).to.be.true
                 })
             })
         })

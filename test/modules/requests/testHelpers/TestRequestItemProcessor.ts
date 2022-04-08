@@ -39,13 +39,13 @@ export class TestRequestItemProcessor extends GenericRequestItemProcessor<
         return Promise.resolve(ValidationResult.success())
     }
 
-    public override validateIncomingResponseItem(
+    public override canApplyIncomingResponseItem(
         _responseItem: ResponseItem,
         _requestItem: TestRequestItem
-    ): Promise<boolean> {
+    ): Promise<ValidationResult> {
         if (_requestItem.shouldFailAtValidation) {
-            return Promise.resolve(false)
+            return Promise.resolve(ValidationResult.error("aCode", "aMessage"))
         }
-        return Promise.resolve(true)
+        return Promise.resolve(ValidationResult.success())
     }
 }

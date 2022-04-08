@@ -15,6 +15,6 @@ export interface IRequestItemProcessor<
     reject(requestItem: TRequestItem, params: TRejectParams): Promise<RejectResponseItem>
 
     canCreateOutgoingRequestItem(_requestItem: TRequestItem): Promise<ValidationResult>
-    validateIncomingResponseItem(_responseItem: ResponseItem, _requestItem: TRequestItem): Promise<boolean>
+    canApplyIncomingResponseItem(_responseItem: ResponseItem, _requestItem: TRequestItem): Promise<ValidationResult>
     applyIncomingResponseItem(_responseItem: ResponseItem, _requestItem: TRequestItem): Promise<void>
 }
