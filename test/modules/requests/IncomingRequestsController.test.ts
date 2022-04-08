@@ -129,7 +129,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 it("sets the response property of the Consumption Request to a ConsumptionResponse", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iAcceptTheRequest()
-                    await Then.theRequestHasItsResponsePropertySet()
+                    await Then.theRequestHasItsResponsePropertySetCorrectly()
                 }).timeout(5000)
 
                 it("updates the status of the Consumption Request", async function () {
@@ -220,7 +220,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 it("sets the response property of the Consumption Request to a ConsumptionResponse", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iRejectTheRequest()
-                    await Then.theRequestHasItsResponsePropertySet()
+                    await Then.theRequestHasItsResponsePropertySetCorrectly()
                 }).timeout(5000)
 
                 it("updates the status of the Consumption Request", async function () {

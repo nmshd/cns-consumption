@@ -1,17 +1,21 @@
 import { IDatabaseCollection } from "@js-soft/docdb-access-abstractions"
-import { IRequest, IResponse, Request, RequestItem, RequestItemGroup } from "@nmshd/content"
-import { CoreDate, ICoreId, Message } from "@nmshd/transport"
+import { IResponse, RequestItem, RequestItemGroup } from "@nmshd/content"
+import { CoreDate, ICoreId, Message, RelationshipTemplate, TransportErrors } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionIds } from "../../../consumption"
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
 import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProcessorRegistry"
 import { ValidationResult } from "../itemProcessors/ValidationResult"
-import { ConsumptionRequest } from "../local/ConsumptionRequest"
+import { ConsumptionRequest, ConsumptionRequestSource } from "../local/ConsumptionRequest"
 import { ConsumptionRequestStatus } from "../local/ConsumptionRequestStatus"
 import { ConsumptionResponse } from "../local/ConsumptionResponse"
 import {
     CreateOutgoingRequestParameters,
     ICreateOutgoingRequestParameters
 } from "./createOutgoingRequest/CreateOutgoingRequestParameters"
+import {
+    ISentOutgoingRequestParameters,
+    SentOutgoingRequestParameters
+} from "./sentOutgoingRequest/SentOutgoingRequestParameters"
 
 export class OutgoingRequestsController extends ConsumptionBaseController {
     private consumptionRequests: IDatabaseCollection
@@ -80,11 +84,11 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
 
         const id = await ConsumptionIds.request.generate()
 
-        const request = await Request.from({ id, ...parsedParams.request.toJSON() } as IRequest)
+        parsedParams.request.id = id
 
         const consumptionRequest = await ConsumptionRequest.from({
             id: id,
-            content: request,
+            content: parsedParams.request,
             createdAt: CoreDate.utc(),
             isOwn: true,
             peer: parsedParams.peer,
@@ -95,6 +99,48 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         await this.consumptionRequests.create(consumptionRequest)
 
         return consumptionRequest
+    }
+
+    public async sent(params: ISentOutgoingRequestParameters): Promise<any> {
+        const parsedParams = await SentOutgoingRequestParameters.from(params)
+
+        const requestDoc = await this.consumptionRequests.read(parsedParams.requestId.toString())
+
+        if (!requestDoc) {
+            throw TransportErrors.general.recordNotFound(ConsumptionRequest, parsedParams.requestId.toString())
+        }
+
+        const request = await ConsumptionRequest.from(requestDoc)
+
+        request.changeStatus(ConsumptionRequestStatus.Open)
+
+        request.source = await ConsumptionRequestSource.from({
+            reference: parsedParams.sourceObject.id,
+            type: this.getSourceType(parsedParams.sourceObject)
+        })
+
+        await this.consumptionRequests.update(requestDoc, request)
+        return request
+    }
+
+    private getSourceType(sourceObject: Message | RelationshipTemplate): "Message" | "RelationshipTemplate" {
+        if (sourceObject instanceof Message) {
+            if (!sourceObject.isOwn) {
+                throw new Error("Cannot create outgoing Request from a peer Message")
+            }
+
+            return "Message"
+        } else if (sourceObject instanceof RelationshipTemplate) {
+            if (!sourceObject.isOwn) {
+                throw new Error("Cannot create outgoing Request from a peer Relationship Template")
+            }
+
+            return "RelationshipTemplate"
+        }
+
+        throw new Error(
+            "The given sourceObject is not of a valid type. Valid types are 'Message' and 'RelationshipTemplate'."
+        )
     }
 
     public async complete(requestId: ICoreId, source: Message, response: IResponse): Promise<ConsumptionRequest> {

@@ -1,6 +1,6 @@
 import { ISerializable, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval"
 import { IRequest, Request } from "@nmshd/content"
-import { ICoreAddress } from "@nmshd/transport"
+import { CoreAddress, ICoreAddress } from "@nmshd/transport"
 
 export type IRequestWithoutId = Omit<IRequest, "id">
 
@@ -17,7 +17,7 @@ export class CreateOutgoingRequestParameters extends SerializableAsync implement
 
     @serialize()
     @validate()
-    public peer: ICoreAddress
+    public peer: CoreAddress
 
     public static override async from(
         value: ICreateOutgoingRequestParameters

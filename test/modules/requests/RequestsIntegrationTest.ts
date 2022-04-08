@@ -5,11 +5,14 @@ import {
     ConsumptionController,
     ConsumptionIds,
     ConsumptionRequest,
+    ConsumptionRequestSource,
     ConsumptionRequestStatus,
     ConsumptionResponse,
     IAcceptRequestParameters,
+    IConsumptionRequestSource,
     ICreateOutgoingRequestParameters,
     IRejectRequestParameters,
+    ISentOutgoingRequestParameters,
     RejectRequestItemParameters,
     ValidationResult
 } from "@nmshd/consumption"
@@ -202,6 +205,35 @@ export class RequestsGiven {
 }
 
 export class RequestsWhen {
+    public async iCallSent(): Promise<void> {
+        await this.iCallSentWith({})
+    }
+
+    public async iCallSentWith(params: Partial<ISentOutgoingRequestParameters>): Promise<void> {
+        params.requestId ??= this.context.givenConsumptionRequest!.id
+        params.sourceObject ??= await TestObjectFactory.createOutgoingMessage(
+            this.context.accountController.identity.address
+        )
+
+        this.context.consumptionRequestAfterAction = await this.context.consumptionController.outgoingRequests.sent({
+            requestId: params.requestId,
+            sourceObject: params.sourceObject
+        })
+    }
+
+    public async iTryToCallSentWith(params: Partial<ISentOutgoingRequestParameters>): Promise<void> {
+        params.requestId ??= this.context.givenConsumptionRequest!.id
+        params.sourceObject ??= await TestObjectFactory.createOutgoingMessage(
+            this.context.accountController.identity.address
+        )
+
+        this.context.actionToTry = async () =>
+            await this.context.consumptionController.outgoingRequests.sent({
+                requestId: params.requestId!,
+                sourceObject: params.sourceObject!
+            })
+    }
+
     public async iCallCanCreateForAnOutgoingRequest(
         params?: Partial<ICreateOutgoingRequestParameters>
     ): Promise<ValidationResult> {
@@ -447,13 +479,32 @@ export class RequestsThen {
         return Promise.resolve()
     }
 
-    public theRequestHasItsResponsePropertySet(): Promise<void> {
+    public theRequestHasItsResponsePropertySetCorrectly(): Promise<void> {
         expect(this.context.consumptionRequestAfterAction!.response).to.exist
         expect(this.context.consumptionRequestAfterAction!.response).to.be.instanceOf(ConsumptionResponse)
         expect(this.context.consumptionRequestAfterAction!.response!.content).to.be.instanceOf(Response)
         expect(this.context.consumptionRequestAfterAction!.response!.content.requestId.toString()).to.equal(
             this.context.givenConsumptionRequest!.id.toString()
         )
+
+        return Promise.resolve()
+    }
+
+    public theRequestHasItsSourcePropertySet(): Promise<void> {
+        expect(this.context.consumptionRequestAfterAction!.source).to.exist
+        expect(this.context.consumptionRequestAfterAction!.source).to.be.instanceOf(ConsumptionRequestSource)
+        expect(this.context.consumptionRequestAfterAction!.source!.reference).to.be.instanceOf(CoreId)
+
+        return Promise.resolve()
+    }
+
+    public theRequestHasItsSourcePropertySetTo(expectedSource: IConsumptionRequestSource): Promise<void> {
+        expect(this.context.consumptionRequestAfterAction!.source).to.exist
+        expect(this.context.consumptionRequestAfterAction!.source).to.be.instanceOf(ConsumptionRequestSource)
+        expect(this.context.consumptionRequestAfterAction!.source!.reference.toString()).to.equal(
+            expectedSource.reference.id
+        )
+        expect(this.context.consumptionRequestAfterAction!.source!.type).to.equal(expectedSource.type)
 
         return Promise.resolve()
     }
@@ -520,5 +571,11 @@ export class RequestsThen {
 
     public async itThrowsAnErrorWithTheErrorMessage(errorMessage: string): Promise<void> {
         await TestUtil.expectThrowsAsync(this.context.actionToTry!, errorMessage)
+    }
+
+    public async itThrowsAnErrorWithTheErrorCode(code: string): Promise<void> {
+        await TestUtil.expectThrowsAsync(this.context.actionToTry!, (error: Error) => {
+            expect((error as any).code).to.be.equal(code)
+        })
     }
 }

@@ -13,6 +13,7 @@ import {
     IRequestWithoutId,
     ValidationResult
 } from "@nmshd/consumption"
+import { RequestItemGroup } from "@nmshd/content"
 import { AccountController, CoreId, IConfigOverwrite, Transport } from "@nmshd/transport"
 import { expect } from "chai"
 import itParam from "mocha-param"
@@ -24,6 +25,7 @@ import {
     RequestsThen,
     RequestsWhen
 } from "./RequestsIntegrationTest"
+import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
 import { TestRequestItem } from "./testHelpers/TestRequestItem"
 import { TestRequestItemProcessor } from "./testHelpers/TestRequestItemProcessor"
 
@@ -202,24 +204,18 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     const validationResult = await When.iCallCanCreateForAnOutgoingRequest({
                         request: {
                             items: [
-                                {
-                                    // @ts-expect-error
-                                    "@type": "TestRequestItem",
-                                    mustBeAccepted: false,
-                                    shouldFailAtValidation: false
-                                },
-                                {
-                                    "@type": "RequestItemGroup",
+                                await TestRequestItem.from({
+                                    mustBeAccepted: false
+                                }),
+                                await RequestItemGroup.from({
                                     mustBeAccepted: false,
                                     items: [
-                                        {
-                                            // @ts-expect-error
-                                            "@type": "TestRequestItem",
+                                        await TestRequestItem.from({
                                             mustBeAccepted: false,
                                             shouldFailAtValidation: true
-                                        }
+                                        })
                                     ]
-                                }
+                                })
                             ]
                         }
                     })
@@ -244,7 +240,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
             })
 
             describe("Create", function () {
-                it("creates a new outgoing ConsumptionRequest", async function () {
+                it("can handle valid input", async function () {
                     await When.iCreateAnOutgoingRequest()
                     await Then.theCreatedOutgoingRequestHasAllProperties()
                     await Then.theRequestIsInStatus(ConsumptionRequestStatus.Draft)
@@ -275,12 +271,76 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                 })
             })
 
+            describe("Sent", function () {
+                it("can handle valid input", async function () {
+                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
+                    await When.iCallSent()
+                    await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Open)
+                    await Then.theRequestHasItsSourcePropertySet()
+                    await Then.theChangesArePersistedInTheDatabase()
+                })
+
+                const paramsWithValidSources = [
+                    {
+                        sourceObjectFactory: TestObjectFactory.createOutgoingIMessage,
+                        expectedSourceType: "Message"
+                    },
+                    {
+                        sourceObjectFactory: TestObjectFactory.createOutgoingIRelationshipTemplate,
+                        expectedSourceType: "RelationshipTemplate"
+                    }
+                ]
+                itParam(
+                    "sets the source property depending on the given source",
+                    paramsWithValidSources,
+                    async function (testParams) {
+                        const source = testParams.sourceObjectFactory(accountController.identity.address)
+
+                        await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
+                        await When.iCallSentWith({ sourceObject: source })
+                        await Then.theRequestHasItsSourcePropertySetTo({
+                            type: testParams.expectedSourceType as any,
+                            reference: source.id
+                        })
+                    }
+                )
+
+                it("throws when no Request with the given id exists in DB", async function () {
+                    await When.iTryToCallSentWith({ requestId: CoreId.from("nonExistentId") })
+                    await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
+                })
+
+                const paramsWithInvalidSources = [
+                    {
+                        description: "an incmoming Message",
+                        sourceObjectFactory: TestObjectFactory.createIncomingIMessage,
+                        expectedSourceType: "Message"
+                    },
+                    {
+                        description: "an incmoming RelationshipTemplate",
+                        sourceObjectFactory: TestObjectFactory.createIncomingIRelationshipTemplate,
+                        expectedSourceType: "RelationshipTemplate"
+                    }
+                ]
+                itParam(
+                    "throws when passing ${value.description}",
+                    paramsWithInvalidSources,
+                    async function (testParams) {
+                        const invalidSource = testParams.sourceObjectFactory(accountController.identity.address)
+
+                        await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
+                        await When.iTryToCallSentWith({ sourceObject: invalidSource })
+                        await Then.itThrowsAnErrorWithTheErrorMessage("Cannot create outgoing Request from a peer*")
+                    }
+                )
+            })
+
             describe("CompleteOutgoingRequest", function () {
                 it("can handle valid input", async function () {
                     await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
                     await When.iCompleteTheOutgoingRequest()
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Completed)
-                    await Then.theRequestHasItsResponsePropertySet()
+                    await Then.theRequestHasItsResponsePropertySetCorrectly()
                     await Then.theNewRequestIsPersistedInTheDatabase()
                 })
             })

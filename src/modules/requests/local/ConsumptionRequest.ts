@@ -28,6 +28,10 @@ export class ConsumptionRequestSource extends CoreSerializableAsync implements I
     @serialize()
     @validate()
     public reference: CoreId
+
+    public static override from(value: IConsumptionRequestSource): Promise<ConsumptionRequestSource> {
+        return super.fromT(value, ConsumptionRequestSource)
+    }
 }
 
 export interface IConsumptionRequest extends ICoreSerializableAsync {
