@@ -280,6 +280,12 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.theChangesArePersistedInTheDatabase()
                 })
 
+                it("throws when the Consumption Request is not in status 'Draft' ", async function () {
+                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Open)
+                    await When.iTryToCallSent()
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*Consumption Request has to be in status 'Draft'*")
+                })
+
                 const paramsWithValidSources = [
                     {
                         sourceObjectFactory: TestObjectFactory.createOutgoingIMessage,

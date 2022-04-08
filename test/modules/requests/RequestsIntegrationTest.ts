@@ -154,7 +154,7 @@ export class RequestsGiven {
             source: requestSource
         })
 
-        await this.moveRequestToStatus(consumptionRequest, params.status)
+        await this.moveIncomingRequestToStatus(consumptionRequest, params.status)
 
         this.context.givenConsumptionRequest = consumptionRequest
     }
@@ -163,18 +163,23 @@ export class RequestsGiven {
         await this.anIncomingRequestWith({ status: status })
     }
 
-    private async moveRequestToStatus(consumptionRequest: ConsumptionRequest, status: ConsumptionRequestStatus) {
-        if (status === ConsumptionRequestStatus.Open) return
+    private async moveIncomingRequestToStatus(
+        consumptionRequest: ConsumptionRequest,
+        status: ConsumptionRequestStatus
+    ) {
+        if (consumptionRequest.status === status) return
 
-        if (status === ConsumptionRequestStatus.Decided) {
-            await this.context.consumptionController.incomingRequests.accept({
+        if (isStatusAAfterStatusB(status, consumptionRequest.status)) {
+            consumptionRequest = await this.context.consumptionController.incomingRequests.accept({
                 requestId: consumptionRequest.id,
                 items: [AcceptRequestItemParameters.from({})]
             })
         }
 
-        if (status === ConsumptionRequestStatus.Completed) {
-            await this.context.consumptionController.incomingRequests.complete(consumptionRequest.id)
+        if (isStatusAAfterStatusB(status, consumptionRequest.status)) {
+            consumptionRequest = await this.context.consumptionController.incomingRequests.complete(
+                consumptionRequest.id
+            )
         }
     }
 
@@ -200,7 +205,23 @@ export class RequestsGiven {
             peer: CoreAddress.from("id1")
         })
 
+        await this.moveOutgoingRequestToStatus(this.context.givenConsumptionRequest, params.status)
+
         return this.context.givenConsumptionRequest
+    }
+
+    private async moveOutgoingRequestToStatus(
+        consumptionRequest: ConsumptionRequest,
+        status: ConsumptionRequestStatus
+    ) {
+        if (consumptionRequest.status === status) return
+
+        if (isStatusAAfterStatusB(status, ConsumptionRequestStatus.Draft)) {
+            await this.context.consumptionController.outgoingRequests.sent({
+                requestId: consumptionRequest.id,
+                sourceObject: TestObjectFactory.createOutgoingIMessage(this.context.accountController.identity.address)
+            })
+        }
     }
 }
 
@@ -219,6 +240,10 @@ export class RequestsWhen {
             requestId: params.requestId,
             sourceObject: params.sourceObject
         })
+    }
+
+    public async iTryToCallSent(): Promise<void> {
+        await this.iTryToCallSentWith({})
     }
 
     public async iTryToCallSentWith(params: Partial<ISentOutgoingRequestParameters>): Promise<void> {
@@ -577,5 +602,26 @@ export class RequestsThen {
         await TestUtil.expectThrowsAsync(this.context.actionToTry!, (error: Error) => {
             expect((error as any).code).to.be.equal(code)
         })
+    }
+}
+
+function isStatusAAfterStatusB(a: ConsumptionRequestStatus, b: ConsumptionRequestStatus): boolean {
+    return getIntegerValue(a) > getIntegerValue(b)
+}
+
+function getIntegerValue(status: ConsumptionRequestStatus): number {
+    switch (status) {
+        case ConsumptionRequestStatus.Draft:
+            return 0
+        case ConsumptionRequestStatus.Open:
+            return 1
+        // case ConsumptionRequestStatus.Checked: return 2;
+        // case ConsumptionRequestStatus.DecisionRequired: return 3;
+        // case ConsumptionRequestStatus.ManualDecisionRequired: return 4;
+        // case ConsumptionRequestStatus.Error: return 5;
+        case ConsumptionRequestStatus.Decided:
+            return 6
+        case ConsumptionRequestStatus.Completed:
+            return 7
     }
 }

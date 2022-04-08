@@ -112,6 +112,10 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
 
         const request = await ConsumptionRequest.from(requestDoc)
 
+        if (request.status !== ConsumptionRequestStatus.Draft) {
+            throw new Error("Consumption Request has to be in status 'Draft'.")
+        }
+
         request.changeStatus(ConsumptionRequestStatus.Open)
 
         request.source = await ConsumptionRequestSource.from({
