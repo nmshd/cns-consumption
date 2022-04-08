@@ -104,13 +104,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     public async sent(params: ISentOutgoingRequestParameters): Promise<any> {
         const parsedParams = await SentOutgoingRequestParameters.from(params)
 
-        const requestDoc = await this.consumptionRequests.read(parsedParams.requestId.toString())
-
-        if (!requestDoc) {
-            throw TransportErrors.general.recordNotFound(ConsumptionRequest, parsedParams.requestId.toString())
-        }
-
-        const request = await ConsumptionRequest.from(requestDoc)
+        const request = await this.getOrThrow(params.requestId)
 
         if (request.status !== ConsumptionRequestStatus.Draft) {
             throw new Error("Consumption Request has to be in status 'Draft'.")
@@ -123,7 +117,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
             type: this.getSourceType(parsedParams.sourceObject)
         })
 
-        await this.consumptionRequests.update(requestDoc, request)
+        await this.update(request)
         return request
     }
 
@@ -170,6 +164,23 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         const requestDoc = await this.consumptionRequests.findOne({ id: id.toString(), isOwn: true })
         const request = requestDoc ? await ConsumptionRequest.from(requestDoc) : undefined
         return request
+    }
+
+    private async getOrThrow(id: ICoreId) {
+        const requestDoc = await this.consumptionRequests.findOne({ id: id.toString(), isOwn: true })
+        if (!requestDoc) {
+            throw TransportErrors.general.recordNotFound(ConsumptionRequest, id.toString())
+        }
+        const request = await ConsumptionRequest.from(requestDoc)
+        return request
+    }
+
+    private async update(request: ConsumptionRequest) {
+        const requestDoc = await this.consumptionRequests.findOne({ id: request.id.toString(), isOwn: true })
+        if (!requestDoc) {
+            throw TransportErrors.general.recordNotFound(ConsumptionRequest, request.id.toString())
+        }
+        await this.consumptionRequests.update(requestDoc, request)
     }
 
     // public async createRequest(request: Request, message: Message): Promise<ConsumptionRequestOld> {
