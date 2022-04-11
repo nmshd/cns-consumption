@@ -13,7 +13,16 @@ import {
     IRequestWithoutId,
     ValidationResult
 } from "@nmshd/consumption"
-import { RequestItemGroup } from "@nmshd/content"
+import {
+    IAcceptResponseItem,
+    IRequest,
+    IRequestItemGroup,
+    IResponse,
+    IResponseItemGroup,
+    RequestItemGroup,
+    ResponseItemResult,
+    ResponseResult
+} from "@nmshd/content"
 import { AccountController, CoreId, IConfigOverwrite, Transport } from "@nmshd/transport"
 import { expect } from "chai"
 import itParam from "mocha-param"
@@ -26,7 +35,7 @@ import {
     RequestsWhen
 } from "./RequestsIntegrationTest"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
-import { TestRequestItem } from "./testHelpers/TestRequestItem"
+import { ITestRequestItem, TestRequestItem } from "./testHelpers/TestRequestItem"
 import { TestRequestItemProcessor } from "./testHelpers/TestRequestItemProcessor"
 
 export class AlwaysTrueDecideRequestParamsValidator extends DecideRequestParametersValidator {
@@ -86,80 +95,73 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.itReturnsASuccessfulValidationResult()
                 })
 
-                const syntacticallyInvalidParams = [
-                    {
-                        params: {
-                            peer: CoreId.from("")
-                        },
-                        expectedErrorMessage: "*request*Value is not defined*"
-                    },
-                    {
-                        params: {
-                            peer: CoreId.from(""),
-                            request: {}
-                        },
-                        expectedErrorMessage: "*Request.items*Value is not defined*"
-                    }
-                ]
                 itParam(
                     "throws on syntactically invalid input",
-                    syntacticallyInvalidParams,
+                    [
+                        {
+                            params: {
+                                peer: CoreId.from("")
+                            },
+                            expectedErrorMessage: "*content*Value is not defined*"
+                        },
+                        {
+                            params: {
+                                peer: CoreId.from(""),
+                                content: {}
+                            },
+                            expectedErrorMessage: "*Request.items*Value is not defined*"
+                        }
+                    ],
                     async function (testParams) {
                         await When.iTryToCallCanCreateForAnOutgoingRequest(testParams.params as any)
                         await Then.itThrowsAnErrorWithTheErrorMessage(testParams.expectedErrorMessage)
                     }
                 )
 
-                const requestsWithOneInvalidItem: IRequestWithoutId[] = [
-                    {
-                        items: [
-                            {
-                                // @ts-expect-error
-                                "@type": "TestRequestItem",
-                                mustBeAccepted: false,
-                                shouldFailAtValidation: true
-                            }
-                        ]
-                    },
-                    {
-                        items: [
-                            {
-                                // @ts-expect-error
-                                "@type": "TestRequestItem",
-                                mustBeAccepted: false,
-                                shouldFailAtValidation: false
-                            },
-                            {
-                                // @ts-expect-error
-                                "@type": "TestRequestItem",
-                                mustBeAccepted: false,
-                                shouldFailAtValidation: true
-                            }
-                        ]
-                    },
-                    {
-                        items: [
-                            {
-                                "@type": "RequestItemGroup",
-                                mustBeAccepted: false,
-                                items: [
-                                    {
-                                        // @ts-expect-error
-                                        "@type": "TestRequestItem",
-                                        mustBeAccepted: false,
-                                        shouldFailAtValidation: true
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
                 itParam(
                     "returns 'error' when at least one RequestItem is invalid",
-                    requestsWithOneInvalidItem,
+                    [
+                        {
+                            items: [
+                                {
+                                    "@type": "TestRequestItem",
+                                    mustBeAccepted: false,
+                                    shouldFailAtCanCreateOutgoingRequestItem: true
+                                } as ITestRequestItem
+                            ]
+                        } as IRequest,
+                        {
+                            items: [
+                                {
+                                    "@type": "TestRequestItem",
+                                    mustBeAccepted: false
+                                } as ITestRequestItem,
+                                {
+                                    "@type": "TestRequestItem",
+                                    mustBeAccepted: false,
+                                    shouldFailAtCanCreateOutgoingRequestItem: true
+                                } as ITestRequestItem
+                            ]
+                        } as IRequest,
+                        {
+                            items: [
+                                {
+                                    "@type": "RequestItemGroup",
+                                    mustBeAccepted: false,
+                                    items: [
+                                        {
+                                            "@type": "TestRequestItem",
+                                            mustBeAccepted: false,
+                                            shouldFailAtCanCreateOutgoingRequestItem: true
+                                        } as ITestRequestItem
+                                    ]
+                                } as IRequestItemGroup
+                            ]
+                        } as IRequest
+                    ],
                     async function (request: IRequestWithoutId) {
                         await When.iCallCanCreateForAnOutgoingRequest({
-                            request: request
+                            content: request
                         })
                         await Then.itReturnsAnErrorValidationResult()
                     }
@@ -167,19 +169,19 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
 
                 it("returns a validation result that contains each error (simple)", async function () {
                     const validationResult = await When.iCallCanCreateForAnOutgoingRequest({
-                        request: {
+                        content: {
                             items: [
                                 {
                                     // @ts-expect-error
                                     "@type": "TestRequestItem",
                                     mustBeAccepted: false,
-                                    shouldFailAtValidation: true
+                                    shouldFailAtCanCreateOutgoingRequestItem: true
                                 },
                                 {
                                     // @ts-expect-error
                                     "@type": "TestRequestItem",
                                     mustBeAccepted: false,
-                                    shouldFailAtValidation: true
+                                    shouldFailAtCanCreateOutgoingRequestItem: true
                                 }
                             ]
                         }
@@ -202,7 +204,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
 
                 it("returns a validation result that contains each error (complex)", async function () {
                     const validationResult = await When.iCallCanCreateForAnOutgoingRequest({
-                        request: {
+                        content: {
                             items: [
                                 await TestRequestItem.from({
                                     mustBeAccepted: false
@@ -212,7 +214,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                                     items: [
                                         await TestRequestItem.from({
                                             mustBeAccepted: false,
-                                            shouldFailAtValidation: true
+                                            shouldFailAtCanCreateOutgoingRequestItem: true
                                         })
                                     ]
                                 })
@@ -250,12 +252,12 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
 
                 it("calls canCreate", async function () {
                     await When.iCreateAnOutgoingRequest()
-                    await Then.canAcceptIsBeingCalled()
+                    await Then.canCreateIsBeingCalled()
                 })
 
                 it("throws on syntactically invalid input", async function () {
-                    await When.iTryToCreateAnOutgoingRequestWithoutRequest()
-                    await Then.itThrowsAnErrorWithTheErrorMessage("*request*Value is not defined*")
+                    await When.iTryToCreateAnOutgoingRequestWithoutContent()
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*content*Value is not defined*")
                 })
 
                 it("throws when canCreate returns an error", async function () {
@@ -278,6 +280,12 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Open)
                     await Then.theRequestHasItsSourcePropertySet()
                     await Then.theChangesArePersistedInTheDatabase()
+                })
+
+                it("throws on syntactically invalid input", async function () {
+                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
+                    await When.iTryToCallSentWithoutSourceObject()
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*sourceObject*Value is not defined*")
                 })
 
                 it("throws when the Consumption Request is not in status 'Draft' ", async function () {
@@ -341,13 +349,201 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                 )
             })
 
-            describe("CompleteOutgoingRequest", function () {
+            describe("Complete", function () {
                 it("can handle valid input", async function () {
-                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
+                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iCompleteTheOutgoingRequest()
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Completed)
                     await Then.theRequestHasItsResponsePropertySetCorrectly()
                     await Then.theNewRequestIsPersistedInTheDatabase()
+                })
+
+                itParam(
+                    "calls applyIncomingResponseItem on the RequestItemProcessor of RequestItems",
+                    [
+                        // 1 item
+                        {
+                            request: {
+                                items: [
+                                    {
+                                        "@type": "TestRequestItem",
+                                        mustBeAccepted: false
+                                    } as ITestRequestItem
+                                ]
+                            } as IRequest,
+                            response: {
+                                result: ResponseResult.Accepted,
+                                items: [
+                                    {
+                                        "@type": "AcceptResponseItem",
+                                        result: ResponseItemResult.Accepted
+                                    } as IAcceptResponseItem
+                                ]
+                            } as Omit<IResponse, "id">,
+                            numberOfCalls: 1
+                        },
+                        // 2 items
+                        {
+                            request: {
+                                items: [
+                                    {
+                                        "@type": "TestRequestItem",
+                                        mustBeAccepted: false
+                                    } as ITestRequestItem,
+                                    {
+                                        "@type": "TestRequestItem",
+                                        mustBeAccepted: false
+                                    } as ITestRequestItem
+                                ]
+                            } as IRequest,
+                            response: {
+                                result: ResponseResult.Accepted,
+                                items: [
+                                    {
+                                        "@type": "AcceptResponseItem",
+                                        result: ResponseItemResult.Accepted
+                                    } as IAcceptResponseItem,
+                                    {
+                                        "@type": "AcceptResponseItem",
+                                        result: ResponseItemResult.Accepted
+                                    } as IAcceptResponseItem
+                                ]
+                            } as Omit<IResponse, "id">,
+                            numberOfCalls: 2
+                        },
+                        // 1 item and 1 group with 1 item
+                        {
+                            request: {
+                                items: [
+                                    {
+                                        "@type": "TestRequestItem",
+                                        mustBeAccepted: false
+                                    } as ITestRequestItem,
+                                    {
+                                        "@type": "RequestItemGroup",
+                                        mustBeAccepted: false,
+                                        items: [
+                                            {
+                                                "@type": "TestRequestItem",
+                                                mustBeAccepted: false
+                                            } as ITestRequestItem
+                                        ]
+                                    } as IRequestItemGroup
+                                ]
+                            } as IRequest,
+                            response: {
+                                result: ResponseResult.Accepted,
+                                items: [
+                                    {
+                                        "@type": "AcceptResponseItem",
+                                        result: ResponseItemResult.Accepted
+                                    } as IAcceptResponseItem,
+                                    {
+                                        "@type": "ResponseItemGroup",
+                                        items: [
+                                            {
+                                                "@type": "AcceptResponseItem",
+                                                result: ResponseItemResult.Accepted
+                                            } as IAcceptResponseItem
+                                        ]
+                                    } as IResponseItemGroup
+                                ]
+                            } as Omit<IResponse, "id">,
+                            numberOfCalls: 2
+                        }
+                    ],
+                    async function (testParams) {
+                        await Given.anOutgoingRequestWith({
+                            status: ConsumptionRequestStatus.Open,
+                            content: testParams.request
+                        })
+                        await When.iCompleteTheOutgoingRequestWith({ response: testParams.response })
+                        await Then.applyIncomingResponseItemIsCalledOnTheRequestItemProcessor(testParams.numberOfCalls)
+                    }
+                )
+
+                itParam(
+                    "throws when an ItemProcessor returns an error validation result",
+                    [
+                        // 1 item with error
+                        {
+                            request: {
+                                items: [
+                                    {
+                                        "@type": "TestRequestItem",
+                                        mustBeAccepted: false,
+                                        shouldFailAtCanApplyIncomingResponseItem: true
+                                    } as ITestRequestItem
+                                ]
+                            } as IRequest,
+                            response: {
+                                result: ResponseResult.Accepted,
+                                items: [
+                                    {
+                                        "@type": "AcceptResponseItem",
+                                        result: ResponseItemResult.Accepted
+                                    } as IAcceptResponseItem
+                                ]
+                            } as Omit<IResponse, "id">
+                        },
+                        // 1 item group with 1 item with error
+                        {
+                            request: {
+                                items: [
+                                    {
+                                        "@type": "RequestItemGroup",
+                                        mustBeAccepted: false,
+                                        items: [
+                                            {
+                                                "@type": "TestRequestItem",
+                                                mustBeAccepted: false,
+                                                shouldFailAtCanApplyIncomingResponseItem: true
+                                            } as ITestRequestItem
+                                        ]
+                                    } as IRequestItemGroup
+                                ]
+                            } as IRequest,
+                            response: {
+                                result: ResponseResult.Accepted,
+                                items: [
+                                    {
+                                        "@type": "ResponseItemGroup",
+                                        items: [
+                                            {
+                                                "@type": "AcceptResponseItem",
+                                                result: ResponseItemResult.Accepted
+                                            } as IAcceptResponseItem
+                                        ]
+                                    } as IResponseItemGroup
+                                ]
+                            } as Omit<IResponse, "id">
+                        }
+                    ],
+                    async function (testParams) {
+                        await Given.anOutgoingRequestWith({
+                            status: ConsumptionRequestStatus.Open,
+                            content: testParams.request
+                        })
+                        await When.iTryToCompleteTheOutgoingRequestWith({ response: testParams.response })
+                        await Then.itThrowsAnErrorWithTheErrorMessage("aMessage")
+                    }
+                )
+
+                it("throws on syntactically invalid input", async function () {
+                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Open)
+                    await When.iTryToCallCompleteWithoutSourceObject()
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*sourceObject*Value is not defined*")
+                })
+
+                it("throws when no Request with the given id exists in DB", async function () {
+                    await When.iTryToCompleteTheOutgoingRequestWith({ requestId: CoreId.from("nonExistentId") })
+                    await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
+                })
+
+                it("throws when the Consumption Request is not in status 'Open' ", async function () {
+                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
+                    await When.iTryToCompleteTheOutgoingRequest()
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*Consumption Request has to be in status 'Open'*")
                 })
             })
 

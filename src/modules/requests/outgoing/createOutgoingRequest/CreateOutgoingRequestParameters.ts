@@ -5,7 +5,7 @@ import { CoreAddress, ICoreAddress } from "@nmshd/transport"
 export type IRequestWithoutId = Omit<IRequest, "id">
 
 export interface ICreateOutgoingRequestParameters extends ISerializable {
-    request: IRequestWithoutId
+    content: IRequestWithoutId
     peer: ICoreAddress
 }
 
@@ -13,7 +13,7 @@ export interface ICreateOutgoingRequestParameters extends ISerializable {
 export class CreateOutgoingRequestParameters extends SerializableAsync implements ICreateOutgoingRequestParameters {
     @serialize()
     @validate()
-    public request: Request
+    public content: Request
 
     @serialize()
     @validate()

@@ -1,5 +1,5 @@
 import { IDatabaseCollection } from "@js-soft/docdb-access-abstractions"
-import { IResponse, RequestItem, RequestItemGroup } from "@nmshd/content"
+import { RequestItem, RequestItemGroup, ResponseItem, ResponseItemGroup } from "@nmshd/content"
 import { CoreDate, ICoreId, Message, RelationshipTemplate, TransportErrors } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionIds } from "../../../consumption"
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
@@ -8,6 +8,10 @@ import { ValidationResult } from "../itemProcessors/ValidationResult"
 import { ConsumptionRequest, ConsumptionRequestSource } from "../local/ConsumptionRequest"
 import { ConsumptionRequestStatus } from "../local/ConsumptionRequestStatus"
 import { ConsumptionResponse } from "../local/ConsumptionResponse"
+import {
+    CompleteOugoingRequestParameters,
+    ICompleteOugoingRequestParameters
+} from "./completeOutgoingRequest/CompleteOutgoingRequest"
 import {
     CreateOutgoingRequestParameters,
     ICreateOutgoingRequestParameters
@@ -33,17 +37,17 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     public async canCreate(params: ICreateOutgoingRequestParameters): Promise<ValidationResult> {
         const parsedParams = await CreateOutgoingRequestParameters.from(params)
 
-        const innerResults = await this.canCreateItems(parsedParams)
+        const innerResults = await this.canCreateItems(parsedParams.content.items)
 
         const result = ValidationResult.fromItems(innerResults)
 
         return result
     }
 
-    private async canCreateItems(parsedParams: CreateOutgoingRequestParameters) {
+    private async canCreateItems(items: (RequestItemGroup | RequestItem)[]) {
         const results: ValidationResult[] = []
 
-        for (const requestItem of parsedParams.request.items) {
+        for (const requestItem of items) {
             if (requestItem instanceof RequestItem) {
                 const canCreateItem = await this.canCreateRequestItem(requestItem)
                 results.push(canCreateItem)
@@ -84,11 +88,11 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
 
         const id = await ConsumptionIds.request.generate()
 
-        parsedParams.request.id = id
+        parsedParams.content.id = id
 
         const consumptionRequest = await ConsumptionRequest.from({
             id: id,
-            content: parsedParams.request,
+            content: parsedParams.content,
             createdAt: CoreDate.utc(),
             isOwn: true,
             peer: parsedParams.peer,
@@ -104,7 +108,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     public async sent(params: ISentOutgoingRequestParameters): Promise<any> {
         const parsedParams = await SentOutgoingRequestParameters.from(params)
 
-        const request = await this.getOrThrow(params.requestId)
+        const request = await this.getOrThrow(parsedParams.requestId)
 
         if (request.status !== ConsumptionRequestStatus.Draft) {
             throw new Error("Consumption Request has to be in status 'Draft'.")
@@ -141,23 +145,98 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         )
     }
 
-    public async complete(requestId: ICoreId, source: Message, response: IResponse): Promise<ConsumptionRequest> {
-        const requestDoc = await this.consumptionRequests.read(requestId.toString())
-        const request = await ConsumptionRequest.from(requestDoc)
+    public async complete(params: ICompleteOugoingRequestParameters): Promise<ConsumptionRequest> {
+        const parsedParams = await CompleteOugoingRequestParameters.from(params)
+
+        const request = await this.getOrThrow(parsedParams.requestId)
+
+        if (request.status !== ConsumptionRequestStatus.Open) {
+            throw new Error("Consumption Request has to be in status 'Open'.")
+        }
+
+        const canComplete = await this.canComplete(request, parsedParams)
+
+        if (canComplete.isError()) {
+            throw new Error(canComplete.message)
+        }
+
+        await this.doComplete(request, parsedParams)
 
         const consumptionResponse = await ConsumptionResponse.from({
-            content: response,
+            content: parsedParams.response,
             createdAt: CoreDate.utc(),
-            source: { reference: source.id, type: "Message" }
+            source: { reference: parsedParams.sourceObject.id, type: "Message" }
         })
 
         request.response = consumptionResponse
-
         request.changeStatus(ConsumptionRequestStatus.Completed)
 
-        await this.consumptionRequests.update(requestDoc, request)
+        await this.update(request)
 
         return request
+    }
+
+    private async canComplete(
+        request: ConsumptionRequest,
+        params: CompleteOugoingRequestParameters
+    ): Promise<ValidationResult> {
+        for (let i = 0; i < params.response.items.length; i++) {
+            const requestItem = request.content.items[i]
+            if (requestItem instanceof RequestItem) {
+                const responseItem = params.response.items[i] as ResponseItem
+                const processor = this.processorRegistry.getProcessorForItem(requestItem)
+                const canApplyItem = await processor.canApplyIncomingResponseItem(responseItem, requestItem)
+
+                if (canApplyItem.isError()) {
+                    return canApplyItem
+                }
+            } else if (requestItem instanceof RequestItemGroup) {
+                const responseGroup = params.response.items[i] as ResponseItemGroup
+
+                for (let j = 0; j < requestItem.items.length; j++) {
+                    const groupRequestItem = requestItem.items[j]
+                    const groupResponseItem = responseGroup.items[j]
+
+                    const processor = this.processorRegistry.getProcessorForItem(groupRequestItem)
+                    const canApplyItem = await processor.canApplyIncomingResponseItem(
+                        groupResponseItem,
+                        groupRequestItem
+                    )
+
+                    if (canApplyItem.isError()) {
+                        return canApplyItem
+                    }
+                }
+            }
+        }
+
+        return ValidationResult.success()
+    }
+
+    private async doComplete(
+        request: ConsumptionRequest,
+        params: CompleteOugoingRequestParameters
+    ): Promise<ValidationResult> {
+        for (let i = 0; i < params.response.items.length; i++) {
+            const requestItem = request.content.items[i]
+            if (requestItem instanceof RequestItem) {
+                const responseItem = params.response.items[i] as ResponseItem
+                const processor = this.processorRegistry.getProcessorForItem(requestItem)
+                await processor.applyIncomingResponseItem(responseItem, requestItem)
+            } else if (requestItem instanceof RequestItemGroup) {
+                const responseGroup = params.response.items[i] as ResponseItemGroup
+
+                for (let j = 0; j < requestItem.items.length; j++) {
+                    const groupRequestItem = requestItem.items[j]
+                    const groupResponseItem = responseGroup.items[j]
+
+                    const processor = this.processorRegistry.getProcessorForItem(groupRequestItem)
+                    await processor.applyIncomingResponseItem(groupResponseItem, requestItem)
+                }
+            }
+        }
+
+        return ValidationResult.success()
     }
 
     public async get(id: ICoreId): Promise<ConsumptionRequest | undefined> {
@@ -182,81 +261,4 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         }
         await this.consumptionRequests.update(requestDoc, request)
     }
-
-    // public async createRequest(request: Request, message: Message): Promise<ConsumptionRequestOld> {
-    //     if (request.id) {
-    //         const availableRequest = await this.getRequest(request.id)
-    //         if (availableRequest) {
-    //             throw ConsumptionErrors.requests.requestsExists(request.id.toString()).logWith(this._log)
-    //         }
-    //     } else {
-    //         request.id = await ConsumptionIds.request.generate()
-    //     }
-
-    //     const isOwn = this.parent.accountController.identity.isMe(message.cache!.createdBy)
-    //     return await ConsumptionRequestOld.from({
-    //         id: request.id,
-    //         isOwn: isOwn,
-    //         isPending: false,
-    //         requestMessage: message.id,
-    //         status: ConsumptionRequestStatusOld.Pending
-    //     })
-    // }
-
-    // public async getRequest(id: CoreId): Promise<ConsumptionRequestOld | undefined> {
-    //     const result = await this.requests.findOne({ id: id.toString() })
-    //     return result ? await ConsumptionRequestOld.from(result) : undefined
-    // }
-
-    // public async getRequests(query?: any): Promise<ConsumptionRequestOld[]> {
-    //     const items = await this.requests.find(query)
-    //     return await this.parseArray<ConsumptionRequestOld>(items, ConsumptionRequestOld)
-    // }
-
-    // public async getPendingRequests(query?: any): Promise<ConsumptionRequestOld[]> {
-    //     query.isProcessed = false
-    //     return await this.getRequests(query)
-    // }
-
-    // private async updateRequestWithStatus(
-    //     requestId: CoreId,
-    //     messageId: CoreId,
-    //     status: ConsumptionRequestStatusOld
-    // ): Promise<ConsumptionRequestOld> {
-    //     const current = await this.requests.findOne({ id: requestId.toString() })
-    //     if (!current) {
-    //         throw TransportErrors.general.recordNotFound(ConsumptionRequestOld, requestId.toString())
-    //     }
-    //     const request = await ConsumptionRequestOld.from(current)
-    //     request.responseMessage = messageId
-    //     request.isPending = false
-    //     request.status = status
-    //     await this.requests.update(current, request)
-    //     return request
-    // }
-
-    // public async acceptRequest(requestId: CoreId, messageId: CoreId): Promise<ConsumptionRequestOld> {
-    //     return await this.updateRequestWithStatus(requestId, messageId, ConsumptionRequestStatusOld.Accepted)
-    // }
-
-    // public async rejectRequest(requestId: CoreId, messageId: CoreId): Promise<ConsumptionRequestOld> {
-    //     return await this.updateRequestWithStatus(requestId, messageId, ConsumptionRequestStatusOld.Rejected)
-    // }
-
-    // public async revokeRequest(requestId: CoreId, messageId: CoreId): Promise<ConsumptionRequestOld> {
-    //     return await this.updateRequestWithStatus(requestId, messageId, ConsumptionRequestStatusOld.Revoked)
-    // }
-
-    // public async updateRequest(request: ConsumptionRequestOld): Promise<ConsumptionRequestOld> {
-    //     const current = await this.requests.findOne({ id: request.id.toString() })
-    //     if (!current) {
-    //         throw TransportErrors.general.recordNotFound(ConsumptionRequestOld, request.id.toString())
-    //     }
-    //     await this.requests.update(current, request)
-    //     return request
-    // }
-
-    // public async deleteRequest(request: ConsumptionRequestOld): Promise<void> {
-    //     await this.requests.delete(request)
-    // }
 }

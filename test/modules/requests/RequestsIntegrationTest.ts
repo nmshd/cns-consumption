@@ -9,6 +9,7 @@ import {
     ConsumptionRequestStatus,
     ConsumptionResponse,
     IAcceptRequestParameters,
+    ICompleteOugoingRequestParameters,
     IConsumptionRequestSource,
     ICreateOutgoingRequestParameters,
     IRejectRequestParameters,
@@ -18,6 +19,7 @@ import {
 } from "@nmshd/consumption"
 import {
     AcceptResponseItem,
+    IRequest,
     IResponse,
     Request,
     RequestItemGroup,
@@ -30,6 +32,8 @@ import {
     CoreAddress,
     CoreId,
     IConfigOverwrite,
+    ICoreId,
+    IMessage,
     Message,
     RelationshipTemplate
 } from "@nmshd/transport"
@@ -38,6 +42,7 @@ import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
 import { TestRequestItem } from "./testHelpers/TestRequestItem"
+import { TestRequestItemProcessor } from "./testHelpers/TestRequestItemProcessor"
 
 export abstract class RequestsIntegrationTest extends IntegrationTest {
     public Given: RequestsGiven // eslint-disable-line @typescript-eslint/naming-convention
@@ -66,23 +71,25 @@ export class RequestsTestsContext {
 
         const oldCanCreate = this.consumptionController.outgoingRequests.canCreate
         this.consumptionController.outgoingRequests.canCreate = (params: ICreateOutgoingRequestParameters) => {
-            this.canAcceptWasCalled = true
+            this.canCreateWasCalled = true
             return oldCanCreate.call(this.consumptionController.outgoingRequests, params)
         }
     }
 
     public reset(): void {
-        this.canAcceptWasCalled = false
+        this.canCreateWasCalled = false
         this.givenConsumptionRequest = undefined
         this.consumptionRequestAfterAction = undefined
         this.validationResult = undefined
         this.actionToTry = undefined
+
+        TestRequestItemProcessor.numberOfApplyIncomingResponseItemCalls = 0
     }
 
     public givenConsumptionRequest?: ConsumptionRequest
     public consumptionRequestAfterAction?: ConsumptionRequest
     public validationResult?: ValidationResult
-    public canAcceptWasCalled = false
+    public canCreateWasCalled = false
     public actionToTry?: () => Promise<void>
 }
 
@@ -191,17 +198,21 @@ export class RequestsGiven {
         await this.anOutgoingRequestWith({ status: status })
     }
 
-    public async anOutgoingRequestWith(params: { status?: ConsumptionRequestStatus }): Promise<ConsumptionRequest> {
+    public async anOutgoingRequestWith(params: {
+        status?: ConsumptionRequestStatus
+        content?: IRequest
+    }): Promise<ConsumptionRequest> {
         params.status ??= ConsumptionRequestStatus.Open
+        params.content ??= {
+            items: [
+                await TestRequestItem.from({
+                    mustBeAccepted: false
+                })
+            ]
+        }
 
         this.context.givenConsumptionRequest = await this.context.consumptionController.outgoingRequests.create({
-            request: {
-                items: [
-                    await TestRequestItem.from({
-                        mustBeAccepted: false
-                    })
-                ]
-            },
+            content: params.content,
             peer: CoreAddress.from("id1")
         })
 
@@ -226,6 +237,15 @@ export class RequestsGiven {
 }
 
 export class RequestsWhen {
+    public iTryToCallSentWithoutSourceObject(): Promise<void> {
+        this.context.actionToTry = async () => {
+            await this.context.consumptionController.outgoingRequests.sent({
+                requestId: this.context.givenConsumptionRequest!.id,
+                sourceObject: undefined
+            } as any)
+        }
+        return Promise.resolve()
+    }
     public async iCallSent(): Promise<void> {
         await this.iCallSentWith({})
     }
@@ -242,6 +262,41 @@ export class RequestsWhen {
         })
     }
 
+    public async iTryToCompleteTheOutgoingRequest(): Promise<void> {
+        await this.iTryToCompleteTheOutgoingRequestWith({})
+    }
+
+    public async iTryToCompleteTheOutgoingRequestWith(params: {
+        requestId?: ICoreId
+        sourceObject?: IMessage
+        response?: Omit<IResponse, "id">
+    }): Promise<void> {
+        params.requestId ??= this.context.givenConsumptionRequest!.id
+        params.sourceObject ??= TestObjectFactory.createIncomingIMessage(
+            this.context.accountController.identity.address
+        )
+        params.response ??= await TestObjectFactory.createResponse()
+
+        params.response.requestId = params.requestId
+
+        this.context.actionToTry = async () => {
+            await this.context.consumptionController.outgoingRequests.complete(
+                params as ICompleteOugoingRequestParameters
+            )
+        }
+    }
+
+    public iTryToCallCompleteWithoutSourceObject(): Promise<void> {
+        this.context.actionToTry = async () => {
+            await this.context.consumptionController.outgoingRequests.complete({
+                requestId: this.context.givenConsumptionRequest!.id,
+                response: await TestObjectFactory.createResponse()
+            } as any)
+        }
+
+        return Promise.resolve()
+    }
+
     public async iTryToCallSent(): Promise<void> {
         await this.iTryToCallSentWith({})
     }
@@ -253,17 +308,14 @@ export class RequestsWhen {
         )
 
         this.context.actionToTry = async () =>
-            await this.context.consumptionController.outgoingRequests.sent({
-                requestId: params.requestId!,
-                sourceObject: params.sourceObject!
-            })
+            await this.context.consumptionController.outgoingRequests.sent(params as ISentOutgoingRequestParameters)
     }
 
     public async iCallCanCreateForAnOutgoingRequest(
         params?: Partial<ICreateOutgoingRequestParameters>
     ): Promise<ValidationResult> {
         const realParams: ICreateOutgoingRequestParameters = {
-            request: params?.request ?? {
+            content: params?.content ?? {
                 items: [
                     await TestRequestItem.from({
                         mustBeAccepted: false
@@ -281,7 +333,7 @@ export class RequestsWhen {
 
     public async iCreateAnOutgoingRequest(): Promise<void> {
         const params: ICreateOutgoingRequestParameters = {
-            request: {
+            content: {
                 items: [
                     await TestRequestItem.from({
                         mustBeAccepted: false
@@ -366,10 +418,28 @@ export class RequestsWhen {
         } as IResponse
 
         this.context.consumptionRequestAfterAction = await this.context.consumptionController.outgoingRequests.complete(
-            this.context.givenConsumptionRequest!.id,
-            responseSource,
-            responseContent
+            {
+                requestId: this.context.givenConsumptionRequest!.id,
+                sourceObject: responseSource,
+                response: responseContent
+            }
         )
+    }
+
+    public async iCompleteTheOutgoingRequestWith(params: {
+        requestId?: ICoreId
+        sourceObject?: IMessage
+        response?: Omit<IResponse, "id">
+    }): Promise<void> {
+        params.requestId ??= this.context.givenConsumptionRequest!.id
+        params.sourceObject ??= TestObjectFactory.createIncomingIMessage(
+            this.context.accountController.identity.address
+        )
+        params.response ??= await TestObjectFactory.createResponse()
+
+        params.response.requestId = params.requestId
+
+        await this.context.consumptionController.outgoingRequests.complete(params as ICompleteOugoingRequestParameters)
     }
 
     public async iGetTheIncomingRequestWith(id: CoreId): Promise<void> {
@@ -416,7 +486,7 @@ export class RequestsWhen {
 
     public async iTryToCreateAnOutgoingRequest(): Promise<void> {
         const params: ICreateOutgoingRequestParameters = {
-            request: {
+            content: {
                 items: [
                     await TestRequestItem.from({
                         mustBeAccepted: false
@@ -431,8 +501,8 @@ export class RequestsWhen {
         }
     }
 
-    public iTryToCreateAnOutgoingRequestWithoutRequest(): Promise<void> {
-        const paramsWithoutItems: Omit<ICreateOutgoingRequestParameters, "request"> = {
+    public iTryToCreateAnOutgoingRequestWithoutContent(): Promise<void> {
+        const paramsWithoutItems: Omit<ICreateOutgoingRequestParameters, "content"> = {
             peer: CoreAddress.from("id1")
         }
 
@@ -457,10 +527,14 @@ export class RequestsWhen {
 }
 
 export class RequestsThen {
+    public applyIncomingResponseItemIsCalledOnTheRequestItemProcessor(numberOfCalls: number): Promise<void> {
+        expect(TestRequestItemProcessor.numberOfApplyIncomingResponseItemCalls).to.equal(numberOfCalls)
+        return Promise.resolve()
+    }
     public constructor(private readonly context: RequestsTestsContext) {}
 
-    public canAcceptIsBeingCalled(): Promise<void> {
-        expect(this.context.canAcceptWasCalled).to.equal(true)
+    public canCreateIsBeingCalled(): Promise<void> {
+        expect(this.context.canCreateWasCalled).to.equal(true)
         return Promise.resolve()
     }
 
