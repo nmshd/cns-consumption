@@ -45,6 +45,8 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
             let Then: RequestsThen // eslint-disable-line @typescript-eslint/naming-convention
 
             before(async function () {
+                this.timeout(5000)
+
                 await TestUtil.clearAccounts(that.connection)
                 await transport.init()
                 ;({ accountController, consumptionController } = (await TestUtil.provideAccounts(transport, 1))[0])
