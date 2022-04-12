@@ -73,12 +73,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         incomingMessage.id,
                         "Message"
                     )
-                })
-
-                it("cannot create incoming Request from outgoing Message", async function () {
-                    const outgoingMessage = await TestObjectFactory.createOutgoingMessage(currentIdentity)
-                    await When.iTryToCreateAnIncomingRequestWith({ sourceObject: outgoingMessage })
-                    await Then.itThrowsAnErrorWithTheErrorMessage("Cannot create incoming Request from own Message")
+                    await Then.theNewRequestIsPersistedInTheDatabase()
                 })
 
                 it("creates an incoming Request with an incoming RelationshipTemplate as source", async function () {
@@ -89,12 +84,20 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         incomingTemplate.id,
                         "RelationshipTemplate"
                     )
+                    await Then.theNewRequestIsPersistedInTheDatabase()
                 })
 
-                it("persists the created ConsumptionRequest", async function () {
-                    const incomingTemplate = await TestObjectFactory.createIncomingRelationshipTemplate()
-                    await When.iCreateAnIncomingRequestWith({ sourceObject: incomingTemplate })
-                    await Then.theNewRequestIsPersistedInTheDatabase()
+                it("uses the ID of the given Request if it exists", async function () {
+                    const request = await TestObjectFactory.createRequestWithOneItem({ id: await CoreId.generate() })
+
+                    await When.iCreateAnIncomingRequestWith({ content: request })
+                    await Then.theCreatedRequestHasTheId(request.id!)
+                })
+
+                it("cannot create incoming Request with an outgoing Message as source", async function () {
+                    const outgoingMessage = await TestObjectFactory.createOutgoingMessage(currentIdentity)
+                    await When.iTryToCreateAnIncomingRequestWith({ sourceObject: outgoingMessage })
+                    await Then.itThrowsAnErrorWithTheErrorMessage("Cannot create incoming Request from own Message")
                 })
 
                 it("cannot create incoming Request from outgoing RelationshipTemplate", async function () {
@@ -114,13 +117,6 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         consumptionController.incomingRequests.received(paramsWithoutSource as any),
                         "*source*Value is not defined*"
                     )
-                })
-
-                it("created Consumption Request has ID of Request if one exists", async function () {
-                    const request = await TestObjectFactory.createRequestWithOneItem({ id: await CoreId.generate() })
-
-                    await When.iCreateAnIncomingRequestWith({ content: request })
-                    await Then.theCreatedRequestHasTheId(request.id!)
                 })
             })
 
