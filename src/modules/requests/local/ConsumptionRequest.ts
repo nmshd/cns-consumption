@@ -96,6 +96,15 @@ export class ConsumptionRequest extends CoreSerializableAsync implements IConsum
         this.status = newStatus
     }
 
+    public sent(source: ConsumptionRequestSource): void {
+        if (this.status !== ConsumptionRequestStatus.Draft) {
+            throw new Error("Consumption Request has to be in status 'Draft'.")
+        }
+
+        this.source = source
+        this.changeStatus(ConsumptionRequestStatus.Open)
+    }
+
     public static override async from(value: IConsumptionRequest): Promise<ConsumptionRequest> {
         return await super.fromT<ConsumptionRequest>(value, ConsumptionRequest)
     }

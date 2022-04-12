@@ -5,7 +5,7 @@ import { IMessage, IRelationshipTemplate, Message, RelationshipTemplate } from "
 export interface IReceivedIncomingRequestParameters extends ISerializable {
     // id?: CoreId
     content: Request
-    source: IMessage | IRelationshipTemplate
+    sourceObject: IMessage | IRelationshipTemplate
 }
 
 export class ReceivedIncomingRequestParameters extends Serializable implements IReceivedIncomingRequestParameters {
@@ -15,7 +15,7 @@ export class ReceivedIncomingRequestParameters extends Serializable implements I
 
     @serialize()
     @validate()
-    public source: Message | RelationshipTemplate
+    public sourceObject: Message | RelationshipTemplate
 
     public static override from(params: IReceivedIncomingRequestParameters): ReceivedIncomingRequestParameters {
         return super.fromT(params, ReceivedIncomingRequestParameters)

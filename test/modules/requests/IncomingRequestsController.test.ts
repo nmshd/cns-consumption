@@ -64,9 +64,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
             })
 
             describe("Received", function () {
-                it("creates an incoming Request with an incoming Message as source", async function () {
+                it("creates an incoming Request with an incoming Message as sourceObject", async function () {
                     const incomingMessage = await TestObjectFactory.createIncomingMessage(currentIdentity)
-                    await When.iCreateAnIncomingRequestWith({ source: incomingMessage })
+                    await When.iCreateAnIncomingRequestWith({ sourceObject: incomingMessage })
                     await Then.theCreatedRequestHasAllProperties(
                         incomingMessage.cache!.createdBy,
                         incomingMessage.id,
@@ -76,13 +76,13 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
                 it("cannot create incoming Request from outgoing Message", async function () {
                     const outgoingMessage = await TestObjectFactory.createOutgoingMessage(currentIdentity)
-                    await When.iTryToCreateAnIncomingRequestWith({ source: outgoingMessage })
+                    await When.iTryToCreateAnIncomingRequestWith({ sourceObject: outgoingMessage })
                     await Then.itThrowsAnErrorWithTheErrorMessage("Cannot create incoming Request from own Message")
                 })
 
                 it("creates an incoming Request with an incoming RelationshipTemplate as source", async function () {
                     const incomingTemplate = await TestObjectFactory.createIncomingRelationshipTemplate()
-                    await When.iCreateAnIncomingRequestWith({ source: incomingTemplate })
+                    await When.iCreateAnIncomingRequestWith({ sourceObject: incomingTemplate })
                     await Then.theCreatedRequestHasAllProperties(
                         incomingTemplate.cache!.createdBy,
                         incomingTemplate.id,
@@ -92,13 +92,13 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
                 it("persists the created ConsumptionRequest", async function () {
                     const incomingTemplate = await TestObjectFactory.createIncomingRelationshipTemplate()
-                    await When.iCreateAnIncomingRequestWith({ source: incomingTemplate })
+                    await When.iCreateAnIncomingRequestWith({ sourceObject: incomingTemplate })
                     await Then.theNewRequestIsPersistedInTheDatabase()
                 })
 
                 it("cannot create incoming Request from outgoing RelationshipTemplate", async function () {
                     const outgoingTemplate = await TestObjectFactory.createOutgoingRelationshipTemplate(currentIdentity)
-                    await When.iTryToCreateAnIncomingRequestWith({ source: outgoingTemplate })
+                    await When.iTryToCreateAnIncomingRequestWith({ sourceObject: outgoingTemplate })
                     await Then.itThrowsAnErrorWithTheErrorMessage(
                         "Cannot create incoming Request from own Relationship Template"
                     )

@@ -51,7 +51,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     public async received(params: IReceivedIncomingRequestParameters): Promise<ConsumptionRequest> {
         const parsedParams = ReceivedIncomingRequestParameters.from(params)
 
-        const infoFromSource = this.extractInfoFromSource(parsedParams.source)
+        const infoFromSource = this.extractInfoFromSource(parsedParams.sourceObject)
 
         const consumptionRequest = await ConsumptionRequest.from({
             id: params.content.id ? CoreId.from(params.content.id) : await CoreId.generate(),

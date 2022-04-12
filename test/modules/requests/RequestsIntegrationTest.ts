@@ -12,6 +12,7 @@ import {
     ICompleteOugoingRequestParameters,
     IConsumptionRequestSource,
     ICreateOutgoingRequestParameters,
+    IReceivedIncomingRequestParameters,
     IRejectRequestParameters,
     ISentOutgoingRequestParameters,
     RejectRequestItemParameters,
@@ -97,19 +98,7 @@ export class RequestsGiven {
     public constructor(private readonly context: RequestsTestsContext) {}
 
     public async anIncomingRequest(): Promise<ConsumptionRequest> {
-        const requestSource = await TestObjectFactory.createIncomingMessage(
-            this.context.accountController.identity.address
-        )
-        const request = await TestObjectFactory.createRequestWithOneItem()
-
-        const consumptionRequest = await this.context.consumptionController.incomingRequests.received({
-            content: request,
-            source: requestSource
-        })
-
-        this.context.givenConsumptionRequest = consumptionRequest
-
-        return consumptionRequest
+        return await this.anIncomingRequestWith({})
     }
 
     public async anIncomingRequestWithAnItemAndAGroupInStatus(status: ConsumptionRequestStatus): Promise<void> {
@@ -147,7 +136,7 @@ export class RequestsGiven {
         id?: CoreId
         content?: Request
         status?: ConsumptionRequestStatus
-    }): Promise<void> {
+    }): Promise<ConsumptionRequest> {
         params.id ??= await ConsumptionIds.request.generate()
         params.content ??= await TestObjectFactory.createRequestWithOneItem({ id: params.id })
         params.status ??= ConsumptionRequestStatus.Open
@@ -158,12 +147,14 @@ export class RequestsGiven {
 
         const consumptionRequest = await this.context.consumptionController.incomingRequests.received({
             content: params.content,
-            source: requestSource
+            sourceObject: requestSource
         })
 
         await this.moveIncomingRequestToStatus(consumptionRequest, params.status)
 
         this.context.givenConsumptionRequest = consumptionRequest
+
+        return consumptionRequest
     }
 
     public async anIncomingRequestInStatus(status: ConsumptionRequestStatus): Promise<void> {
@@ -348,34 +339,33 @@ export class RequestsWhen {
         )
     }
 
-    public async iCreateAnIncomingRequestWithSource(source: Message | RelationshipTemplate): Promise<void> {
+    public async iCreateAnIncomingRequestWithSource(sourceObject: Message | RelationshipTemplate): Promise<void> {
         const request = await TestObjectFactory.createRequestWithOneItem()
 
         this.context.consumptionRequestAfterAction = await this.context.consumptionController.incomingRequests.received(
             {
                 content: request,
-                source: source
+                sourceObject: sourceObject
             }
         )
     }
 
-    public async iCreateAnIncomingRequestWith(params: {
-        content?: Request
-        source?: Message | RelationshipTemplate
-    }): Promise<void> {
+    public async iCreateAnIncomingRequestWith(params: Partial<IReceivedIncomingRequestParameters>): Promise<void> {
         params.content ??= await TestObjectFactory.createRequestWithOneItem()
-        params.source ??= await TestObjectFactory.createIncomingMessage(this.context.accountController.identity.address)
+        params.sourceObject ??= await TestObjectFactory.createIncomingMessage(
+            this.context.accountController.identity.address
+        )
 
         this.context.consumptionRequestAfterAction = await this.context.consumptionController.incomingRequests.received(
             {
                 content: params.content,
-                source: params.source
+                sourceObject: params.sourceObject
             }
         )
     }
 
-    public iTryToCreateAnIncomingRequestWith(params: { source: Message | RelationshipTemplate }): Promise<void> {
-        this.context.actionToTry = async () => await this.iCreateAnIncomingRequestWithSource(params.source)
+    public iTryToCreateAnIncomingRequestWith(params: { sourceObject: Message | RelationshipTemplate }): Promise<void> {
+        this.context.actionToTry = async () => await this.iCreateAnIncomingRequestWithSource(params.sourceObject)
         return Promise.resolve()
     }
 
