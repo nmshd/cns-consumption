@@ -39,7 +39,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
         let consumptionController: ConsumptionController
         let currentIdentity: CoreAddress
 
-        describe("IncomingRequestController", function () {
+        describe("IncomingRequestsController", function () {
             let Given: RequestsGiven // eslint-disable-line @typescript-eslint/naming-convention
             let When: RequestsWhen // eslint-disable-line @typescript-eslint/naming-convention
             let Then: RequestsThen // eslint-disable-line @typescript-eslint/naming-convention
@@ -47,8 +47,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
             before(async function () {
                 await TestUtil.clearAccounts(that.connection)
                 await transport.init()
-                accountController = (await TestUtil.provideAccounts(transport, 1))[0]
-                consumptionController = await new ConsumptionController(transport, accountController).init()
+                ;({ accountController, consumptionController } = (await TestUtil.provideAccounts(transport, 1))[0])
 
                 consumptionController.incomingRequests.processorRegistry.registerProcessorForType(
                     TestRequestItemProcessor,

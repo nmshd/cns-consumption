@@ -28,12 +28,10 @@ export class RelationshipRequestorTest extends IntegrationTest {
 
                 await transport.init()
 
-                const accounts: AccountController[] = await TestUtil.provideAccounts(transport, 2)
+                const accounts = await TestUtil.provideAccounts(transport, 2)
 
-                templator = accounts[0]
-                requestor = accounts[1]
-
-                requestorConsumption = await new ConsumptionController(transport, requestor).init()
+                ;({ accountController: requestor, consumptionController: requestorConsumption } = accounts[0])
+                ;({ accountController: templator } = accounts[1])
             })
 
             it("should create a valid RelationshipTemplate with body", async function () {

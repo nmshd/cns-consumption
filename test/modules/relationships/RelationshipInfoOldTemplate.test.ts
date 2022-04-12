@@ -22,13 +22,10 @@ export class RelationshipInfoOldTemplateTest extends IntegrationTest {
 
                 await transport.init()
 
-                const accounts: AccountController[] = await TestUtil.provideAccounts(transport, 2)
+                const accounts = await TestUtil.provideAccounts(transport, 2)
 
-                requestor = accounts[0]
-                templator = accounts[1]
-
-                senderConsumption = await new ConsumptionController(transport, requestor).init()
-                templatorConsumption = await new ConsumptionController(transport, templator).init()
+                ;({ accountController: requestor, consumptionController: senderConsumption } = accounts[0])
+                ;({ accountController: templator, consumptionController: templatorConsumption } = accounts[1])
 
                 await TestUtil.addRelationship(
                     templator,

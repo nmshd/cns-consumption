@@ -5,6 +5,7 @@ import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import { SimpleLoggerFactory } from "@js-soft/simple-logger"
 import { ISerializableAsync, SerializableAsync } from "@js-soft/ts-serval"
 import { sleep } from "@js-soft/ts-utils"
+import { ConsumptionController } from "@nmshd/consumption"
 // import { RelationshipCreationChangeRequestBody, RelationshipTemplateBody } from "@nmshd/content"
 import { CoreBuffer } from "@nmshd/crypto"
 import {
@@ -168,7 +169,10 @@ export class TestUtil {
         }
     }
 
-    public static async provideAccounts(transport: Transport, count: number): Promise<AccountController[]> {
+    public static async provideAccounts(
+        transport: Transport,
+        count: number
+    ): Promise<{ accountController: AccountController; consumptionController: ConsumptionController }[]> {
         const accounts = []
 
         for (let i = 0; i < count; i++) {
@@ -178,14 +182,18 @@ export class TestUtil {
         return accounts
     }
 
-    private static async createAccount(transport: Transport): Promise<AccountController> {
+    private static async createAccount(
+        transport: Transport
+    ): Promise<{ accountController: AccountController; consumptionController: ConsumptionController }> {
         const randomId = Math.random().toString(36).substring(7)
         const db: IDatabaseCollectionProvider = await transport.createDatabase(`acc-${randomId}`)
 
         const accountController: AccountController = new AccountController(transport, db, transport.config)
         await accountController.init()
 
-        return accountController
+        const consumptionController = await new ConsumptionController(transport, accountController).init()
+
+        return { accountController, consumptionController }
     }
 
     public static async addRelationship(

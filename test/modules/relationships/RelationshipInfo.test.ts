@@ -21,12 +21,10 @@ export class RelationshipInfoTest extends IntegrationTest {
 
                 await transport.init()
 
-                const accounts: AccountController[] = await TestUtil.provideAccounts(transport, 2)
+                const accounts = await TestUtil.provideAccounts(transport, 2)
 
-                sender = accounts[0]
-                recipient = accounts[1]
-
-                senderConsumption = await new ConsumptionController(transport, sender).init()
+                ;({ accountController: sender, consumptionController: senderConsumption } = accounts[0])
+                ;({ accountController: recipient } = accounts[1])
 
                 await TestUtil.addRelationship(recipient, sender)
             })

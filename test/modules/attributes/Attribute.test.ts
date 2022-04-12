@@ -21,10 +21,9 @@ export class AttributeTest extends IntegrationTest {
                 await TestUtil.clearAccounts(that.connection)
 
                 await transport.init()
-
-                const accounts: AccountController[] = await TestUtil.provideAccounts(transport, 1)
-                testAccount = accounts[0]
-                consumptionController = await new ConsumptionController(transport, testAccount).init()
+                ;({ accountController: testAccount, consumptionController } = (
+                    await TestUtil.provideAccounts(transport, 1)
+                )[0])
             })
 
             it("should fill attributes", async function () {
