@@ -362,7 +362,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     )
                 })
 
-                it("returns a validation result that contains an error for each invalid item", async function () {
+                it("returns a validation result that contains a sub result for each item", async function () {
                     const request = {
                         items: [
                             await TestRequestItem.from({
@@ -371,6 +371,13 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                             await RequestItemGroup.from({
                                 mustBeAccepted: false,
                                 items: [
+                                    await TestRequestItem.from({
+                                        mustBeAccepted: false,
+                                        shouldFailAtCanAccept: true
+                                    }),
+                                    await TestRequestItem.from({
+                                        mustBeAccepted: false
+                                    }),
                                     await TestRequestItem.from({
                                         mustBeAccepted: false,
                                         shouldFailAtCanAccept: true
@@ -389,6 +396,14 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                             {
                                 "@type": "DecideRequestItemGroupParameters",
                                 items: [
+                                    {
+                                        "@type": "AcceptRequestItemParameters",
+                                        result: ResponseItemResult.Accepted
+                                    } as IAcceptRequestItemParameters,
+                                    {
+                                        "@type": "AcceptRequestItemParameters",
+                                        result: ResponseItemResult.Accepted
+                                    } as IAcceptRequestItemParameters,
                                     {
                                         "@type": "AcceptRequestItemParameters",
                                         result: ResponseItemResult.Accepted
@@ -422,8 +437,10 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         "Some child items have errors."
                     )
 
-                    expect(validationResult.items[1].items).to.have.lengthOf(1)
+                    expect(validationResult.items[1].items).to.have.lengthOf(3)
                     expect(validationResult.items[1].items[0].isError()).to.be.true
+                    expect(validationResult.items[1].items[1].isError()).to.be.false
+                    expect(validationResult.items[1].items[2].isError()).to.be.true
                 })
             })
 
