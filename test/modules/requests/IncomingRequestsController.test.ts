@@ -40,7 +40,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
         let consumptionController: ConsumptionController
         let currentIdentity: CoreAddress
 
-        describe("IncomingRequestsController", function () {
+        describe.only("IncomingRequestsController", function () {
             let Given: RequestsGiven // eslint-disable-line @typescript-eslint/naming-convention
             let When: RequestsWhen // eslint-disable-line @typescript-eslint/naming-convention
             let Then: RequestsThen // eslint-disable-line @typescript-eslint/naming-convention
@@ -187,20 +187,48 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     }
                 )
 
-                it("throws when no Consumption Request with the given id exists in DB", async function () {
-                    const nonExistentId = CoreId.from("nonExistentId")
-                    await When.iTryToCheckPrerequisitesWith({ requestId: nonExistentId })
-                    await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
-                })
-
                 it("throws when the Consumption Request is not in status 'Open'", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.WaitingForDecision)
                     await When.iTryToCheckPrerequisites()
                     await Then.itThrowsAnErrorWithTheErrorMessage("*Consumption Request has to be in status 'Open'*")
                 })
 
+                it("throws when no Consumption Request with the given id exists in DB", async function () {
+                    const nonExistentId = CoreId.from("nonExistentId")
+                    await When.iTryToCheckPrerequisitesWith({ requestId: nonExistentId })
+                    await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
+                })
+
                 it("throws on syntactically invalid input", async function () {
                     await When.iTryToCheckPrerequisitesWithoutARequestId()
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*requestId*Value is not defined*")
+                })
+            })
+
+            describe("RequireManualDecision", function () {
+                it("can handle valid input", async function () {
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.WaitingForDecision)
+                    await When.iRequireManualDecision()
+                    await Then.theRequestIsInStatus(ConsumptionRequestStatus.ManualDecisionRequired)
+                    await Then.theChangesArePersistedInTheDatabase()
+                })
+
+                it("throws when the Consumption Request is not in status 'WaitingForDecision'", async function () {
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
+                    await When.iTryToRequireManualDecision()
+                    await Then.itThrowsAnErrorWithTheErrorMessage(
+                        "*Consumption Request has to be in status 'WaitingForDecision'*"
+                    )
+                })
+
+                it("throws when no Consumption Request with the given id exists in DB", async function () {
+                    const nonExistentId = CoreId.from("nonExistentId")
+                    await When.iTryToRequireManualDecisionWith({ requestId: nonExistentId })
+                    await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
+                })
+
+                it("throws on syntactically invalid input", async function () {
+                    await When.iTryToRequireManualDecisionWithoutRequestId()
                     await Then.itThrowsAnErrorWithTheErrorMessage("*requestId*Value is not defined*")
                 })
             })

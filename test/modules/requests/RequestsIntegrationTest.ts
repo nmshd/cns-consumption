@@ -16,6 +16,7 @@ import {
     IncomingRequestsController,
     IReceivedIncomingRequestParameters,
     IRejectRequestParameters,
+    IRequireManualDecisionParams,
     ISentOutgoingRequestParameters,
     OutgoingRequestsController,
     RejectRequestItemParameters,
@@ -240,6 +241,36 @@ export class RequestsGiven {
 }
 
 export class RequestsWhen {
+    public async iRequireManualDecision(): Promise<void> {
+        await this.iRequireManualDecisionWith({})
+    }
+
+    public async iTryToRequireManualDecision(): Promise<void> {
+        await this.iTryToRequireManualDecisionWith({})
+    }
+
+    public iTryToRequireManualDecisionWithoutRequestId(): Promise<void> {
+        this.context.actionToTry = async () => {
+            await this.context.incomingRequestsController.requireManualDecision({} as IRequireManualDecisionParams)
+        }
+
+        return Promise.resolve()
+    }
+
+    public iTryToRequireManualDecisionWith(params: Partial<IRequireManualDecisionParams>): Promise<void> {
+        this.context.actionToTry = async () => {
+            await this.iRequireManualDecisionWith(params)
+        }
+
+        return Promise.resolve()
+    }
+
+    public async iRequireManualDecisionWith(params: Partial<IRequireManualDecisionParams>): Promise<void> {
+        params.requestId ??= this.context.givenConsumptionRequest!.id
+        this.context.consumptionRequestAfterAction =
+            await this.context.incomingRequestsController.requireManualDecision(params as IRequireManualDecisionParams)
+    }
+
     public iTryToAccept(): Promise<void> {
         this.context.actionToTry = async () => {
             await this.context.incomingRequestsController.accept({
@@ -726,13 +757,11 @@ function getIntegerValue(status: ConsumptionRequestStatus): number {
             return 1
         case ConsumptionRequestStatus.WaitingForDecision:
             return 2
-        // case ConsumptionRequestStatus.Checked: return 2;
-        // case ConsumptionRequestStatus.DecisionRequired: return 3;
-        // case ConsumptionRequestStatus.ManualDecisionRequired: return 4;
-        // case ConsumptionRequestStatus.Error: return 5;
+        case ConsumptionRequestStatus.ManualDecisionRequired:
+            return 3
         case ConsumptionRequestStatus.Decided:
-            return 6
+            return 5
         case ConsumptionRequestStatus.Completed:
-            return 7
+            return 6
     }
 }

@@ -44,6 +44,10 @@ import {
     IReceivedIncomingRequestParameters,
     ReceivedIncomingRequestParameters
 } from "./receivedIncomingRequestParameters/ReceivedIncomingRequestParameters"
+import {
+    IRequireManualDecisionParams,
+    RequireManualDecisionParams
+} from "./requireManualDecision/RequireManualDecisionParams"
 
 export class IncomingRequestsController extends ConsumptionBaseController {
     public async checkPrerequisites(
@@ -144,6 +148,20 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             sourceReference: template.id,
             sourceType: "RelationshipTemplate"
         }
+    }
+
+    public async requireManualDecision(params: IRequireManualDecisionParams): Promise<ConsumptionRequest> {
+        const parsedParams = await RequireManualDecisionParams.from(params)
+        const request = await this.getOrThrow(parsedParams.requestId)
+
+        if (request.status !== ConsumptionRequestStatus.WaitingForDecision) {
+            throw new Error("Consumption Request has to be in status 'WaitingForDecision'.")
+        }
+
+        request.changeStatus(ConsumptionRequestStatus.ManualDecisionRequired)
+        await this.update(request)
+
+        return request
     }
 
     public async accept(params: IAcceptRequestParameters): Promise<ConsumptionRequest> {
