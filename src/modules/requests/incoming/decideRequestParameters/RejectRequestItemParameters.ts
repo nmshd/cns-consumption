@@ -1,7 +1,7 @@
-import { ISerializable, serialize, type, validate } from "@js-soft/ts-serval"
+import { ISerializableAsync, serialize, type, validate } from "@js-soft/ts-serval"
 import { DecideRequestItemParameters } from "./DecideRequestItemParameters"
 
-export interface IRejectRequestItemParameters extends ISerializable {
+export interface IRejectRequestItemParameters extends ISerializableAsync {
     code?: string
     message?: string
 }

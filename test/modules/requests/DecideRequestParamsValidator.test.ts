@@ -56,7 +56,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
 
                 const validationResult = validator.validate(
                     {
-                        items: [AcceptRequestItemParameters.from({}), AcceptRequestItemParameters.from({})],
+                        items: [await AcceptRequestItemParameters.from({}), await AcceptRequestItemParameters.from({})],
                         requestId: consumptionRequest.id
                     },
                     consumptionRequest

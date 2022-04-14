@@ -185,7 +185,7 @@ export class RequestsGiven {
         if (isStatusAAfterStatusB(status, consumptionRequest.status)) {
             consumptionRequest = await this.context.incomingRequestsController.accept({
                 requestId: consumptionRequest.id,
-                items: [AcceptRequestItemParameters.from({})]
+                items: [await AcceptRequestItemParameters.from({})]
             })
         }
 
@@ -264,7 +264,7 @@ export class RequestsWhen {
     }
 
     public async iCallCanAcceptWith(params: Partial<IAcceptRequestParameters>): Promise<ValidationResult> {
-        params.items ??= [AcceptRequestItemParameters.from({})]
+        params.items ??= [await AcceptRequestItemParameters.from({})]
         params.requestId ??= this.context.givenConsumptionRequest!.id
 
         this.context.validationResult = await this.context.incomingRequestsController.canAccept(
@@ -308,7 +308,7 @@ export class RequestsWhen {
         this.context.actionToTry = async () => {
             await this.context.incomingRequestsController.accept({
                 requestId: this.context.givenConsumptionRequest!.id,
-                items: [AcceptRequestItemParameters.from({})]
+                items: [await AcceptRequestItemParameters.from({})]
             })
         }
         return Promise.resolve()
@@ -489,7 +489,7 @@ export class RequestsWhen {
 
     public async iAcceptTheRequest(params?: Omit<IAcceptRequestParameters, "requestId">): Promise<void> {
         params ??= {
-            items: [AcceptRequestItemParameters.from({})]
+            items: [await AcceptRequestItemParameters.from({})]
         }
 
         this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.accept({
@@ -500,7 +500,7 @@ export class RequestsWhen {
 
     public async iRejectTheRequest(params?: Omit<IAcceptRequestParameters, "requestId">): Promise<void> {
         params ??= {
-            items: [RejectRequestItemParameters.from({})]
+            items: [await RejectRequestItemParameters.from({})]
         }
 
         this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.reject({

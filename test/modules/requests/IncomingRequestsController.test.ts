@@ -442,9 +442,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     )
                     await When.iAcceptTheRequest({
                         items: [
-                            AcceptRequestItemParameters.from({}),
-                            DecideRequestItemGroupParameters.from({
-                                items: [RejectRequestItemParameters.from({})]
+                            await AcceptRequestItemParameters.from({}),
+                            await DecideRequestItemGroupParameters.from({
+                                items: [await RejectRequestItemParameters.from({})]
                             })
                         ]
                     })
@@ -462,9 +462,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     )
                     await When.iAcceptTheRequest({
                         items: [
-                            AcceptRequestItemParameters.from({}),
-                            DecideRequestItemGroupParameters.from({
-                                items: [RejectRequestItemParameters.from({})]
+                            await AcceptRequestItemParameters.from({}),
+                            await DecideRequestItemGroupParameters.from({
+                                items: [await RejectRequestItemParameters.from({})]
                             })
                         ]
                     })
@@ -484,9 +484,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     )
                     await When.iAcceptTheRequest({
                         items: [
-                            AcceptRequestItemParameters.from({}),
-                            DecideRequestItemGroupParameters.from({
-                                items: [RejectRequestItemParameters.from({})]
+                            await AcceptRequestItemParameters.from({}),
+                            await DecideRequestItemGroupParameters.from({
+                                items: [await RejectRequestItemParameters.from({})]
                             })
                         ]
                     })
@@ -537,9 +537,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     )
                     await When.iRejectTheRequest({
                         items: [
-                            RejectRequestItemParameters.from({}),
-                            DecideRequestItemGroupParameters.from({
-                                items: [RejectRequestItemParameters.from({})]
+                            await RejectRequestItemParameters.from({}),
+                            await DecideRequestItemGroupParameters.from({
+                                items: [await RejectRequestItemParameters.from({})]
                             })
                         ]
                     })
@@ -557,9 +557,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     )
                     await When.iRejectTheRequest({
                         items: [
-                            RejectRequestItemParameters.from({}),
-                            DecideRequestItemGroupParameters.from({
-                                items: [RejectRequestItemParameters.from({})]
+                            await RejectRequestItemParameters.from({}),
+                            await DecideRequestItemGroupParameters.from({
+                                items: [await RejectRequestItemParameters.from({})]
                             })
                         ]
                     })
@@ -579,9 +579,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     )
                     await When.iRejectTheRequest({
                         items: [
-                            RejectRequestItemParameters.from({}),
-                            DecideRequestItemGroupParameters.from({
-                                items: [RejectRequestItemParameters.from({})]
+                            await RejectRequestItemParameters.from({}),
+                            await DecideRequestItemGroupParameters.from({
+                                items: [await RejectRequestItemParameters.from({})]
                             })
                         ]
                     })
@@ -634,7 +634,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 it("can only complete ConsumptionRequests in status 'Decided'", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iTryToCompleteTheRequest()
-                    await Then.itThrowsAnErrorWithTheErrorMessage("*Can only decide Request in status 'Decided'*")
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*Consumption Request has to be in status 'Decided'*")
                 })
             })
 

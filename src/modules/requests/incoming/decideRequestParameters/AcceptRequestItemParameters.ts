@@ -1,7 +1,7 @@
-import { ISerializable, type } from "@js-soft/ts-serval"
+import { ISerializableAsync, type } from "@js-soft/ts-serval"
 import { DecideRequestItemParameters } from "./DecideRequestItemParameters"
 
-export interface IAcceptRequestItemParameters extends ISerializable {}
+export interface IAcceptRequestItemParameters extends ISerializableAsync {}
 
 @type("AcceptRequestItemParameters")
 export class AcceptRequestItemParameters extends DecideRequestItemParameters implements IAcceptRequestItemParameters {

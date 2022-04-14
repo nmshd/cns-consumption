@@ -1,7 +1,7 @@
-import { ISerializable, SerializableAsync, serialize, validate } from "@js-soft/ts-serval"
+import { ISerializableAsync, SerializableAsync, serialize, validate } from "@js-soft/ts-serval"
 import { CoreId } from "@nmshd/transport"
 
-export interface IRequireManualDecisionParams extends ISerializable {
+export interface IRequireManualDecisionParams extends ISerializableAsync {
     requestId: CoreId
 }
 
