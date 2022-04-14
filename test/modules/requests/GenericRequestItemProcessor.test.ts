@@ -91,7 +91,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                     const processor = new FailingTestItemProcessor()
 
                     await TestUtil.expectThrowsAsync(
-                        processor.accept(new TestRequestItem(), AcceptRequestItemParameters.from({})),
+                        processor.accept(new TestRequestItem(), await AcceptRequestItemParameters.from({})),
                         "*aCode*aMessage*"
                     )
                 })
@@ -112,7 +112,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                     const processor = new FailingTestItemProcessor()
 
                     await TestUtil.expectThrowsAsync(
-                        processor.reject(new TestRequestItem(), RejectRequestItemParameters.from({})),
+                        processor.reject(new TestRequestItem(), await RejectRequestItemParameters.from({})),
                         "*aCode*aMessage*"
                     )
                 })

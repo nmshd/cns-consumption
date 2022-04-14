@@ -1,10 +1,11 @@
-import { ISerializableAsync, SerializableAsync, serialize, validate } from "@js-soft/ts-serval"
+import { ISerializableAsync, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval"
 import { CoreId, ICoreId } from "@nmshd/transport"
 
 export interface ICheckPrerequisitesOfOutgoingRequestParameters extends ISerializableAsync {
     requestId: ICoreId
 }
 
+@type("CheckPrerequisitesOfOutgoingRequestParameters")
 export class CheckPrerequisitesOfOutgoingRequestParameters
     extends SerializableAsync
     implements ICheckPrerequisitesOfOutgoingRequestParameters

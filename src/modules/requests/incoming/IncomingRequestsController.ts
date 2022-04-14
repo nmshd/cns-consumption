@@ -19,6 +19,7 @@ import {
 import { ConsumptionBaseController, ConsumptionControllerName } from "../../../consumption"
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
 import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProcessorRegistry"
+import { ValidationResult } from "../itemProcessors/ValidationResult"
 import { ConsumptionRequest } from "../local/ConsumptionRequest"
 import { ConsumptionRequestStatus } from "../local/ConsumptionRequestStatus"
 import { ConsumptionResponse } from "../local/ConsumptionResponse"
@@ -50,15 +51,79 @@ import {
 } from "./requireManualDecision/RequireManualDecisionParams"
 
 export class IncomingRequestsController extends ConsumptionBaseController {
+    public async canAccept(params: IAcceptRequestParameters): Promise<ValidationResult> {
+        const parsedParams = await AcceptRequestParameters.from(params)
+        return await this.canDecide(parsedParams, "Accept")
+    }
+
+    private async canDecide(params: DecideRequestParameters, action: "Accept" | "Reject"): Promise<ValidationResult> {
+        const request = await this.getOrThrow(params.requestId)
+
+        this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.WaitingForDecision)
+
+        const itemResults = await this.canDecideItems(params.items, request.content.items, action)
+
+        return ValidationResult.fromItems(itemResults)
+    }
+
+    private async canDecideItems(
+        params: IDecideRequestItemParameters[],
+        items: (RequestItem | RequestItemGroup)[],
+        action: "Accept" | "Reject"
+    ) {
+        const validationResults: ValidationResult[] = []
+
+        for (let i = 0; i < params.length; i++) {
+            const decideItemParams = params[i]
+            const requestItem = items[i]
+
+            if (requestItem instanceof RequestItemGroup) {
+                const groupResult = await this.canDecideGroup(
+                    decideItemParams as DecideRequestItemGroupParameters,
+                    requestItem,
+                    action
+                )
+                validationResults.push(groupResult)
+            } else {
+                const itemResult = await this.canDecideItem(
+                    decideItemParams as DecideRequestItemParameters,
+                    requestItem,
+                    action
+                )
+                validationResults.push(itemResult)
+            }
+        }
+
+        return validationResults
+    }
+
+    private async canDecideGroup(
+        params: DecideRequestItemGroupParameters,
+        requestItemGroup: RequestItemGroup,
+        action: "Accept" | "Reject"
+    ) {
+        const itemResults = await this.canDecideItems(params.items, requestItemGroup.items, action)
+        return ValidationResult.fromItems(itemResults)
+    }
+
+    private canDecideItem(params: DecideRequestItemParameters, requestItem: RequestItem, action: "Accept" | "Reject") {
+        const processor = this.processorRegistry.getProcessorForItem(requestItem)
+        return processor[`can${action}`](requestItem, params)
+    }
+
+    private ensureRequestIsInStatus(request: ConsumptionRequest, status: ConsumptionRequestStatus) {
+        if (request.status !== status) {
+            throw new Error(`Consumption Request has to be in status '${status}'.`)
+        }
+    }
+
     public async checkPrerequisites(
         params: ICheckPrerequisitesOfOutgoingRequestParameters
     ): Promise<ConsumptionRequest> {
         const parsedParams = await CheckPrerequisitesOfOutgoingRequestParameters.from(params)
         const request = await this.getOrThrow(parsedParams.requestId)
 
-        if (request.status !== ConsumptionRequestStatus.Open) {
-            throw new Error("Consumption Request has to be in status 'Open'.")
-        }
+        this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.Open)
 
         for (const item of request.content.items) {
             if (item instanceof RequestItem) {
@@ -154,9 +219,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         const parsedParams = await RequireManualDecisionParams.from(params)
         const request = await this.getOrThrow(parsedParams.requestId)
 
-        if (request.status !== ConsumptionRequestStatus.WaitingForDecision) {
-            throw new Error("Consumption Request has to be in status 'WaitingForDecision'.")
-        }
+        this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.WaitingForDecision)
 
         request.changeStatus(ConsumptionRequestStatus.ManualDecisionRequired)
         await this.update(request)
@@ -165,11 +228,11 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     }
 
     public async accept(params: IAcceptRequestParameters): Promise<ConsumptionRequest> {
-        return await this.decide(AcceptRequestParameters.from(params))
+        return await this.decide(await AcceptRequestParameters.from(params))
     }
 
     public async reject(params: IRejectRequestParameters): Promise<ConsumptionRequest> {
-        return await this.decide(RejectRequestParameters.from(params))
+        return await this.decide(await RejectRequestParameters.from(params))
     }
 
     private async decide(params: DecideRequestParameters) {
@@ -270,9 +333,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             throw new Error("Cannot decide own Request")
         }
 
-        if (request.status !== ConsumptionRequestStatus.Decided) {
-            throw new Error(`Can only decide Request in status '${ConsumptionRequestStatus.Decided}'`)
-        }
+        this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.Decided)
 
         request.changeStatus(ConsumptionRequestStatus.Completed)
 

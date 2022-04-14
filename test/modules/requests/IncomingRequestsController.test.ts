@@ -9,10 +9,20 @@ import {
     ConsumptionRequestStatus,
     DecideRequestItemGroupParameters,
     DecideRequestParametersValidator,
+    ErrorValidationResult,
+    IAcceptRequestItemParameters,
+    IAcceptRequestParameters,
     IDecideRequestParameters,
     RejectRequestItemParameters
 } from "@nmshd/consumption"
-import { IRequest, IRequestItemGroup, ResponseItem, ResponseItemGroup, ResponseItemResult } from "@nmshd/content"
+import {
+    IRequest,
+    IRequestItemGroup,
+    RequestItemGroup,
+    ResponseItem,
+    ResponseItemGroup,
+    ResponseItemResult
+} from "@nmshd/content"
 import { AccountController, CoreAddress, CoreId, IConfigOverwrite, Transport } from "@nmshd/transport"
 import { expect } from "chai"
 import itParam from "mocha-param"
@@ -40,7 +50,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
         let consumptionController: ConsumptionController
         let currentIdentity: CoreAddress
 
-        describe.only("IncomingRequestsController", function () {
+        describe("IncomingRequestsController", function () {
             let Given: RequestsGiven // eslint-disable-line @typescript-eslint/naming-convention
             let When: RequestsWhen // eslint-disable-line @typescript-eslint/naming-convention
             let Then: RequestsThen // eslint-disable-line @typescript-eslint/naming-convention
@@ -230,6 +240,190 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 it("throws on syntactically invalid input", async function () {
                     await When.iTryToRequireManualDecisionWithoutRequestId()
                     await Then.itThrowsAnErrorWithTheErrorMessage("*requestId*Value is not defined*")
+                })
+            })
+
+            describe("CanAccept", function () {
+                it("returns 'success' on valid parameters", async function () {
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.WaitingForDecision)
+                    await When.iCallCanAccept()
+                    await Then.itReturnsASuccessfulValidationResult()
+                })
+
+                itParam(
+                    "returns 'error' when at least one RequestItem is invalid",
+                    [
+                        {
+                            request: {
+                                items: [
+                                    {
+                                        "@type": "TestRequestItem",
+                                        mustBeAccepted: false,
+                                        shouldFailAtCanAccept: true
+                                    } as ITestRequestItem
+                                ]
+                            } as IRequest,
+                            acceptParams: {
+                                items: [
+                                    {
+                                        "@type": "AcceptRequestItemParameters"
+                                    } as IAcceptRequestItemParameters
+                                ]
+                            } as Omit<IAcceptRequestParameters, "requestId">
+                        },
+
+                        {
+                            request: {
+                                items: [
+                                    {
+                                        "@type": "TestRequestItem",
+                                        mustBeAccepted: false
+                                    } as ITestRequestItem,
+                                    {
+                                        "@type": "TestRequestItem",
+                                        mustBeAccepted: false,
+                                        shouldFailAtCanAccept: true
+                                    } as ITestRequestItem
+                                ]
+                            } as IRequest,
+                            acceptParams: {
+                                items: [
+                                    {
+                                        "@type": "AcceptRequestItemParameters",
+                                        result: ResponseItemResult.Accepted
+                                    } as IAcceptRequestItemParameters,
+                                    {
+                                        "@type": "AcceptRequestItemParameters",
+                                        result: ResponseItemResult.Accepted
+                                    } as IAcceptRequestItemParameters
+                                ]
+                            } as Omit<IAcceptRequestParameters, "requestId">
+                        },
+
+                        {
+                            request: {
+                                items: [
+                                    {
+                                        "@type": "RequestItemGroup",
+                                        mustBeAccepted: false,
+                                        items: [
+                                            {
+                                                "@type": "TestRequestItem",
+                                                mustBeAccepted: false,
+                                                shouldFailAtCanAccept: true
+                                            } as ITestRequestItem
+                                        ]
+                                    } as IRequestItemGroup
+                                ]
+                            } as IRequest,
+                            acceptParams: {
+                                items: [
+                                    {
+                                        "@type": "DecideRequestItemGroupParameters",
+                                        items: [
+                                            {
+                                                "@type": "AcceptRequestItemParameters",
+                                                result: ResponseItemResult.Accepted
+                                            } as IAcceptRequestItemParameters
+                                        ]
+                                    }
+                                ]
+                            } as Omit<IAcceptRequestParameters, "requestId">
+                        }
+                    ],
+                    async function (testParams) {
+                        await Given.anIncomingRequestWith({
+                            content: testParams.request,
+                            status: ConsumptionRequestStatus.WaitingForDecision
+                        })
+                        await When.iCallCanAcceptWith({
+                            items: testParams.acceptParams.items
+                        })
+                        await Then.itReturnsAnErrorValidationResult()
+                    }
+                )
+
+                it("throws when no Consumption Request with the given id exists in DB", async function () {
+                    const nonExistentId = CoreId.from("nonExistentId")
+                    await When.iTryToCallCanAcceptWith({ requestId: nonExistentId })
+                    await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
+                })
+
+                it("throws on syntactically invalid input", async function () {
+                    await When.iTryToCallCanAcceptWithoutARequestId()
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*requestId*Value is not defined*")
+                })
+
+                it("throws when the Consumption Request is not in status 'WaitingForDecision'", async function () {
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
+                    await When.iTryToCallCanAccept()
+                    await Then.itThrowsAnErrorWithTheErrorMessage(
+                        "*Consumption Request has to be in status 'WaitingForDecision'*"
+                    )
+                })
+
+                it("returns a validation result that contains an error for each invalid item", async function () {
+                    const request = {
+                        items: [
+                            await TestRequestItem.from({
+                                mustBeAccepted: false
+                            }),
+                            await RequestItemGroup.from({
+                                mustBeAccepted: false,
+                                items: [
+                                    await TestRequestItem.from({
+                                        mustBeAccepted: false,
+                                        shouldFailAtCanAccept: true
+                                    })
+                                ]
+                            })
+                        ]
+                    } as IRequest
+
+                    const acceptParams = {
+                        items: [
+                            {
+                                "@type": "AcceptRequestItemParameters",
+                                result: ResponseItemResult.Accepted
+                            } as IAcceptRequestItemParameters,
+                            {
+                                "@type": "DecideRequestItemGroupParameters",
+                                items: [
+                                    {
+                                        "@type": "AcceptRequestItemParameters",
+                                        result: ResponseItemResult.Accepted
+                                    } as IAcceptRequestItemParameters
+                                ]
+                            }
+                        ]
+                    } as Omit<IAcceptRequestParameters, "requestId">
+
+                    await Given.anIncomingRequestWith({
+                        content: request,
+                        status: ConsumptionRequestStatus.WaitingForDecision
+                    })
+
+                    const validationResult = await When.iCallCanAcceptWith({
+                        items: acceptParams.items
+                    })
+
+                    expect(validationResult.isError()).to.be.true
+                    expect((validationResult as ErrorValidationResult).code).to.equal("inheritedFromItem")
+                    expect((validationResult as ErrorValidationResult).message).to.equal(
+                        "Some child items have errors."
+                    )
+                    expect(validationResult.items).to.have.lengthOf(2)
+
+                    expect(validationResult.items[0].isError()).to.be.false
+
+                    expect(validationResult.items[1].isError()).to.be.true
+                    expect((validationResult.items[1] as ErrorValidationResult).code).to.equal("inheritedFromItem")
+                    expect((validationResult.items[1] as ErrorValidationResult).message).to.equal(
+                        "Some child items have errors."
+                    )
+
+                    expect(validationResult.items[1].items).to.have.lengthOf(1)
+                    expect(validationResult.items[1].items[0].isError()).to.be.true
                 })
             })
 

@@ -5,7 +5,7 @@ export interface IAcceptRequestParameters extends IDecideRequestParameters {}
 
 @type("AcceptRequestParameters")
 export class AcceptRequestParameters extends DecideRequestParameters implements IAcceptRequestParameters {
-    public static override from(params: IAcceptRequestParameters): AcceptRequestParameters {
-        return super.fromT(params, AcceptRequestParameters)
+    public static override async from(params: IAcceptRequestParameters): Promise<AcceptRequestParameters> {
+        return await super.fromT(params, AcceptRequestParameters)
     }
 }

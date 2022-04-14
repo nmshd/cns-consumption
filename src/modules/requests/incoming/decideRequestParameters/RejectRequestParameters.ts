@@ -5,7 +5,7 @@ export interface IRejectRequestParameters extends IDecideRequestParameters {}
 
 @type("RejectRequestParameters")
 export class RejectRequestParameters extends DecideRequestParameters implements IRejectRequestParameters {
-    public static override from(params: IRejectRequestParameters): RejectRequestParameters {
-        return super.fromT(params, RejectRequestParameters)
+    public static override async from(params: IRejectRequestParameters): Promise<RejectRequestParameters> {
+        return await super.fromT(params, RejectRequestParameters)
     }
 }

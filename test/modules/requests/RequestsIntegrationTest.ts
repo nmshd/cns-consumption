@@ -241,6 +241,39 @@ export class RequestsGiven {
 }
 
 export class RequestsWhen {
+    public async iCallCanAccept(): Promise<void> {
+        await this.iCallCanAcceptWith({})
+    }
+
+    public async iTryToCallCanAccept(): Promise<void> {
+        await this.iTryToCallCanAcceptWith({})
+    }
+
+    public iTryToCallCanAcceptWithoutARequestId(): Promise<void> {
+        this.context.actionToTry = async () => {
+            await this.context.incomingRequestsController.canAccept({} as IAcceptRequestParameters)
+        }
+        return Promise.resolve()
+    }
+
+    public iTryToCallCanAcceptWith(params: Partial<IAcceptRequestParameters>): Promise<void> {
+        this.context.actionToTry = async () => {
+            await this.iCallCanAcceptWith(params)
+        }
+        return Promise.resolve()
+    }
+
+    public async iCallCanAcceptWith(params: Partial<IAcceptRequestParameters>): Promise<ValidationResult> {
+        params.items ??= [AcceptRequestItemParameters.from({})]
+        params.requestId ??= this.context.givenConsumptionRequest!.id
+
+        this.context.validationResult = await this.context.incomingRequestsController.canAccept(
+            params as IAcceptRequestParameters
+        )
+
+        return this.context.validationResult
+    }
+
     public async iRequireManualDecision(): Promise<void> {
         await this.iRequireManualDecisionWith({})
     }
