@@ -444,7 +444,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
             })
 
-            describe("Accept", function () {
+            describe.only("Accept", function () {
                 it("can handle valid input", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.WaitingForDecision)
                     await When.iAcceptTheRequest()
@@ -523,6 +523,12 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                             innerItemMetaKey: "innerItemMetaValue"
                         })
                     })
+                })
+
+                it("throws when no Consumption Request with the given id exists in DB", async function () {
+                    const nonExistentId = CoreId.from("nonExistentId")
+                    await When.iTryToAcceptWith({ requestId: nonExistentId })
+                    await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
 
                 it("throws when the Consumption Request is not in status 'WaitingForDecision'", async function () {

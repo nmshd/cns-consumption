@@ -313,6 +313,16 @@ export class RequestsWhen {
         }
         return Promise.resolve()
     }
+
+    public async iTryToAcceptWith(params: Partial<IAcceptRequestParameters>): Promise<void> {
+        params.requestId ??= this.context.givenConsumptionRequest!.id
+        params.items ??= [await AcceptRequestItemParameters.from({})]
+
+        this.context.actionToTry = async () => {
+            await this.context.incomingRequestsController.accept(params as IAcceptRequestParameters)
+        }
+    }
+
     public async iCheckPrerequisites(): Promise<void> {
         await this.iCheckPrerequisitesWith({})
     }

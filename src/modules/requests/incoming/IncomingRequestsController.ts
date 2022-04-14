@@ -236,12 +236,9 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     }
 
     private async decide(params: DecideRequestParameters) {
-        const requestDoc = await this.consumptionRequests.read(params.requestId.toString())
-        const consumptionRequest = await ConsumptionRequest.from(requestDoc)
+        const consumptionRequest = await this.getOrThrow(params.requestId)
 
-        if (consumptionRequest.status !== ConsumptionRequestStatus.WaitingForDecision) {
-            throw new Error("Consumption Request has to be in status 'WaitingForDecision'.")
-        }
+        this.ensureRequestIsInStatus(consumptionRequest, ConsumptionRequestStatus.WaitingForDecision)
 
         const validationResult = this.decideRequestParamsValidator.validate(params, consumptionRequest)
         if (!validationResult.isSuccess) {
@@ -253,7 +250,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         consumptionRequest.response = consumptionResponse
         consumptionRequest.changeStatus(ConsumptionRequestStatus.Decided)
 
-        await this.consumptionRequests.update(requestDoc, consumptionRequest)
+        await this.update(consumptionRequest)
 
         return consumptionRequest
     }
