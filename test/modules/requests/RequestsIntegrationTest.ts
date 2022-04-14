@@ -798,7 +798,7 @@ function getIntegerValue(status: ConsumptionRequestStatus): number {
             return 0
         case ConsumptionRequestStatus.Open:
             return 1
-        case ConsumptionRequestStatus.WaitingForDecision:
+        case ConsumptionRequestStatus.DecisionRequired:
             return 2
         case ConsumptionRequestStatus.ManualDecisionRequired:
             return 3

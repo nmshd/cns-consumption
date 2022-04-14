@@ -136,7 +136,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 it("can handle valid input", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iCheckPrerequisites()
-                    await Then.theRequestIsInStatus(ConsumptionRequestStatus.WaitingForDecision)
+                    await Then.theRequestIsInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await Then.theChangesArePersistedInTheDatabase()
                 })
 
@@ -198,7 +198,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 )
 
                 it("throws when the Consumption Request is not in status 'Open'", async function () {
-                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.WaitingForDecision)
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iTryToCheckPrerequisites()
                     await Then.itThrowsAnErrorWithTheErrorMessage("*Consumption Request has to be in status 'Open'*")
                 })
@@ -217,17 +217,17 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
             describe("RequireManualDecision", function () {
                 it("can handle valid input", async function () {
-                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.WaitingForDecision)
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iRequireManualDecision()
                     await Then.theRequestIsInStatus(ConsumptionRequestStatus.ManualDecisionRequired)
                     await Then.theChangesArePersistedInTheDatabase()
                 })
 
-                it("throws when the Consumption Request is not in status 'WaitingForDecision'", async function () {
+                it("throws when the Consumption Request is not in status 'DecisionRequired'", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iTryToRequireManualDecision()
                     await Then.itThrowsAnErrorWithTheErrorMessage(
-                        "*Consumption Request has to be in status 'WaitingForDecision'*"
+                        "*Consumption Request has to be in status 'DecisionRequired'*"
                     )
                 })
 
@@ -245,7 +245,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
             describe("CanAccept", function () {
                 it("returns 'success' on valid parameters", async function () {
-                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.WaitingForDecision)
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iCallCanAccept()
                     await Then.itReturnsASuccessfulValidationResult()
                 })
@@ -334,7 +334,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     async function (testParams) {
                         await Given.anIncomingRequestWith({
                             content: testParams.request,
-                            status: ConsumptionRequestStatus.WaitingForDecision
+                            status: ConsumptionRequestStatus.DecisionRequired
                         })
                         await When.iCallCanAcceptWith({
                             items: testParams.acceptParams.items
@@ -354,11 +354,11 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.itThrowsAnErrorWithTheErrorMessage("*requestId*Value is not defined*")
                 })
 
-                it("throws when the Consumption Request is not in status 'WaitingForDecision'", async function () {
+                it("throws when the Consumption Request is not in status 'DecisionRequired'", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iTryToCallCanAccept()
                     await Then.itThrowsAnErrorWithTheErrorMessage(
-                        "*Consumption Request has to be in status 'WaitingForDecision'*"
+                        "*Consumption Request has to be in status 'DecisionRequired'*"
                     )
                 })
 
@@ -415,7 +415,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
                     await Given.anIncomingRequestWith({
                         content: request,
-                        status: ConsumptionRequestStatus.WaitingForDecision
+                        status: ConsumptionRequestStatus.DecisionRequired
                     })
 
                     const validationResult = await When.iCallCanAcceptWith({
@@ -444,9 +444,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
             })
 
-            describe.only("Accept", function () {
+            describe("Accept", function () {
                 it("can handle valid input", async function () {
-                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.WaitingForDecision)
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iAcceptTheRequest()
                     await Then.theRequestHasItsResponsePropertySetCorrectly()
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Decided)
@@ -454,9 +454,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("creates Response Items and Groups with the correct structure", async function () {
-                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(
-                        ConsumptionRequestStatus.WaitingForDecision
-                    )
+                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iAcceptTheRequest({
                         items: [
                             await AcceptRequestItemParameters.from({}),
@@ -474,9 +472,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("creates Response Items with the correct result", async function () {
-                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(
-                        ConsumptionRequestStatus.WaitingForDecision
-                    )
+                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iAcceptTheRequest({
                         items: [
                             await AcceptRequestItemParameters.from({}),
@@ -496,9 +492,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("writes responseMetadata from Request Items and Groups into the corresponding Response Items and Groups", async function () {
-                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(
-                        ConsumptionRequestStatus.WaitingForDecision
-                    )
+                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iAcceptTheRequest({
                         items: [
                             await AcceptRequestItemParameters.from({}),
@@ -531,11 +525,11 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
 
-                it("throws when the Consumption Request is not in status 'WaitingForDecision'", async function () {
+                it("throws when the Consumption Request is not in status 'DecisionRequired'", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iTryToAccept()
                     await Then.itThrowsAnErrorWithTheErrorMessage(
-                        "*Consumption Request has to be in status 'WaitingForDecision'*"
+                        "*Consumption Request has to be in status 'DecisionRequired'*"
                     )
                 })
 
@@ -547,7 +541,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
             describe("Reject", function () {
                 it("can handle valid input", async function () {
-                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.WaitingForDecision)
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iRejectTheRequest()
                     await Then.theRequestHasItsResponsePropertySetCorrectly()
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Decided)
@@ -555,9 +549,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("creates Response Items and Groups with the correct structure", async function () {
-                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(
-                        ConsumptionRequestStatus.WaitingForDecision
-                    )
+                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iRejectTheRequest({
                         items: [
                             await RejectRequestItemParameters.from({}),
@@ -575,9 +567,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("creates Response Items with the correct result", async function () {
-                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(
-                        ConsumptionRequestStatus.WaitingForDecision
-                    )
+                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iRejectTheRequest({
                         items: [
                             await RejectRequestItemParameters.from({}),
@@ -597,9 +587,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("writes responseMetadata from Request Items and Groups into the corresponding Response Items and Groups", async function () {
-                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(
-                        ConsumptionRequestStatus.WaitingForDecision
-                    )
+                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iRejectTheRequest({
                         items: [
                             await RejectRequestItemParameters.from({}),
@@ -626,11 +614,11 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     })
                 })
 
-                it("throws when the Consumption Request is not in status 'WaitingForDecision'", async function () {
+                it("throws when the Consumption Request is not in status 'DecisionRequired'", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iTryToAccept()
                     await Then.itThrowsAnErrorWithTheErrorMessage(
-                        "*Consumption Request has to be in status 'WaitingForDecision'*"
+                        "*Consumption Request has to be in status 'DecisionRequired'*"
                     )
                 })
 

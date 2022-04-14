@@ -59,7 +59,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     private async canDecide(params: DecideRequestParameters, action: "Accept" | "Reject"): Promise<ValidationResult> {
         const request = await this.getOrThrow(params.requestId)
 
-        this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.WaitingForDecision)
+        this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.DecisionRequired)
 
         const itemResults = await this.canDecideItems(params.items, request.content.items, action)
 
@@ -143,7 +143,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             }
         }
 
-        request.changeStatus(ConsumptionRequestStatus.WaitingForDecision)
+        request.changeStatus(ConsumptionRequestStatus.DecisionRequired)
 
         await this.update(request)
 
@@ -219,7 +219,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         const parsedParams = await RequireManualDecisionParams.from(params)
         const request = await this.getOrThrow(parsedParams.requestId)
 
-        this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.WaitingForDecision)
+        this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.DecisionRequired)
 
         request.changeStatus(ConsumptionRequestStatus.ManualDecisionRequired)
         await this.update(request)
@@ -238,7 +238,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     private async decide(params: DecideRequestParameters) {
         const consumptionRequest = await this.getOrThrow(params.requestId)
 
-        this.ensureRequestIsInStatus(consumptionRequest, ConsumptionRequestStatus.WaitingForDecision)
+        this.ensureRequestIsInStatus(consumptionRequest, ConsumptionRequestStatus.DecisionRequired)
 
         const validationResult = this.decideRequestParamsValidator.validate(params, consumptionRequest)
         if (!validationResult.isSuccess) {
