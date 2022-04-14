@@ -22,26 +22,14 @@ export class GenericRequestItemProcessor<
         return Promise.resolve(ValidationResult.success())
     }
 
-    public async accept(requestItem: TRequestItem, params: TAcceptParams): Promise<AcceptResponseItem> {
-        const canAcceptResult = await this.canAccept(requestItem, params)
-
-        if (canAcceptResult.isError()) {
-            throw new Error(`Error while accepting a RequestItem: ${canAcceptResult.code} - ${canAcceptResult.message}`)
-        }
-
+    public async accept(requestItem: TRequestItem, _params: TAcceptParams): Promise<AcceptResponseItem> {
         return await AcceptResponseItem.from({
             result: ResponseItemResult.Accepted,
             metadata: requestItem.responseMetadata
         })
     }
 
-    public async reject(requestItem: TRequestItem, params: TRejectParams): Promise<RejectResponseItem> {
-        const canRejectResult = await this.canReject(requestItem, params)
-
-        if (canRejectResult.isError()) {
-            throw new Error(`Error while rejecting a RequestItem: ${canRejectResult.code} - ${canRejectResult.message}`)
-        }
-
+    public async reject(requestItem: TRequestItem, _params: TRejectParams): Promise<RejectResponseItem> {
         return await RejectResponseItem.from({
             result: ResponseItemResult.Rejected,
             metadata: requestItem.responseMetadata

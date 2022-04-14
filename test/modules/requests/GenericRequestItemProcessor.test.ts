@@ -3,16 +3,13 @@ import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import {
     AcceptRequestItemParameters,
     GenericRequestItemProcessor,
-    RejectRequestItemParameters,
-    ValidationResult
+    RejectRequestItemParameters
 } from "@nmshd/consumption"
 import { AcceptResponseItem, RejectResponseItem } from "@nmshd/content"
 import { IConfigOverwrite } from "@nmshd/transport"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
-import { TestUtil } from "../../core/TestUtil"
 import { TestRequestItem } from "./testHelpers/TestRequestItem"
-import { TestRequestItemProcessor } from "./testHelpers/TestRequestItemProcessor"
 
 export class GenericRequestItemProcessorTests extends IntegrationTest {
     public constructor(
@@ -86,15 +83,6 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
 
                     expect(result).to.be.instanceOf(AcceptResponseItem)
                 })
-
-                it("throws when canAccept returns a validation error", async function () {
-                    const processor = new FailingTestItemProcessor()
-
-                    await TestUtil.expectThrowsAsync(
-                        processor.accept(new TestRequestItem(), await AcceptRequestItemParameters.from({})),
-                        "*aCode*aMessage*"
-                    )
-                })
             })
 
             describe("Reject", function () {
@@ -106,15 +94,6 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                     const result = await processor.reject(requestItem, params)
 
                     expect(result).to.be.instanceOf(RejectResponseItem)
-                })
-
-                it("throws when canReject returns a validation error", async function () {
-                    const processor = new FailingTestItemProcessor()
-
-                    await TestUtil.expectThrowsAsync(
-                        processor.reject(new TestRequestItem(), await RejectRequestItemParameters.from({})),
-                        "*aCode*aMessage*"
-                    )
                 })
             })
 
@@ -142,21 +121,5 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                 })
             })
         })
-    }
-}
-
-class FailingTestItemProcessor extends TestRequestItemProcessor {
-    public override canAccept(
-        _requestItem: TestRequestItem,
-        _params: AcceptRequestItemParameters
-    ): Promise<ValidationResult> {
-        return Promise.resolve(ValidationResult.error("aCode", "aMessage"))
-    }
-
-    public override canReject(
-        _requestItem: TestRequestItem,
-        _params: AcceptRequestItemParameters
-    ): Promise<ValidationResult> {
-        return Promise.resolve(ValidationResult.error("aCode", "aMessage"))
     }
 }

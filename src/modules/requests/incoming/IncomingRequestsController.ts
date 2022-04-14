@@ -56,6 +56,11 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return await this.canDecide(parsedParams, "Accept")
     }
 
+    public async canReject(params: IRejectRequestParameters): Promise<ValidationResult> {
+        const parsedParams = await RejectRequestParameters.from(params)
+        return await this.canDecide(parsedParams, "Reject")
+    }
+
     private async canDecide(params: DecideRequestParameters, action: "Accept" | "Reject"): Promise<ValidationResult> {
         const request = await this.getOrThrow(params.requestId)
 
@@ -111,9 +116,9 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return processor[`can${action}`](requestItem, params)
     }
 
-    private ensureRequestIsInStatus(request: ConsumptionRequest, status: ConsumptionRequestStatus) {
-        if (request.status !== status) {
-            throw new Error(`Consumption Request has to be in status '${status}'.`)
+    private ensureRequestIsInStatus(request: ConsumptionRequest, ...status: ConsumptionRequestStatus[]) {
+        if (!status.includes(request.status)) {
+            throw new Error(`Consumption Request has to be in status '${status.join("/")}'.`)
         }
     }
 
@@ -228,10 +233,22 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     }
 
     public async accept(params: IAcceptRequestParameters): Promise<ConsumptionRequest> {
+        const canAccept = await this.canAccept(params)
+        if (!canAccept.isSuccess()) {
+            throw new Error(
+                "Cannot accept the Request with the given parameters. Call 'canAccept' to get more information."
+            )
+        }
         return await this.decide(await AcceptRequestParameters.from(params))
     }
 
     public async reject(params: IRejectRequestParameters): Promise<ConsumptionRequest> {
+        const canReject = await this.canReject(params)
+        if (!canReject.isSuccess()) {
+            throw new Error(
+                "Cannot reject the Request with the given parameters. Call 'canReject' to get more information."
+            )
+        }
         return await this.decide(await RejectRequestParameters.from(params))
     }
 
@@ -300,12 +317,21 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     ): Promise<ResponseItem> {
         const processor = this.processorRegistry.getProcessorForItem(requestItem)
 
-        if (params instanceof AcceptRequestItemParameters) {
-            return await processor.accept(requestItem, params)
-        } else if (params instanceof RejectRequestItemParameters) {
-            return await processor.reject(requestItem, params)
+        try {
+            if (params instanceof AcceptRequestItemParameters) {
+                return await processor.accept(requestItem, params)
+            } else if (params instanceof RejectRequestItemParameters) {
+                return await processor.reject(requestItem, params)
+            }
+        } catch (e) {
+            let details = ""
+            if (e instanceof Error) {
+                details = ` Details: ${e.message}`
+            }
+            throw new Error(
+                `An error occurred while processing a '${requestItem.constructor.name}'. You should contact the developer of this RequestItem.${details}}`
+            )
         }
-
         throw new Error("Unknown params type")
     }
 

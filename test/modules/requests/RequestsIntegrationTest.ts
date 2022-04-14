@@ -274,6 +274,39 @@ export class RequestsWhen {
         return this.context.validationResult
     }
 
+    public async iCallCanReject(): Promise<void> {
+        await this.iCallCanRejectWith({})
+    }
+
+    public async iTryToCallCanReject(): Promise<void> {
+        await this.iTryToCallCanRejectWith({})
+    }
+
+    public iTryToCallCanRejectWithoutARequestId(): Promise<void> {
+        this.context.actionToTry = async () => {
+            await this.context.incomingRequestsController.canReject({} as IRejectRequestParameters)
+        }
+        return Promise.resolve()
+    }
+
+    public iTryToCallCanRejectWith(params: Partial<IRejectRequestParameters>): Promise<void> {
+        this.context.actionToTry = async () => {
+            await this.iCallCanRejectWith(params)
+        }
+        return Promise.resolve()
+    }
+
+    public async iCallCanRejectWith(params: Partial<IRejectRequestParameters>): Promise<ValidationResult> {
+        params.items ??= [await RejectRequestItemParameters.from({})]
+        params.requestId ??= this.context.givenConsumptionRequest!.id
+
+        this.context.validationResult = await this.context.incomingRequestsController.canReject(
+            params as IRejectRequestParameters
+        )
+
+        return this.context.validationResult
+    }
+
     public async iRequireManualDecision(): Promise<void> {
         await this.iRequireManualDecisionWith({})
     }
@@ -320,6 +353,25 @@ export class RequestsWhen {
 
         this.context.actionToTry = async () => {
             await this.context.incomingRequestsController.accept(params as IAcceptRequestParameters)
+        }
+    }
+
+    public iTryToReject(): Promise<void> {
+        this.context.actionToTry = async () => {
+            await this.context.incomingRequestsController.reject({
+                requestId: this.context.givenConsumptionRequest!.id,
+                items: [await RejectRequestItemParameters.from({})]
+            })
+        }
+        return Promise.resolve()
+    }
+
+    public async iTryToRejectWith(params: Partial<IRejectRequestParameters>): Promise<void> {
+        params.requestId ??= this.context.givenConsumptionRequest!.id
+        params.items ??= [await RejectRequestItemParameters.from({})]
+
+        this.context.actionToTry = async () => {
+            await this.context.incomingRequestsController.reject(params as IRejectRequestParameters)
         }
     }
 
@@ -589,6 +641,18 @@ export class RequestsWhen {
 
         this.context.actionToTry = async () => {
             await this.context.incomingRequestsController.accept(paramsWithoutItems as any)
+        }
+
+        return Promise.resolve()
+    }
+
+    public iTryToRejectARequestWithoutItemsParameters(): Promise<void> {
+        const paramsWithoutItems: Omit<IRejectRequestParameters, "items"> = {
+            requestId: CoreId.from("CNSREQ1")
+        }
+
+        this.context.actionToTry = async () => {
+            await this.context.incomingRequestsController.reject(paramsWithoutItems as any)
         }
 
         return Promise.resolve()

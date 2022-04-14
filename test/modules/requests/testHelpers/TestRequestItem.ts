@@ -6,6 +6,8 @@ export interface ITestRequestItem extends IRequestItem {
     shouldFailAtCanReject?: true
     shouldFailAtCanCreateOutgoingRequestItem?: true
     shouldFailAtCanApplyIncomingResponseItem?: true
+    shouldThrowOnAccept?: true
+    shouldThrowOnReject?: true
 }
 
 @type("TestRequestItem")
@@ -29,6 +31,14 @@ export class TestRequestItem extends RequestItem implements ITestRequestItem {
     @serialize()
     @validate({ nullable: true })
     public shouldFailAtCheckPrerequisitesOfIncomingRequestItem?: true
+
+    @serialize()
+    @validate({ nullable: true })
+    public shouldThrowOnAccept?: true
+
+    @serialize()
+    @validate({ nullable: true })
+    public shouldThrowOnReject?: true
 
     public static override async from(item: ITestRequestItem): Promise<TestRequestItem> {
         return await super.fromT(item, TestRequestItem)

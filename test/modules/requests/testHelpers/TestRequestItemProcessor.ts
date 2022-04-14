@@ -4,7 +4,7 @@ import {
     RejectRequestItemParameters,
     ValidationResult
 } from "@nmshd/consumption"
-import { ResponseItem } from "@nmshd/content"
+import { AcceptResponseItem, RejectResponseItem, ResponseItem } from "@nmshd/content"
 import { TestRequestItem } from "./TestRequestItem"
 
 export class TestRequestItemProcessor extends GenericRequestItemProcessor<
@@ -64,5 +64,25 @@ export class TestRequestItemProcessor extends GenericRequestItemProcessor<
             return Promise.resolve(false)
         }
         return Promise.resolve(true)
+    }
+
+    public override accept(
+        requestItem: TestRequestItem,
+        params: AcceptRequestItemParameters
+    ): Promise<AcceptResponseItem> {
+        if (requestItem.shouldThrowOnAccept) {
+            throw new Error("Accept failed for testing purposes.")
+        }
+        return super.accept(requestItem, params)
+    }
+
+    public override reject(
+        requestItem: TestRequestItem,
+        params: RejectRequestItemParameters
+    ): Promise<RejectResponseItem> {
+        if (requestItem.shouldThrowOnReject) {
+            throw new Error("Reject failed for testing purposes.")
+        }
+        return super.reject(requestItem, params)
     }
 }

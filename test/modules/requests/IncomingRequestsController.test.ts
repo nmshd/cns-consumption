@@ -13,6 +13,8 @@ import {
     IAcceptRequestItemParameters,
     IAcceptRequestParameters,
     IDecideRequestParameters,
+    IRejectRequestItemParameters,
+    IRejectRequestParameters,
     RejectRequestItemParameters
 } from "@nmshd/consumption"
 import {
@@ -444,6 +446,207 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
             })
 
+            describe("CanReject", function () {
+                it("returns 'success' on valid parameters", async function () {
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.DecisionRequired)
+                    await When.iCallCanReject()
+                    await Then.itReturnsASuccessfulValidationResult()
+                })
+
+                itParam(
+                    "returns 'error' when at least one RequestItem is invalid",
+                    [
+                        {
+                            request: {
+                                items: [
+                                    {
+                                        "@type": "TestRequestItem",
+                                        mustBeAccepted: false,
+                                        shouldFailAtCanReject: true
+                                    } as ITestRequestItem
+                                ]
+                            } as IRequest,
+                            rejectParams: {
+                                items: [
+                                    {
+                                        "@type": "RejectRequestItemParameters"
+                                    } as IRejectRequestItemParameters
+                                ]
+                            } as Omit<IRejectRequestParameters, "requestId">
+                        },
+
+                        {
+                            request: {
+                                items: [
+                                    {
+                                        "@type": "TestRequestItem",
+                                        mustBeAccepted: false
+                                    } as ITestRequestItem,
+                                    {
+                                        "@type": "TestRequestItem",
+                                        mustBeAccepted: false,
+                                        shouldFailAtCanReject: true
+                                    } as ITestRequestItem
+                                ]
+                            } as IRequest,
+                            rejectParams: {
+                                items: [
+                                    {
+                                        "@type": "RejectRequestItemParameters",
+                                        result: ResponseItemResult.Rejected
+                                    } as IRejectRequestItemParameters,
+                                    {
+                                        "@type": "RejectRequestItemParameters",
+                                        result: ResponseItemResult.Rejected
+                                    } as IRejectRequestItemParameters
+                                ]
+                            } as Omit<IRejectRequestParameters, "requestId">
+                        },
+
+                        {
+                            request: {
+                                items: [
+                                    {
+                                        "@type": "RequestItemGroup",
+                                        mustBeAccepted: false,
+                                        items: [
+                                            {
+                                                "@type": "TestRequestItem",
+                                                mustBeAccepted: false,
+                                                shouldFailAtCanReject: true
+                                            } as ITestRequestItem
+                                        ]
+                                    } as IRequestItemGroup
+                                ]
+                            } as IRequest,
+                            rejectParams: {
+                                items: [
+                                    {
+                                        "@type": "DecideRequestItemGroupParameters",
+                                        items: [
+                                            {
+                                                "@type": "RejectRequestItemParameters",
+                                                result: ResponseItemResult.Rejected
+                                            } as IRejectRequestItemParameters
+                                        ]
+                                    }
+                                ]
+                            } as Omit<IRejectRequestParameters, "requestId">
+                        }
+                    ],
+                    async function (testParams) {
+                        await Given.anIncomingRequestWith({
+                            content: testParams.request,
+                            status: ConsumptionRequestStatus.DecisionRequired
+                        })
+                        await When.iCallCanRejectWith({
+                            items: testParams.rejectParams.items
+                        })
+                        await Then.itReturnsAnErrorValidationResult()
+                    }
+                )
+
+                it("throws when no Consumption Request with the given id exists in DB", async function () {
+                    const nonExistentId = CoreId.from("nonExistentId")
+                    await When.iTryToCallCanRejectWith({ requestId: nonExistentId })
+                    await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
+                })
+
+                it("throws on syntactically invalid input", async function () {
+                    await When.iTryToCallCanRejectWithoutARequestId()
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*requestId*Value is not defined*")
+                })
+
+                it("throws when the Consumption Request is not in status 'DecisionRequired'", async function () {
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
+                    await When.iTryToCallCanReject()
+                    await Then.itThrowsAnErrorWithTheErrorMessage(
+                        "*Consumption Request has to be in status 'DecisionRequired'*"
+                    )
+                })
+
+                it("returns a validation result that contains a sub result for each item", async function () {
+                    const request = {
+                        items: [
+                            await TestRequestItem.from({
+                                mustBeAccepted: false
+                            }),
+                            await RequestItemGroup.from({
+                                mustBeAccepted: false,
+                                items: [
+                                    await TestRequestItem.from({
+                                        mustBeAccepted: false,
+                                        shouldFailAtCanReject: true
+                                    }),
+                                    await TestRequestItem.from({
+                                        mustBeAccepted: false
+                                    }),
+                                    await TestRequestItem.from({
+                                        mustBeAccepted: false,
+                                        shouldFailAtCanReject: true
+                                    })
+                                ]
+                            })
+                        ]
+                    } as IRequest
+
+                    const rejectParams = {
+                        items: [
+                            {
+                                "@type": "RejectRequestItemParameters",
+                                result: ResponseItemResult.Rejected
+                            } as IRejectRequestItemParameters,
+                            {
+                                "@type": "DecideRequestItemGroupParameters",
+                                items: [
+                                    {
+                                        "@type": "RejectRequestItemParameters",
+                                        result: ResponseItemResult.Rejected
+                                    } as IRejectRequestItemParameters,
+                                    {
+                                        "@type": "RejectRequestItemParameters",
+                                        result: ResponseItemResult.Rejected
+                                    } as IRejectRequestItemParameters,
+                                    {
+                                        "@type": "RejectRequestItemParameters",
+                                        result: ResponseItemResult.Rejected
+                                    } as IRejectRequestItemParameters
+                                ]
+                            }
+                        ]
+                    } as Omit<IRejectRequestParameters, "requestId">
+
+                    await Given.anIncomingRequestWith({
+                        content: request,
+                        status: ConsumptionRequestStatus.DecisionRequired
+                    })
+
+                    const validationResult = await When.iCallCanRejectWith({
+                        items: rejectParams.items
+                    })
+
+                    expect(validationResult.isError()).to.be.true
+                    expect((validationResult as ErrorValidationResult).code).to.equal("inheritedFromItem")
+                    expect((validationResult as ErrorValidationResult).message).to.equal(
+                        "Some child items have errors."
+                    )
+                    expect(validationResult.items).to.have.lengthOf(2)
+
+                    expect(validationResult.items[0].isError()).to.be.false
+
+                    expect(validationResult.items[1].isError()).to.be.true
+                    expect((validationResult.items[1] as ErrorValidationResult).code).to.equal("inheritedFromItem")
+                    expect((validationResult.items[1] as ErrorValidationResult).message).to.equal(
+                        "Some child items have errors."
+                    )
+
+                    expect(validationResult.items[1].items).to.have.lengthOf(3)
+                    expect(validationResult.items[1].items[0].isError()).to.be.true
+                    expect(validationResult.items[1].items[1].isError()).to.be.false
+                    expect(validationResult.items[1].items[2].isError()).to.be.true
+                })
+            })
+
             describe("Accept", function () {
                 it("can handle valid input", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.DecisionRequired)
@@ -519,13 +722,40 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     })
                 })
 
+                it("throws when canAccept returns an error", async function () {
+                    await Given.anIncomingRequestWith({
+                        content: {
+                            items: [await TestRequestItem.from({ mustBeAccepted: false, shouldFailAtCanAccept: true })]
+                        },
+                        status: ConsumptionRequestStatus.DecisionRequired
+                    })
+                    await When.iTryToAccept()
+                    await Then.itThrowsAnErrorWithTheErrorMessage(
+                        "Cannot accept the Request with the given parameters. Call 'canAccept' to get more information."
+                    )
+                })
+
                 it("throws when no Consumption Request with the given id exists in DB", async function () {
                     const nonExistentId = CoreId.from("nonExistentId")
                     await When.iTryToAcceptWith({ requestId: nonExistentId })
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
 
-                it("throws when the Consumption Request is not in status 'DecisionRequired'", async function () {
+                it("throws when at least one RequestItemProcessor throws", async function () {
+                    await Given.anIncomingRequestWith({
+                        content: {
+                            items: [await TestRequestItem.from({ mustBeAccepted: false, shouldThrowOnAccept: true })]
+                        },
+                        status: ConsumptionRequestStatus.DecisionRequired
+                    })
+
+                    await When.iTryToAccept()
+                    await Then.itThrowsAnErrorWithTheErrorMessage(
+                        "An error occurred while processing a 'TestRequestItem'*Details: Accept failed for testing purposes*"
+                    )
+                })
+
+                it("throws when the Consumption Request is not in status 'DecisionRequired/ManualDecisionRequired'", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iTryToAccept()
                     await Then.itThrowsAnErrorWithTheErrorMessage(
@@ -614,16 +844,49 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     })
                 })
 
-                it("throws when the Consumption Request is not in status 'DecisionRequired'", async function () {
+                it("throws when canReject returns an error", async function () {
+                    await Given.anIncomingRequestWith({
+                        content: {
+                            items: [await TestRequestItem.from({ mustBeAccepted: false, shouldFailAtCanReject: true })]
+                        },
+                        status: ConsumptionRequestStatus.DecisionRequired
+                    })
+                    await When.iTryToReject()
+                    await Then.itThrowsAnErrorWithTheErrorMessage(
+                        "Cannot reject the Request with the given parameters. Call 'canReject' to get more information."
+                    )
+                })
+
+                it("throws when no Consumption Request with the given id exists in DB", async function () {
+                    const nonExistentId = CoreId.from("nonExistentId")
+                    await When.iTryToRejectWith({ requestId: nonExistentId })
+                    await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
+                })
+
+                it("throws when at least one RequestItemProcessor throws", async function () {
+                    await Given.anIncomingRequestWith({
+                        content: {
+                            items: [await TestRequestItem.from({ mustBeAccepted: false, shouldThrowOnReject: true })]
+                        },
+                        status: ConsumptionRequestStatus.DecisionRequired
+                    })
+
+                    await When.iTryToReject()
+                    await Then.itThrowsAnErrorWithTheErrorMessage(
+                        "An error occurred while processing a 'TestRequestItem'*Details: Reject failed for testing purposes*"
+                    )
+                })
+
+                it("throws when the Consumption Request is not in status 'DecisionRequired/ManualDecisionRequired'", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
-                    await When.iTryToAccept()
+                    await When.iTryToReject()
                     await Then.itThrowsAnErrorWithTheErrorMessage(
                         "*Consumption Request has to be in status 'DecisionRequired'*"
                     )
                 })
 
                 it("throws on syntactically invalid input", async function () {
-                    await When.iTryToRejectARequestWithSyntacticallyInvalidInput()
+                    await When.iTryToAcceptARequestWithoutItemsParameters()
                     await Then.itThrowsAnErrorWithTheErrorMessage("*items*Value is not defined*")
                 })
             })
