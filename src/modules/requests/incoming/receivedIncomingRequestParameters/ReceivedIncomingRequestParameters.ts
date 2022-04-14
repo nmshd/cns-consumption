@@ -1,23 +1,26 @@
-import { ISerializable, Serializable, serialize, validate } from "@js-soft/ts-serval"
-import { Request } from "@nmshd/content"
+import { ISerializableAsync, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval"
+import { IRequest, Request } from "@nmshd/content"
 import { IMessage, IRelationshipTemplate, Message, RelationshipTemplate } from "@nmshd/transport"
 
-export interface IReceivedIncomingRequestParameters extends ISerializable {
+export interface IReceivedIncomingRequestParameters extends ISerializableAsync {
     // id?: CoreId
-    content: Request
+    content: IRequest
     sourceObject: IMessage | IRelationshipTemplate
 }
 
-export class ReceivedIncomingRequestParameters extends Serializable implements IReceivedIncomingRequestParameters {
+@type("ReceivedIncomingRequestParameters")
+export class ReceivedIncomingRequestParameters extends SerializableAsync implements IReceivedIncomingRequestParameters {
     @serialize()
     @validate()
     public content: Request
 
-    @serialize()
+    @serialize({ unionTypes: [Message, RelationshipTemplate] })
     @validate()
     public sourceObject: Message | RelationshipTemplate
 
-    public static override from(params: IReceivedIncomingRequestParameters): ReceivedIncomingRequestParameters {
-        return super.fromT(params, ReceivedIncomingRequestParameters)
+    public static override async from(
+        params: IReceivedIncomingRequestParameters
+    ): Promise<ReceivedIncomingRequestParameters> {
+        return await super.fromT(params, ReceivedIncomingRequestParameters)
     }
 }

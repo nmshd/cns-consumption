@@ -7,13 +7,25 @@ import {
     ResponseItemGroup,
     ResponseResult
 } from "@nmshd/content"
-import { CoreAddress, CoreDate, CoreId, ICoreId, Message, RelationshipTemplate } from "@nmshd/transport"
+import {
+    CoreAddress,
+    CoreDate,
+    CoreId,
+    ICoreId,
+    Message,
+    RelationshipTemplate,
+    TransportErrors
+} from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName } from "../../../consumption"
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
 import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProcessorRegistry"
 import { ConsumptionRequest } from "../local/ConsumptionRequest"
 import { ConsumptionRequestStatus } from "../local/ConsumptionRequestStatus"
 import { ConsumptionResponse } from "../local/ConsumptionResponse"
+import {
+    CheckPrerequisitesOfOutgoingRequestParameters,
+    ICheckPrerequisitesOfOutgoingRequestParameters
+} from "./checkPrerequisites/CheckPrerequisitesOfOutgoingRequestParameters"
 import { AcceptRequestItemParameters } from "./decideRequestParameters/AcceptRequestItemParameters"
 import { AcceptRequestParameters, IAcceptRequestParameters } from "./decideRequestParameters/AcceptRequestParameters"
 import {
@@ -34,6 +46,41 @@ import {
 } from "./receivedIncomingRequestParameters/ReceivedIncomingRequestParameters"
 
 export class IncomingRequestsController extends ConsumptionBaseController {
+    public async checkPrerequisites(
+        params: ICheckPrerequisitesOfOutgoingRequestParameters
+    ): Promise<ConsumptionRequest> {
+        const parsedParams = await CheckPrerequisitesOfOutgoingRequestParameters.from(params)
+        const request = await this.getOrThrow(parsedParams.requestId)
+
+        if (request.status !== ConsumptionRequestStatus.Open) {
+            throw new Error("Consumption Request has to be in status 'Open'.")
+        }
+
+        for (const item of request.content.items) {
+            if (item instanceof RequestItem) {
+                const processor = this.processorRegistry.getProcessorForItem(item)
+                const prerequisitesFulfilled = await processor.checkPrerequisitesOfIncomingRequestItem(item)
+                if (!prerequisitesFulfilled) {
+                    return request
+                }
+            } else {
+                for (const childItem of item.items) {
+                    const processor = this.processorRegistry.getProcessorForItem(childItem)
+                    const prerequisitesFulfilled = await processor.checkPrerequisitesOfIncomingRequestItem(childItem)
+                    if (!prerequisitesFulfilled) {
+                        return request
+                    }
+                }
+            }
+        }
+
+        request.changeStatus(ConsumptionRequestStatus.WaitingForDecision)
+
+        await this.update(request)
+
+        return request
+    }
+
     private consumptionRequests: IDatabaseCollection
     private readonly decideRequestParamsValidator: DecideRequestParametersValidator =
         new DecideRequestParametersValidator()
@@ -49,15 +96,15 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     }
 
     public async received(params: IReceivedIncomingRequestParameters): Promise<ConsumptionRequest> {
-        const parsedParams = ReceivedIncomingRequestParameters.from(params)
+        const parsedParams = await ReceivedIncomingRequestParameters.from(params)
 
         const infoFromSource = this.extractInfoFromSource(parsedParams.sourceObject)
 
         const consumptionRequest = await ConsumptionRequest.from({
-            id: params.content.id ? CoreId.from(params.content.id) : await CoreId.generate(),
+            id: parsedParams.content.id ? CoreId.from(parsedParams.content.id) : await CoreId.generate(),
             createdAt: CoreDate.utc(),
             status: ConsumptionRequestStatus.Open,
-            content: params.content,
+            content: parsedParams.content,
             isOwn: infoFromSource.isOwn,
             peer: infoFromSource.peer,
             source: { reference: infoFromSource.sourceReference, type: infoFromSource.sourceType },
@@ -110,6 +157,10 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     private async decide(params: DecideRequestParameters) {
         const requestDoc = await this.consumptionRequests.read(params.requestId.toString())
         const consumptionRequest = await ConsumptionRequest.from(requestDoc)
+
+        if (consumptionRequest.status !== ConsumptionRequestStatus.WaitingForDecision) {
+            throw new Error("Consumption Request has to be in status 'WaitingForDecision'.")
+        }
 
         const validationResult = this.decideRequestParamsValidator.validate(params, consumptionRequest)
         if (!validationResult.isSuccess) {
@@ -216,6 +267,22 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         const requestDoc = await this.consumptionRequests.findOne({ id: id.toString(), isOwn: false })
         const request = requestDoc ? await ConsumptionRequest.from(requestDoc) : undefined
         return request
+    }
+
+    private async getOrThrow(id: CoreId) {
+        const request = await this.get(id)
+        if (!request) {
+            throw TransportErrors.general.recordNotFound(ConsumptionRequest, id.toString())
+        }
+        return request
+    }
+
+    private async update(request: ConsumptionRequest) {
+        const requestDoc = await this.consumptionRequests.findOne({ id: request.id.toString(), isOwn: false })
+        if (!requestDoc) {
+            throw TransportErrors.general.recordNotFound(ConsumptionRequest, request.id.toString())
+        }
+        await this.consumptionRequests.update(requestDoc, request)
     }
 }
 

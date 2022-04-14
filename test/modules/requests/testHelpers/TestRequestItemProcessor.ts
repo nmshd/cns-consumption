@@ -58,4 +58,11 @@ export class TestRequestItemProcessor extends GenericRequestItemProcessor<
         TestRequestItemProcessor.numberOfApplyIncomingResponseItemCalls++
         return Promise.resolve()
     }
+
+    public override checkPrerequisitesOfIncomingRequestItem(_requestItem: TestRequestItem): Promise<boolean> {
+        if (_requestItem.shouldFailAtCheckPrerequisitesOfIncomingRequestItem) {
+            return Promise.resolve(false)
+        }
+        return Promise.resolve(true)
+    }
 }

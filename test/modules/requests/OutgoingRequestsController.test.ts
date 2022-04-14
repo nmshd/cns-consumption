@@ -539,7 +539,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
 
-                it("throws when the Consumption Request is not in status 'Open' ", async function () {
+                it("throws when the Consumption Request is not in status 'Open'", async function () {
                     await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
                     await When.iTryToCompleteTheOutgoingRequest()
                     await Then.itThrowsAnErrorWithTheErrorMessage("*Consumption Request has to be in status 'Open'*")

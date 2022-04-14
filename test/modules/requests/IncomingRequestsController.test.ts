@@ -12,9 +12,10 @@ import {
     IDecideRequestParameters,
     RejectRequestItemParameters
 } from "@nmshd/consumption"
-import { ResponseItem, ResponseItemGroup, ResponseItemResult } from "@nmshd/content"
+import { IRequest, IRequestItemGroup, ResponseItem, ResponseItemGroup, ResponseItemResult } from "@nmshd/content"
 import { AccountController, CoreAddress, CoreId, IConfigOverwrite, Transport } from "@nmshd/transport"
 import { expect } from "chai"
+import itParam from "mocha-param"
 import { TestUtil } from "../../core/TestUtil"
 import {
     RequestsGiven,
@@ -24,7 +25,7 @@ import {
     RequestsWhen
 } from "./RequestsIntegrationTest"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
-import { TestRequestItem } from "./testHelpers/TestRequestItem"
+import { ITestRequestItem, TestRequestItem } from "./testHelpers/TestRequestItem"
 import { TestRequestItemProcessor } from "./testHelpers/TestRequestItemProcessor"
 
 export class IncomingRequestControllerTests extends RequestsIntegrationTest {
@@ -73,6 +74,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         incomingMessage.id,
                         "Message"
                     )
+                    await Then.theRequestIsInStatus(ConsumptionRequestStatus.Open)
                     await Then.theNewRequestIsPersistedInTheDatabase()
                 })
 
@@ -84,6 +86,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         incomingTemplate.id,
                         "RelationshipTemplate"
                     )
+                    await Then.theRequestIsInStatus(ConsumptionRequestStatus.Open)
                     await Then.theNewRequestIsPersistedInTheDatabase()
                 })
 
@@ -91,7 +94,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     const request = await TestObjectFactory.createRequestWithOneItem({ id: await CoreId.generate() })
 
                     await When.iCreateAnIncomingRequestWith({ content: request })
-                    await Then.theCreatedRequestHasTheId(request.id!)
+                    await Then.theRequestHasTheId(request.id!)
                 })
 
                 it("cannot create incoming Request with an outgoing Message as source", async function () {
@@ -100,7 +103,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.itThrowsAnErrorWithTheErrorMessage("Cannot create incoming Request from own Message")
                 })
 
-                it("cannot create incoming Request from outgoing RelationshipTemplate", async function () {
+                it("cannot create incoming Request with an outgoing RelationshipTemplate as source", async function () {
                     const outgoingTemplate = await TestObjectFactory.createOutgoingRelationshipTemplate(currentIdentity)
                     await When.iTryToCreateAnIncomingRequestWith({ sourceObject: outgoingTemplate })
                     await Then.itThrowsAnErrorWithTheErrorMessage(
@@ -112,7 +115,6 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     const paramsWithoutSource = {
                         content: await TestObjectFactory.createRequestWithOneItem()
                     }
-
                     await TestUtil.expectThrowsAsync(
                         consumptionController.incomingRequests.received(paramsWithoutSource as any),
                         "*source*Value is not defined*"
@@ -120,9 +122,92 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
             })
 
-            describe("Accept", function () {
+            describe("CheckPrerequisites", function () {
                 it("can handle valid input", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
+                    await When.iCheckPrerequisites()
+                    await Then.theRequestIsInStatus(ConsumptionRequestStatus.WaitingForDecision)
+                    await Then.theChangesArePersistedInTheDatabase()
+                })
+
+                itParam(
+                    "does not change the status when a RequestItemProcessor returns false",
+                    [
+                        {
+                            content: {
+                                items: [
+                                    {
+                                        "@type": "TestRequestItem",
+                                        mustBeAccepted: false,
+                                        shouldFailAtCheckPrerequisitesOfIncomingRequestItem: true
+                                    } as ITestRequestItem
+                                ]
+                            } as IRequest
+                        },
+                        {
+                            content: {
+                                items: [
+                                    {
+                                        "@type": "TestRequestItem",
+                                        mustBeAccepted: false
+                                    } as ITestRequestItem,
+                                    {
+                                        "@type": "TestRequestItem",
+                                        mustBeAccepted: false,
+                                        shouldFailAtCheckPrerequisitesOfIncomingRequestItem: true
+                                    } as ITestRequestItem
+                                ]
+                            } as IRequest
+                        },
+                        {
+                            content: {
+                                items: [
+                                    {
+                                        "@type": "RequestItemGroup",
+                                        mustBeAccepted: false,
+                                        items: [
+                                            {
+                                                "@type": "TestRequestItem",
+                                                mustBeAccepted: false,
+                                                shouldFailAtCheckPrerequisitesOfIncomingRequestItem: true
+                                            } as ITestRequestItem
+                                        ]
+                                    } as IRequestItemGroup
+                                ]
+                            } as IRequest
+                        }
+                    ],
+                    async function (testParams) {
+                        await Given.anIncomingRequestWith({
+                            status: ConsumptionRequestStatus.Open,
+                            content: testParams.content
+                        })
+                        await When.iCheckPrerequisites()
+                        await Then.theRequestIsInStatus(ConsumptionRequestStatus.Open)
+                    }
+                )
+
+                it("throws when no Consumption Request with the given id exists in DB", async function () {
+                    const nonExistentId = CoreId.from("nonExistentId")
+                    await When.iTryToCheckPrerequisitesWith({ requestId: nonExistentId })
+                    await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
+                })
+
+                it("throws when the Consumption Request is not in status 'Open'", async function () {
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.WaitingForDecision)
+                    await When.iTryToCheckPrerequisites()
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*Consumption Request has to be in status 'Open'*")
+                })
+
+                it("throws on syntactically invalid input", async function () {
+                    await When.iTryToCheckPrerequisitesWithoutARequestId()
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*requestId*Value is not defined*")
+                })
+            })
+
+            describe("Accept", function () {
+                it("can handle valid input", async function () {
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.WaitingForDecision)
                     await When.iAcceptTheRequest()
                     await Then.theRequestHasItsResponsePropertySetCorrectly()
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Decided)
@@ -130,7 +215,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("creates Response Items and Groups with the correct structure", async function () {
-                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.Open)
+                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(
+                        ConsumptionRequestStatus.WaitingForDecision
+                    )
                     await When.iAcceptTheRequest({
                         items: [
                             AcceptRequestItemParameters.from({}),
@@ -148,7 +235,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("creates Response Items with the correct result", async function () {
-                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.Open)
+                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(
+                        ConsumptionRequestStatus.WaitingForDecision
+                    )
                     await When.iAcceptTheRequest({
                         items: [
                             AcceptRequestItemParameters.from({}),
@@ -168,7 +257,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("writes responseMetadata from Request Items and Groups into the corresponding Response Items and Groups", async function () {
-                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.Open)
+                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(
+                        ConsumptionRequestStatus.WaitingForDecision
+                    )
                     await When.iAcceptTheRequest({
                         items: [
                             AcceptRequestItemParameters.from({}),
@@ -195,6 +286,14 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     })
                 })
 
+                it("throws when the Consumption Request is not in status 'WaitingForDecision'", async function () {
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
+                    await When.iTryToAccept()
+                    await Then.itThrowsAnErrorWithTheErrorMessage(
+                        "*Consumption Request has to be in status 'WaitingForDecision'*"
+                    )
+                })
+
                 it("throws on syntactically invalid input", async function () {
                     await When.iTryToAcceptARequestWithoutItemsParameters()
                     await Then.itThrowsAnErrorWithTheErrorMessage("*items*Value is not defined*")
@@ -203,7 +302,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
             describe("Reject", function () {
                 it("can handle valid input", async function () {
-                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.WaitingForDecision)
                     await When.iRejectTheRequest()
                     await Then.theRequestHasItsResponsePropertySetCorrectly()
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Decided)
@@ -211,7 +310,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("creates Response Items and Groups with the correct structure", async function () {
-                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.Open)
+                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(
+                        ConsumptionRequestStatus.WaitingForDecision
+                    )
                     await When.iRejectTheRequest({
                         items: [
                             RejectRequestItemParameters.from({}),
@@ -229,7 +330,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("creates Response Items with the correct result", async function () {
-                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.Open)
+                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(
+                        ConsumptionRequestStatus.WaitingForDecision
+                    )
                     await When.iRejectTheRequest({
                         items: [
                             RejectRequestItemParameters.from({}),
@@ -249,7 +352,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("writes responseMetadata from Request Items and Groups into the corresponding Response Items and Groups", async function () {
-                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.Open)
+                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(
+                        ConsumptionRequestStatus.WaitingForDecision
+                    )
                     await When.iRejectTheRequest({
                         items: [
                             RejectRequestItemParameters.from({}),
@@ -276,30 +381,17 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     })
                 })
 
+                it("throws when the Consumption Request is not in status 'WaitingForDecision'", async function () {
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
+                    await When.iTryToAccept()
+                    await Then.itThrowsAnErrorWithTheErrorMessage(
+                        "*Consumption Request has to be in status 'WaitingForDecision'*"
+                    )
+                })
+
                 it("throws on syntactically invalid input", async function () {
                     await When.iTryToRejectARequestWithSyntacticallyInvalidInput()
                     await Then.itThrowsAnErrorWithTheErrorMessage("*items*Value is not defined*")
-                })
-            })
-
-            describe("Get", function () {
-                it("returns the Request with the given id if it exists", async function () {
-                    const requestId = await ConsumptionIds.request.generate()
-                    await Given.anIncomingRequestWith({ id: requestId })
-                    await When.iGetTheIncomingRequestWith(requestId)
-                    await Then.theReturnedRequestHasTheId(requestId)
-                })
-
-                it("returns undefined when the given id does not exist", async function () {
-                    const aNonExistentId = await ConsumptionIds.request.generate()
-                    await When.iGetTheIncomingRequestWith(aNonExistentId)
-                    await Then.iExpectUndefinedToBeReturned()
-                })
-
-                it("returns undefined when the given id belongs to an outgoing Request", async function () {
-                    const outgoingRequest = await Given.anOutgoingRequest()
-                    await When.iGetTheIncomingRequestWith(outgoingRequest.id)
-                    await Then.iExpectUndefinedToBeReturned()
                 })
             })
 
@@ -321,6 +413,27 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iTryToCompleteTheRequest()
                     await Then.itThrowsAnErrorWithTheErrorMessage("*Can only decide Request in status 'Decided'*")
+                })
+            })
+
+            describe("Get", function () {
+                it("returns the Request with the given id if it exists", async function () {
+                    const requestId = await ConsumptionIds.request.generate()
+                    await Given.anIncomingRequestWith({ id: requestId })
+                    await When.iGetTheIncomingRequestWith(requestId)
+                    await Then.theReturnedRequestHasTheId(requestId)
+                })
+
+                it("returns undefined when the given id does not exist", async function () {
+                    const aNonExistentId = await ConsumptionIds.request.generate()
+                    await When.iGetTheIncomingRequestWith(aNonExistentId)
+                    await Then.iExpectUndefinedToBeReturned()
+                })
+
+                it("returns undefined when the given id belongs to an outgoing Request", async function () {
+                    const outgoingRequest = await Given.anOutgoingRequest()
+                    await When.iGetTheIncomingRequestWith(outgoingRequest.id)
+                    await Then.iExpectUndefinedToBeReturned()
                 })
             })
         })

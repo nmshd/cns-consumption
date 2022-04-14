@@ -1,6 +1,6 @@
 import { IDatabaseCollection } from "@js-soft/docdb-access-abstractions"
 import { RequestItem, RequestItemGroup, ResponseItem, ResponseItemGroup } from "@nmshd/content"
-import { CoreDate, ICoreId, Message, RelationshipTemplate, TransportErrors } from "@nmshd/transport"
+import { CoreDate, CoreId, ICoreId, Message, RelationshipTemplate, TransportErrors } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionIds } from "../../../consumption"
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
 import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProcessorRegistry"
@@ -245,12 +245,11 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         return request
     }
 
-    private async getOrThrow(id: ICoreId) {
-        const requestDoc = await this.consumptionRequests.findOne({ id: id.toString(), isOwn: true })
-        if (!requestDoc) {
+    private async getOrThrow(id: CoreId) {
+        const request = await this.get(id)
+        if (!request) {
             throw TransportErrors.general.recordNotFound(ConsumptionRequest, id.toString())
         }
-        const request = await ConsumptionRequest.from(requestDoc)
         return request
     }
 

@@ -26,6 +26,10 @@ export class TestRequestItem extends RequestItem implements ITestRequestItem {
     @validate({ nullable: true })
     public shouldFailAtCanApplyIncomingResponseItem?: true
 
+    @serialize()
+    @validate({ nullable: true })
+    public shouldFailAtCheckPrerequisitesOfIncomingRequestItem?: true
+
     public static override async from(item: ITestRequestItem): Promise<TestRequestItem> {
         return await super.fromT(item, TestRequestItem)
     }
