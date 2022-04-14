@@ -356,11 +356,11 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.itThrowsAnErrorWithTheErrorMessage("*requestId*Value is not defined*")
                 })
 
-                it("throws when the Consumption Request is not in status 'DecisionRequired'", async function () {
+                it("throws when the Consumption Request is not in status 'DecisionRequired/ManualDecisionRequired'", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iTryToCallCanAccept()
                     await Then.itThrowsAnErrorWithTheErrorMessage(
-                        "*Consumption Request has to be in status 'DecisionRequired'*"
+                        "*Consumption Request has to be in status 'DecisionRequired/ManualDecisionRequired'*"
                     )
                 })
 
@@ -557,11 +557,11 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.itThrowsAnErrorWithTheErrorMessage("*requestId*Value is not defined*")
                 })
 
-                it("throws when the Consumption Request is not in status 'DecisionRequired'", async function () {
+                it("throws when the Consumption Request is not in status 'DecisionRequired/ManualDecisionRequired'", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iTryToCallCanReject()
                     await Then.itThrowsAnErrorWithTheErrorMessage(
-                        "*Consumption Request has to be in status 'DecisionRequired'*"
+                        "*Consumption Request has to be in status 'DecisionRequired/ManualDecisionRequired'*"
                     )
                 })
 
@@ -759,7 +759,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iTryToAccept()
                     await Then.itThrowsAnErrorWithTheErrorMessage(
-                        "*Consumption Request has to be in status 'DecisionRequired'*"
+                        "*Consumption Request has to be in status 'DecisionRequired/ManualDecisionRequired'*"
                     )
                 })
 
@@ -881,7 +881,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iTryToReject()
                     await Then.itThrowsAnErrorWithTheErrorMessage(
-                        "*Consumption Request has to be in status 'DecisionRequired'*"
+                        "*Consumption Request has to be in status 'DecisionRequired/ManualDecisionRequired'*"
                     )
                 })
 

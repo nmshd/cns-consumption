@@ -51,6 +51,116 @@ import {
 } from "./requireManualDecision/RequireManualDecisionParams"
 
 export class IncomingRequestsController extends ConsumptionBaseController {
+    private consumptionRequests: IDatabaseCollection
+    private readonly decideRequestParamsValidator: DecideRequestParametersValidator =
+        new DecideRequestParametersValidator()
+
+    public constructor(parent: ConsumptionController, public readonly processorRegistry: RequestItemProcessorRegistry) {
+        super(ConsumptionControllerName.RequestsController, parent)
+    }
+
+    public override async init(): Promise<IncomingRequestsController> {
+        await super.init()
+        this.consumptionRequests = await this.parent.accountController.getSynchronizedCollection("Requests")
+        return this
+    }
+
+    public async received(params: IReceivedIncomingRequestParameters): Promise<ConsumptionRequest> {
+        const parsedParams = await ReceivedIncomingRequestParameters.from(params)
+
+        const infoFromSource = this.extractInfoFromSource(parsedParams.sourceObject)
+
+        const consumptionRequest = await ConsumptionRequest.from({
+            id: parsedParams.content.id ? CoreId.from(parsedParams.content.id) : await CoreId.generate(),
+            createdAt: CoreDate.utc(),
+            status: ConsumptionRequestStatus.Open,
+            content: parsedParams.content,
+            isOwn: infoFromSource.isOwn,
+            peer: infoFromSource.peer,
+            source: { reference: infoFromSource.sourceReference, type: infoFromSource.sourceType },
+            statusLog: []
+        })
+
+        await this.consumptionRequests.create(consumptionRequest)
+
+        return consumptionRequest
+    }
+
+    public async checkPrerequisites(
+        params: ICheckPrerequisitesOfOutgoingRequestParameters
+    ): Promise<ConsumptionRequest> {
+        const parsedParams = await CheckPrerequisitesOfOutgoingRequestParameters.from(params)
+        const request = await this.getOrThrow(parsedParams.requestId)
+
+        this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.Open)
+
+        for (const item of request.content.items) {
+            if (item instanceof RequestItem) {
+                const processor = this.processorRegistry.getProcessorForItem(item)
+                const prerequisitesFulfilled = await processor.checkPrerequisitesOfIncomingRequestItem(item)
+                if (!prerequisitesFulfilled) {
+                    return request
+                }
+            } else {
+                for (const childItem of item.items) {
+                    const processor = this.processorRegistry.getProcessorForItem(childItem)
+                    const prerequisitesFulfilled = await processor.checkPrerequisitesOfIncomingRequestItem(childItem)
+                    if (!prerequisitesFulfilled) {
+                        return request
+                    }
+                }
+            }
+        }
+
+        request.changeStatus(ConsumptionRequestStatus.DecisionRequired)
+
+        await this.update(request)
+
+        return request
+    }
+
+    private extractInfoFromSource(source: Message | RelationshipTemplate): InfoFromSource {
+        if (source instanceof Message) {
+            return this.extractInfoFromMessage(source)
+        }
+
+        return this.extractInfoFromRelationshipTemplate(source)
+    }
+
+    private extractInfoFromMessage(message: Message): InfoFromSource {
+        if (message.isOwn) throw new Error("Cannot create incoming Request from own Message")
+
+        return {
+            isOwn: this.parent.accountController.identity.isMe(message.cache!.createdBy),
+            peer: message.cache!.createdBy,
+            sourceReference: message.id,
+            sourceType: "Message"
+        }
+    }
+
+    private extractInfoFromRelationshipTemplate(template: RelationshipTemplate): InfoFromSource {
+        if (template.isOwn) throw new Error("Cannot create incoming Request from own Relationship Template")
+
+        return {
+            isOwn: this.parent.accountController.identity.isMe(template.cache!.createdBy),
+            peer: template.cache!.createdBy,
+            sourceReference: template.id,
+            sourceType: "RelationshipTemplate"
+        }
+    }
+
+    public async requireManualDecision(params: IRequireManualDecisionParams): Promise<ConsumptionRequest> {
+        const parsedParams = await RequireManualDecisionParams.from(params)
+        const request = await this.getOrThrow(parsedParams.requestId)
+
+        this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.DecisionRequired)
+
+        request.changeStatus(ConsumptionRequestStatus.ManualDecisionRequired)
+        await this.update(request)
+
+        return request
+    }
+
     public async canAccept(params: IAcceptRequestParameters): Promise<ValidationResult> {
         const parsedParams = await AcceptRequestParameters.from(params)
         return await this.canDecide(parsedParams, "Accept")
@@ -64,7 +174,11 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     private async canDecide(params: DecideRequestParameters, action: "Accept" | "Reject"): Promise<ValidationResult> {
         const request = await this.getOrThrow(params.requestId)
 
-        this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.DecisionRequired)
+        this.ensureRequestIsInStatus(
+            request,
+            ConsumptionRequestStatus.DecisionRequired,
+            ConsumptionRequestStatus.ManualDecisionRequired
+        )
 
         const itemResults = await this.canDecideItems(params.items, request.content.items, action)
 
@@ -116,122 +230,6 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return processor[`can${action}`](requestItem, params)
     }
 
-    private ensureRequestIsInStatus(request: ConsumptionRequest, ...status: ConsumptionRequestStatus[]) {
-        if (!status.includes(request.status)) {
-            throw new Error(`Consumption Request has to be in status '${status.join("/")}'.`)
-        }
-    }
-
-    public async checkPrerequisites(
-        params: ICheckPrerequisitesOfOutgoingRequestParameters
-    ): Promise<ConsumptionRequest> {
-        const parsedParams = await CheckPrerequisitesOfOutgoingRequestParameters.from(params)
-        const request = await this.getOrThrow(parsedParams.requestId)
-
-        this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.Open)
-
-        for (const item of request.content.items) {
-            if (item instanceof RequestItem) {
-                const processor = this.processorRegistry.getProcessorForItem(item)
-                const prerequisitesFulfilled = await processor.checkPrerequisitesOfIncomingRequestItem(item)
-                if (!prerequisitesFulfilled) {
-                    return request
-                }
-            } else {
-                for (const childItem of item.items) {
-                    const processor = this.processorRegistry.getProcessorForItem(childItem)
-                    const prerequisitesFulfilled = await processor.checkPrerequisitesOfIncomingRequestItem(childItem)
-                    if (!prerequisitesFulfilled) {
-                        return request
-                    }
-                }
-            }
-        }
-
-        request.changeStatus(ConsumptionRequestStatus.DecisionRequired)
-
-        await this.update(request)
-
-        return request
-    }
-
-    private consumptionRequests: IDatabaseCollection
-    private readonly decideRequestParamsValidator: DecideRequestParametersValidator =
-        new DecideRequestParametersValidator()
-
-    public constructor(parent: ConsumptionController, public readonly processorRegistry: RequestItemProcessorRegistry) {
-        super(ConsumptionControllerName.RequestsController, parent)
-    }
-
-    public override async init(): Promise<IncomingRequestsController> {
-        await super.init()
-        this.consumptionRequests = await this.parent.accountController.getSynchronizedCollection("Requests")
-        return this
-    }
-
-    public async received(params: IReceivedIncomingRequestParameters): Promise<ConsumptionRequest> {
-        const parsedParams = await ReceivedIncomingRequestParameters.from(params)
-
-        const infoFromSource = this.extractInfoFromSource(parsedParams.sourceObject)
-
-        const consumptionRequest = await ConsumptionRequest.from({
-            id: parsedParams.content.id ? CoreId.from(parsedParams.content.id) : await CoreId.generate(),
-            createdAt: CoreDate.utc(),
-            status: ConsumptionRequestStatus.Open,
-            content: parsedParams.content,
-            isOwn: infoFromSource.isOwn,
-            peer: infoFromSource.peer,
-            source: { reference: infoFromSource.sourceReference, type: infoFromSource.sourceType },
-            statusLog: []
-        })
-
-        await this.consumptionRequests.create(consumptionRequest)
-
-        return consumptionRequest
-    }
-
-    private extractInfoFromSource(source: Message | RelationshipTemplate): InfoFromSource {
-        if (source instanceof Message) {
-            return this.extractInfoFromMessage(source)
-        }
-
-        return this.extractInfoFromRelationshipTemplate(source)
-    }
-
-    private extractInfoFromMessage(message: Message): InfoFromSource {
-        if (message.isOwn) throw new Error("Cannot create incoming Request from own Message")
-
-        return {
-            isOwn: this.parent.accountController.identity.isMe(message.cache!.createdBy),
-            peer: message.cache!.createdBy,
-            sourceReference: message.id,
-            sourceType: "Message"
-        }
-    }
-
-    private extractInfoFromRelationshipTemplate(template: RelationshipTemplate): InfoFromSource {
-        if (template.isOwn) throw new Error("Cannot create incoming Request from own Relationship Template")
-
-        return {
-            isOwn: this.parent.accountController.identity.isMe(template.cache!.createdBy),
-            peer: template.cache!.createdBy,
-            sourceReference: template.id,
-            sourceType: "RelationshipTemplate"
-        }
-    }
-
-    public async requireManualDecision(params: IRequireManualDecisionParams): Promise<ConsumptionRequest> {
-        const parsedParams = await RequireManualDecisionParams.from(params)
-        const request = await this.getOrThrow(parsedParams.requestId)
-
-        this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.DecisionRequired)
-
-        request.changeStatus(ConsumptionRequestStatus.ManualDecisionRequired)
-        await this.update(request)
-
-        return request
-    }
-
     public async accept(params: IAcceptRequestParameters): Promise<ConsumptionRequest> {
         const canAccept = await this.canAccept(params)
         if (!canAccept.isSuccess()) {
@@ -255,7 +253,11 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     private async decide(params: DecideRequestParameters) {
         const consumptionRequest = await this.getOrThrow(params.requestId)
 
-        this.ensureRequestIsInStatus(consumptionRequest, ConsumptionRequestStatus.DecisionRequired)
+        this.ensureRequestIsInStatus(
+            consumptionRequest,
+            ConsumptionRequestStatus.DecisionRequired,
+            ConsumptionRequestStatus.ManualDecisionRequired
+        )
 
         const validationResult = this.decideRequestParamsValidator.validate(params, consumptionRequest)
         if (!validationResult.isSuccess) {
@@ -277,7 +279,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         request: ConsumptionRequest
     ) {
         const requestItems = request.content.items
-        const responseItems = await this.createResponseItems(params.items, requestItems)
+        const responseItems = await this.decideItems(params.items, requestItems)
 
         const response = await Response.from({
             result: params instanceof AcceptRequestParameters ? ResponseResult.Accepted : ResponseResult.Rejected,
@@ -293,7 +295,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return consumptionResponse
     }
 
-    private async createResponseItems(
+    private async decideItems(
         params: (IDecideRequestItemParameters | IDecideRequestItemGroupParameters)[],
         requestItems: (RequestItemGroup | RequestItem)[]
     ) {
@@ -303,18 +305,15 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             const itemParam = params[i]
 
             if (itemParam instanceof DecideRequestItemParameters) {
-                responseItems.push(await this.createResponseItem(itemParam, requestItems[i] as RequestItem))
+                responseItems.push(await this.decideItem(itemParam, requestItems[i] as RequestItem))
             } else if (itemParam instanceof DecideRequestItemGroupParameters) {
-                responseItems.push(await this.createResponseItemGroup(itemParam, requestItems[i] as RequestItemGroup))
+                responseItems.push(await this.decideGroup(itemParam, requestItems[i] as RequestItemGroup))
             }
         }
         return responseItems
     }
 
-    private async createResponseItem(
-        params: DecideRequestItemParameters,
-        requestItem: RequestItem
-    ): Promise<ResponseItem> {
+    private async decideItem(params: DecideRequestItemParameters, requestItem: RequestItem): Promise<ResponseItem> {
         const processor = this.processorRegistry.getProcessorForItem(requestItem)
 
         try {
@@ -335,11 +334,8 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         throw new Error("Unknown params type")
     }
 
-    private async createResponseItemGroup(
-        groupItemParam: DecideRequestItemGroupParameters,
-        requestItemGroup: RequestItemGroup
-    ) {
-        const items = (await this.createResponseItems(groupItemParam.items, requestItemGroup.items)) as ResponseItem[]
+    private async decideGroup(groupItemParam: DecideRequestItemGroupParameters, requestItemGroup: RequestItemGroup) {
+        const items = (await this.decideItems(groupItemParam.items, requestItemGroup.items)) as ResponseItem[]
 
         const group = await ResponseItemGroup.from({
             items: items,
@@ -385,6 +381,12 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             throw TransportErrors.general.recordNotFound(ConsumptionRequest, request.id.toString())
         }
         await this.consumptionRequests.update(requestDoc, request)
+    }
+
+    private ensureRequestIsInStatus(request: ConsumptionRequest, ...status: ConsumptionRequestStatus[]) {
+        if (!status.includes(request.status)) {
+            throw new Error(`Consumption Request has to be in status '${status.join("/")}'.`)
+        }
     }
 }
 
