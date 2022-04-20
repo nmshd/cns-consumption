@@ -21,9 +21,12 @@ import {
     CoreDate,
     CoreId,
     IMessage,
+    IRelationshipChange,
     IRelationshipTemplate,
     Message,
     Realm,
+    RelationshipChangeStatus,
+    RelationshipChangeType,
     RelationshipTemplate,
     RelationshipTemplatePublicKey
 } from "@nmshd/transport"
@@ -145,6 +148,24 @@ export class TestObjectFactory {
         return await RelationshipTemplate.from(this.createIncomingIRelationshipTemplate())
     }
 
+    public static createOutgoingIRelationshipChange(
+        type: RelationshipChangeType,
+        sender: CoreAddress
+    ): IRelationshipChange {
+        return {
+            // @ts-expect-error
+            "@type": "RelationshipChange",
+            id: CoreId.from("RCH1"),
+            relationshipId: CoreId.from("REL1"),
+            type: type,
+            status: RelationshipChangeStatus.Pending,
+            request: {
+                createdAt: CoreDate.utc(),
+                createdBy: sender,
+                createdByDevice: CoreId.from("DVC1")
+            }
+        }
+    }
     public static createIncomingIRelationshipTemplate(): IRelationshipTemplate {
         return {
             // @ts-expect-error

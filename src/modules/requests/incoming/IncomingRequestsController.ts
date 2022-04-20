@@ -13,6 +13,7 @@ import {
     CoreId,
     ICoreId,
     Message,
+    RelationshipChange,
     RelationshipTemplate,
     TransportErrors
 } from "@nmshd/transport"
@@ -22,11 +23,15 @@ import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProce
 import { ValidationResult } from "../itemProcessors/ValidationResult"
 import { ConsumptionRequest } from "../local/ConsumptionRequest"
 import { ConsumptionRequestStatus } from "../local/ConsumptionRequestStatus"
-import { ConsumptionResponse } from "../local/ConsumptionResponse"
+import { ConsumptionResponse, ConsumptionResponseSource } from "../local/ConsumptionResponse"
 import {
     CheckPrerequisitesOfOutgoingRequestParameters,
     ICheckPrerequisitesOfOutgoingRequestParameters
 } from "./checkPrerequisites/CheckPrerequisitesOfOutgoingRequestParameters"
+import {
+    CompleteIncomingRequestParameters,
+    ICompleteIncomingRequestParameters
+} from "./completeIncomingRequest/CompleteIncomingRequestParameters"
 import { AcceptRequestItemParameters } from "./decideRequestParameters/AcceptRequestItemParameters"
 import { AcceptRequestParameters, IAcceptRequestParameters } from "./decideRequestParameters/AcceptRequestParameters"
 import {
@@ -344,9 +349,9 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return group
     }
 
-    public async complete(id: ICoreId): Promise<ConsumptionRequest> {
-        const requestDoc = await this.consumptionRequests.read(id.toString())
-        const request = await ConsumptionRequest.from(requestDoc)
+    public async complete(params: ICompleteIncomingRequestParameters): Promise<ConsumptionRequest> {
+        const parsedParams = await CompleteIncomingRequestParameters.from(params)
+        const request = await this.getOrThrow(parsedParams.requestId)
 
         if (request.isOwn) {
             throw new Error("Cannot decide own Request")
@@ -354,9 +359,24 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
         this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.Decided)
 
+        let responseSource: "Message" | "RelationshipChange"
+
+        if (parsedParams.responseSource instanceof Message) {
+            responseSource = "Message"
+        } else if (parsedParams.responseSource instanceof RelationshipChange) {
+            responseSource = "RelationshipChange"
+        } else {
+            throw new Error("Unknown response source")
+        }
+
+        request.response!.source = await ConsumptionResponseSource.from({
+            type: responseSource,
+            reference: parsedParams.responseSource.id
+        })
+
         request.changeStatus(ConsumptionRequestStatus.Completed)
 
-        await this.consumptionRequests.update(requestDoc, request)
+        await this.update(request)
 
         return request
     }

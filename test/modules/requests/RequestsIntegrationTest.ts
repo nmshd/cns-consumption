@@ -10,6 +10,7 @@ import {
     ConsumptionResponse,
     IAcceptRequestParameters,
     ICheckPrerequisitesOfOutgoingRequestParameters,
+    ICompleteIncomingRequestParameters,
     ICompleteOugoingRequestParameters,
     IConsumptionRequestSource,
     ICreateOutgoingRequestParameters,
@@ -190,7 +191,12 @@ export class RequestsGiven {
         }
 
         if (isStatusAAfterStatusB(status, consumptionRequest.status)) {
-            consumptionRequest = await this.context.incomingRequestsController.complete(consumptionRequest.id)
+            consumptionRequest = await this.context.incomingRequestsController.complete({
+                requestId: consumptionRequest.id,
+                responseSource: TestObjectFactory.createOutgoingIMessage(
+                    this.context.accountController.identity.address
+                )
+            })
         }
     }
 
@@ -543,9 +549,17 @@ export class RequestsWhen {
         return Promise.resolve()
     }
 
-    public async iCompleteTheRequest(): Promise<void> {
+    public async iCompleteTheIncomingRequest(): Promise<void> {
+        await this.iCompleteTheIncomingRequestWith({})
+    }
+
+    public async iCompleteTheIncomingRequestWith(params: Partial<ICompleteIncomingRequestParameters>): Promise<void> {
+        params.requestId ??= this.context.givenConsumptionRequest!.id
+        params.responseSource ??= TestObjectFactory.createOutgoingIMessage(
+            this.context.accountController.identity.address
+        )
         this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.complete(
-            this.context.givenConsumptionRequest!.id
+            params as ICompleteIncomingRequestParameters
         )
     }
 
@@ -618,9 +632,27 @@ export class RequestsWhen {
         ))!
     }
 
-    public iTryToCompleteTheRequest(): Promise<void> {
+    public iTryToCompleteTheIncomingRequestWithoutResponseSource(): Promise<void> {
         this.context.actionToTry = async () => {
-            await this.context.incomingRequestsController.complete(this.context.givenConsumptionRequest!.id)
+            this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.complete({
+                requestId: this.context.givenConsumptionRequest!.id
+            } as any)
+        }
+
+        return Promise.resolve()
+    }
+
+    public iTryToCompleteTheIncomingRequestWith(params: Partial<ICompleteIncomingRequestParameters>): Promise<void> {
+        this.context.actionToTry = async () => {
+            await this.iCompleteTheIncomingRequestWith(params)
+        }
+
+        return Promise.resolve()
+    }
+
+    public iTryToCompleteTheIncomingRequest(): Promise<void> {
+        this.context.actionToTry = async () => {
+            await this.iCompleteTheIncomingRequest()
         }
 
         return Promise.resolve()
@@ -757,6 +789,18 @@ export class RequestsThen {
         expect(this.context.consumptionRequestAfterAction!.response!.content).to.be.instanceOf(Response)
         expect(this.context.consumptionRequestAfterAction!.response!.content.requestId.toString()).to.equal(
             this.context.givenConsumptionRequest!.id.toString()
+        )
+
+        return Promise.resolve()
+    }
+
+    public theResponseHasItsSourcePropertySetCorrectly(expectedProperties: {
+        responseSourceType: string
+    }): Promise<void> {
+        expect(this.context.consumptionRequestAfterAction!.response!.source).to.exist
+        expect(this.context.consumptionRequestAfterAction!.response!.source!.reference).to.be.exist
+        expect(this.context.consumptionRequestAfterAction!.response!.source!.type).to.equal(
+            expectedProperties.responseSourceType
         )
 
         return Promise.resolve()

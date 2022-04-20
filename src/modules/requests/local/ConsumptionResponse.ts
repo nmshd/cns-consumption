@@ -3,7 +3,7 @@ import { IResponse, Response } from "@nmshd/content"
 import { CoreDate, CoreId, CoreSerializableAsync, ICoreDate, ICoreId, ICoreSerializableAsync } from "@nmshd/transport"
 
 export interface IConsumptionResponseSource extends ICoreSerializableAsync {
-    type: "Message" | "Relationship"
+    type: "Message" | "Relationship" | "RelationshipChange"
     reference: ICoreId
 }
 
@@ -11,11 +11,15 @@ export interface IConsumptionResponseSource extends ICoreSerializableAsync {
 export class ConsumptionResponseSource extends CoreSerializableAsync implements IConsumptionResponseSource {
     @serialize()
     @validate()
-    public type: "Message" | "Relationship"
+    public type: "Message" | "Relationship" | "RelationshipChange"
 
     @serialize()
     @validate()
     public reference: CoreId
+
+    public static override async from(value: IConsumptionResponseSource): Promise<ConsumptionResponseSource> {
+        return await super.fromT(value, ConsumptionResponseSource)
+    }
 }
 
 export interface IConsumptionResponse extends ICoreSerializableAsync {

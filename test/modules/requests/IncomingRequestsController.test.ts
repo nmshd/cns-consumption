@@ -25,7 +25,14 @@ import {
     ResponseItemGroup,
     ResponseItemResult
 } from "@nmshd/content"
-import { AccountController, CoreAddress, CoreId, IConfigOverwrite, Transport } from "@nmshd/transport"
+import {
+    AccountController,
+    CoreAddress,
+    CoreId,
+    IConfigOverwrite,
+    RelationshipChangeType,
+    Transport
+} from "@nmshd/transport"
 import { expect } from "chai"
 import itParam from "mocha-param"
 import { TestUtil } from "../../core/TestUtil"
@@ -892,23 +899,46 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
             })
 
             describe("Complete", function () {
-                it("can handle valid input", async function () {
+                it("can handle valid input with a Message as responseSource", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Decided)
-                    await When.iCompleteTheRequest()
+                    await When.iCompleteTheIncomingRequestWith({
+                        responseSource: TestObjectFactory.createOutgoingIMessage(accountController.identity.address)
+                    })
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Completed)
+                    await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "Message" })
                     await Then.theChangesArePersistedInTheDatabase()
                 })
 
-                it("cannot complete outgoing ConsumptionRequests", async function () {
-                    await Given.anOutgoingRequest()
-                    await When.iTryToCompleteTheRequest()
-                    await Then.itThrowsAnErrorWithTheErrorMessage("*Cannot decide own Request*")
+                it("can handle valid input with a RelationshipChange as responseSource", async function () {
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Decided)
+                    const outgoingRelationshipCreationChange = TestObjectFactory.createOutgoingIRelationshipChange(
+                        RelationshipChangeType.Creation,
+                        accountController.identity.address
+                    )
+                    await When.iCompleteTheIncomingRequestWith({
+                        responseSource: outgoingRelationshipCreationChange
+                    })
+                    await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Completed)
+                    await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "RelationshipChange" })
+                    await Then.theChangesArePersistedInTheDatabase()
                 })
 
-                it("can only complete ConsumptionRequests in status 'Decided'", async function () {
+                it("throws on syntactically invalid input", async function () {
+                    await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Decided)
+                    await When.iTryToCompleteTheIncomingRequestWithoutResponseSource()
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*responseSource*Value is not defined*")
+                })
+
+                it("throws when the Consumption Request is not in status 'Decided'", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Open)
-                    await When.iTryToCompleteTheRequest()
+                    await When.iTryToCompleteTheIncomingRequest()
                     await Then.itThrowsAnErrorWithTheErrorMessage("*Consumption Request has to be in status 'Decided'*")
+                })
+
+                it("throws when no Consumption Request with the given id exists in DB", async function () {
+                    const nonExistentId = CoreId.from("nonExistentId")
+                    await When.iTryToCompleteTheIncomingRequestWith({ requestId: nonExistentId })
+                    await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
             })
 
