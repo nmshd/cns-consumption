@@ -23,7 +23,7 @@ import {
     ResponseItemResult,
     ResponseResult
 } from "@nmshd/content"
-import { AccountController, CoreId, IConfigOverwrite, Transport } from "@nmshd/transport"
+import { AccountController, CoreId, IConfigOverwrite, RelationshipChangeType, Transport } from "@nmshd/transport"
 import { expect } from "chai"
 import itParam from "mocha-param"
 import { TestUtil } from "../../core/TestUtil"
@@ -284,7 +284,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                 it("throws on syntactically invalid input", async function () {
                     await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
                     await When.iTryToCallSentWithoutSourceObject()
-                    await Then.itThrowsAnErrorWithTheErrorMessage("*sourceObject*Value is not defined*")
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*requestSourceObject*Value is not defined*")
                 })
 
                 it("throws when the Consumption Request is not in status 'Draft' ", async function () {
@@ -310,7 +310,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                         const source = testParams.sourceObjectFactory(accountController.identity.address)
 
                         await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
-                        await When.iCallSentWith({ sourceObject: source })
+                        await When.iCallSentWith({ requestSourceObject: source })
                         await Then.theRequestHasItsSourcePropertySetTo({
                             type: testParams.expectedSourceType as any,
                             reference: source.id
@@ -342,18 +342,36 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                         const invalidSource = testParams.sourceObjectFactory(accountController.identity.address)
 
                         await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
-                        await When.iTryToCallSentWith({ sourceObject: invalidSource })
+                        await When.iTryToCallSentWith({ requestSourceObject: invalidSource })
                         await Then.itThrowsAnErrorWithTheErrorMessage("Cannot create outgoing Request from a peer*")
                     }
                 )
             })
 
             describe("Complete", function () {
-                it("can handle valid input", async function () {
+                it("can handle valid input with a Message as responseSourceObject", async function () {
                     await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Open)
-                    await When.iCompleteTheOutgoingRequest()
+                    const incomingMessage = TestObjectFactory.createIncomingIMessage(accountController.identity.address)
+                    await When.iCompleteTheOutgoingRequestWith({
+                        responseSourceObject: incomingMessage
+                    })
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Completed)
                     await Then.theRequestHasItsResponsePropertySetCorrectly()
+                    await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "Message" })
+                    await Then.theNewRequestIsPersistedInTheDatabase()
+                })
+
+                it("can handle valid input with a RelationshipChange as responseSourceObject", async function () {
+                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Open)
+                    const incomingRelationshipCreationChange = TestObjectFactory.createIncomingIRelationshipChange(
+                        RelationshipChangeType.Creation
+                    )
+                    await When.iCompleteTheOutgoingRequestWith({
+                        responseSourceObject: incomingRelationshipCreationChange
+                    })
+                    await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Completed)
+                    await Then.theRequestHasItsResponsePropertySetCorrectly()
+                    await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "RelationshipChange" })
                     await Then.theNewRequestIsPersistedInTheDatabase()
                 })
 

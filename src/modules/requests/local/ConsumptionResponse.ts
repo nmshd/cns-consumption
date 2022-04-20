@@ -3,7 +3,7 @@ import { IResponse, Response } from "@nmshd/content"
 import { CoreDate, CoreId, CoreSerializableAsync, ICoreDate, ICoreId, ICoreSerializableAsync } from "@nmshd/transport"
 
 export interface IConsumptionResponseSource extends ICoreSerializableAsync {
-    type: "Message" | "Relationship" | "RelationshipChange"
+    type: "Message" | "RelationshipChange"
     reference: ICoreId
 }
 
@@ -11,7 +11,7 @@ export interface IConsumptionResponseSource extends ICoreSerializableAsync {
 export class ConsumptionResponseSource extends CoreSerializableAsync implements IConsumptionResponseSource {
     @serialize()
     @validate()
-    public type: "Message" | "Relationship" | "RelationshipChange"
+    public type: "Message" | "RelationshipChange"
 
     @serialize()
     @validate()

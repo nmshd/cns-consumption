@@ -1,10 +1,10 @@
 import { ISerializableAsync, SerializableAsync, serialize, validate } from "@js-soft/ts-serval"
 import { IResponse, Response } from "@nmshd/content"
-import { CoreId, ICoreId, IMessage, Message } from "@nmshd/transport"
+import { CoreId, ICoreId, IMessage, IRelationshipChange, Message, RelationshipChange } from "@nmshd/transport"
 
 export interface ICompleteOugoingRequestParameters extends ISerializableAsync {
     requestId: ICoreId
-    responseSourceObject: IMessage
+    responseSourceObject: IMessage | IRelationshipChange
     receivedResponse: IResponse
 }
 
@@ -13,9 +13,9 @@ export class CompleteOugoingRequestParameters extends SerializableAsync implemen
     @validate()
     public requestId: CoreId
 
-    @serialize()
+    @serialize({ unionTypes: [Message, RelationshipChange] })
     @validate()
-    public responseSourceObject: Message
+    public responseSourceObject: Message | RelationshipChange
 
     @serialize()
     @validate()

@@ -1,6 +1,14 @@
 import { IDatabaseCollection } from "@js-soft/docdb-access-abstractions"
 import { RequestItem, RequestItemGroup, ResponseItem, ResponseItemGroup } from "@nmshd/content"
-import { CoreDate, CoreId, ICoreId, Message, RelationshipTemplate, TransportErrors } from "@nmshd/transport"
+import {
+    CoreDate,
+    CoreId,
+    ICoreId,
+    Message,
+    RelationshipChange,
+    RelationshipTemplate,
+    TransportErrors
+} from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionIds } from "../../../consumption"
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
 import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProcessorRegistry"
@@ -117,8 +125,8 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         request.changeStatus(ConsumptionRequestStatus.Open)
 
         request.source = await ConsumptionRequestSource.from({
-            reference: parsedParams.sourceObject.id,
-            type: this.getSourceType(parsedParams.sourceObject)
+            reference: parsedParams.requestSourceObject.id,
+            type: this.getSourceType(parsedParams.requestSourceObject)
         })
 
         await this.update(request)
@@ -160,12 +168,22 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
             throw new Error(canComplete.message)
         }
 
-        await this.doComplete(request, parsedParams)
+        await this.applyItems(request, parsedParams)
+
+        let responseSource: "Message" | "RelationshipChange"
+
+        if (parsedParams.responseSourceObject instanceof Message) {
+            responseSource = "Message"
+        } else if (parsedParams.responseSourceObject instanceof RelationshipChange) {
+            responseSource = "RelationshipChange"
+        } else {
+            throw new Error("Invalid responseSourceObject")
+        }
 
         const consumptionResponse = await ConsumptionResponse.from({
             content: parsedParams.receivedResponse,
             createdAt: CoreDate.utc(),
-            source: { reference: parsedParams.responseSourceObject.id, type: "Message" }
+            source: { reference: parsedParams.responseSourceObject.id, type: responseSource }
         })
 
         request.response = consumptionResponse
@@ -213,7 +231,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         return ValidationResult.success()
     }
 
-    private async doComplete(
+    private async applyItems(
         request: ConsumptionRequest,
         params: CompleteOugoingRequestParameters
     ): Promise<ValidationResult> {

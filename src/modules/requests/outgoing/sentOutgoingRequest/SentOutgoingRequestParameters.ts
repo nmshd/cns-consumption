@@ -3,7 +3,7 @@ import { CoreId, ICoreId, IMessage, IRelationshipTemplate, Message, Relationship
 
 export interface ISentOutgoingRequestParameters extends ISerializableAsync {
     requestId: ICoreId
-    sourceObject: IMessage | IRelationshipTemplate
+    requestSourceObject: IMessage | IRelationshipTemplate
 }
 
 @type("SentOutgoingRequestParameters")
@@ -14,7 +14,7 @@ export class SentOutgoingRequestParameters extends SerializableAsync implements 
 
     @serialize({ unionTypes: [Message, RelationshipTemplate] })
     @validate()
-    public sourceObject: Message | RelationshipTemplate
+    public requestSourceObject: Message | RelationshipTemplate
 
     public static override async from(value: ISentOutgoingRequestParameters): Promise<SentOutgoingRequestParameters> {
         return await super.fromT(value, SentOutgoingRequestParameters)

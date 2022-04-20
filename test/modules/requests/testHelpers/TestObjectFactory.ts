@@ -148,6 +148,22 @@ export class TestObjectFactory {
         return await RelationshipTemplate.from(this.createIncomingIRelationshipTemplate())
     }
 
+    public static createIncomingIRelationshipChange(type: RelationshipChangeType): IRelationshipChange {
+        return {
+            // @ts-expect-error
+            "@type": "RelationshipChange",
+            id: CoreId.from("RCH1"),
+            relationshipId: CoreId.from("REL1"),
+            type: type,
+            status: RelationshipChangeStatus.Pending,
+            request: {
+                createdAt: CoreDate.utc(),
+                createdBy: CoreAddress.from("id1"),
+                createdByDevice: CoreId.from("DVC1")
+            }
+        }
+    }
+
     public static createOutgoingIRelationshipChange(
         type: RelationshipChangeType,
         sender: CoreAddress
@@ -166,6 +182,7 @@ export class TestObjectFactory {
             }
         }
     }
+
     public static createIncomingIRelationshipTemplate(): IRelationshipTemplate {
         return {
             // @ts-expect-error
