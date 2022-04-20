@@ -9,7 +9,7 @@ import {
     ConsumptionRequestStatus,
     ConsumptionResponse,
     IAcceptRequestParameters,
-    ICheckPrerequisitesOfOutgoingRequestParameters,
+    ICheckPrerequisitesOfIncomingRequestParameters,
     ICompleteIncomingRequestParameters,
     ICompleteOugoingRequestParameters,
     IConsumptionRequestSource,
@@ -17,7 +17,7 @@ import {
     IncomingRequestsController,
     IReceivedIncomingRequestParameters,
     IRejectRequestParameters,
-    IRequireManualDecisionParams,
+    IRequireManualDecisionOfIncomingRequestParameters,
     ISentOutgoingRequestParameters,
     OutgoingRequestsController,
     RejectRequestItemParameters,
@@ -157,8 +157,8 @@ export class RequestsGiven {
         )
 
         const consumptionRequest = await this.context.incomingRequestsController.received({
-            content: params.content,
-            sourceObject: requestSource
+            receivedRequest: params.content,
+            requestSourceObject: requestSource
         })
 
         await this.moveIncomingRequestToStatus(consumptionRequest, params.status)
@@ -194,7 +194,7 @@ export class RequestsGiven {
         if (isStatusAAfterStatusB(status, consumptionRequest.status)) {
             consumptionRequest = await this.context.incomingRequestsController.complete({
                 requestId: consumptionRequest.id,
-                responseSource: TestObjectFactory.createOutgoingIMessage(
+                responseSourceObject: TestObjectFactory.createOutgoingIMessage(
                     this.context.accountController.identity.address
                 )
             })
@@ -326,13 +326,17 @@ export class RequestsWhen {
 
     public iTryToRequireManualDecisionWithoutRequestId(): Promise<void> {
         this.context.actionToTry = async () => {
-            await this.context.incomingRequestsController.requireManualDecision({} as IRequireManualDecisionParams)
+            await this.context.incomingRequestsController.requireManualDecision(
+                {} as IRequireManualDecisionOfIncomingRequestParameters
+            )
         }
 
         return Promise.resolve()
     }
 
-    public iTryToRequireManualDecisionWith(params: Partial<IRequireManualDecisionParams>): Promise<void> {
+    public iTryToRequireManualDecisionWith(
+        params: Partial<IRequireManualDecisionOfIncomingRequestParameters>
+    ): Promise<void> {
         this.context.actionToTry = async () => {
             await this.iRequireManualDecisionWith(params)
         }
@@ -340,10 +344,14 @@ export class RequestsWhen {
         return Promise.resolve()
     }
 
-    public async iRequireManualDecisionWith(params: Partial<IRequireManualDecisionParams>): Promise<void> {
+    public async iRequireManualDecisionWith(
+        params: Partial<IRequireManualDecisionOfIncomingRequestParameters>
+    ): Promise<void> {
         params.requestId ??= this.context.givenConsumptionRequest!.id
         this.context.consumptionRequestAfterAction =
-            await this.context.incomingRequestsController.requireManualDecision(params as IRequireManualDecisionParams)
+            await this.context.incomingRequestsController.requireManualDecision(
+                params as IRequireManualDecisionOfIncomingRequestParameters
+            )
     }
 
     public iTryToAccept(): Promise<void> {
@@ -393,10 +401,10 @@ export class RequestsWhen {
     }
 
     public iTryToCheckPrerequisitesWith(
-        params: Partial<ICheckPrerequisitesOfOutgoingRequestParameters>
+        params: Partial<ICheckPrerequisitesOfIncomingRequestParameters>
     ): Promise<void> {
         this.context.actionToTry = async () => {
-            await this.iCheckPrerequisitesWith(params as ICheckPrerequisitesOfOutgoingRequestParameters)
+            await this.iCheckPrerequisitesWith(params as ICheckPrerequisitesOfIncomingRequestParameters)
         }
         return Promise.resolve()
     }
@@ -409,12 +417,12 @@ export class RequestsWhen {
     }
 
     public async iCheckPrerequisitesWith(
-        params: Partial<ICheckPrerequisitesOfOutgoingRequestParameters>
+        params: Partial<ICheckPrerequisitesOfIncomingRequestParameters>
     ): Promise<void> {
         params.requestId ??= this.context.givenConsumptionRequest?.id
 
         this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.checkPrerequisites(
-            params as ICheckPrerequisitesOfOutgoingRequestParameters
+            params as ICheckPrerequisitesOfIncomingRequestParameters
         )
     }
 
@@ -530,20 +538,20 @@ export class RequestsWhen {
         const request = await TestObjectFactory.createRequestWithOneItem()
 
         this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.received({
-            content: request,
-            sourceObject: sourceObject
+            receivedRequest: request,
+            requestSourceObject: sourceObject
         })
     }
 
     public async iCreateAnIncomingRequestWith(params: Partial<IReceivedIncomingRequestParameters>): Promise<void> {
-        params.content ??= await TestObjectFactory.createRequestWithOneItem()
-        params.sourceObject ??= await TestObjectFactory.createIncomingMessage(
+        params.receivedRequest ??= await TestObjectFactory.createRequestWithOneItem()
+        params.requestSourceObject ??= await TestObjectFactory.createIncomingMessage(
             this.context.accountController.identity.address
         )
 
         this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.received({
-            content: params.content,
-            sourceObject: params.sourceObject
+            receivedRequest: params.receivedRequest,
+            requestSourceObject: params.requestSourceObject
         })
     }
 
@@ -558,7 +566,7 @@ export class RequestsWhen {
 
     public async iCompleteTheIncomingRequestWith(params: Partial<ICompleteIncomingRequestParameters>): Promise<void> {
         params.requestId ??= this.context.givenConsumptionRequest!.id
-        params.responseSource ??= TestObjectFactory.createOutgoingIMessage(
+        params.responseSourceObject ??= TestObjectFactory.createOutgoingIMessage(
             this.context.accountController.identity.address
         )
         this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.complete(

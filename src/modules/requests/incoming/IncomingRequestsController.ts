@@ -25,35 +25,32 @@ import { ConsumptionRequest } from "../local/ConsumptionRequest"
 import { ConsumptionRequestStatus } from "../local/ConsumptionRequestStatus"
 import { ConsumptionResponse, ConsumptionResponseSource } from "../local/ConsumptionResponse"
 import {
-    CheckPrerequisitesOfOutgoingRequestParameters,
-    ICheckPrerequisitesOfOutgoingRequestParameters
-} from "./checkPrerequisites/CheckPrerequisitesOfOutgoingRequestParameters"
+    CheckPrerequisitesOfIncomingRequestParameters,
+    ICheckPrerequisitesOfIncomingRequestParameters
+} from "./checkPrerequisites/CheckPrerequisitesOfIncomingRequestParameters"
 import {
     CompleteIncomingRequestParameters,
     ICompleteIncomingRequestParameters
-} from "./completeIncomingRequest/CompleteIncomingRequestParameters"
-import { AcceptRequestItemParameters } from "./decideRequestParameters/AcceptRequestItemParameters"
-import { AcceptRequestParameters, IAcceptRequestParameters } from "./decideRequestParameters/AcceptRequestParameters"
+} from "./complete/CompleteIncomingRequestParameters"
+import { AcceptRequestItemParameters } from "./decide/AcceptRequestItemParameters"
+import { AcceptRequestParameters, IAcceptRequestParameters } from "./decide/AcceptRequestParameters"
 import {
     DecideRequestItemGroupParameters,
     IDecideRequestItemGroupParameters
-} from "./decideRequestParameters/DecideRequestItemGroupParameters"
-import {
-    DecideRequestItemParameters,
-    IDecideRequestItemParameters
-} from "./decideRequestParameters/DecideRequestItemParameters"
-import { DecideRequestParameters } from "./decideRequestParameters/DecideRequestParameters"
-import { RejectRequestItemParameters } from "./decideRequestParameters/RejectRequestItemParameters"
-import { IRejectRequestParameters, RejectRequestParameters } from "./decideRequestParameters/RejectRequestParameters"
+} from "./decide/DecideRequestItemGroupParameters"
+import { DecideRequestItemParameters, IDecideRequestItemParameters } from "./decide/DecideRequestItemParameters"
+import { DecideRequestParameters } from "./decide/DecideRequestParameters"
+import { RejectRequestItemParameters } from "./decide/RejectRequestItemParameters"
+import { IRejectRequestParameters, RejectRequestParameters } from "./decide/RejectRequestParameters"
 import { DecideRequestParametersValidator } from "./DecideRequestParametersValidator"
 import {
     IReceivedIncomingRequestParameters,
     ReceivedIncomingRequestParameters
-} from "./receivedIncomingRequestParameters/ReceivedIncomingRequestParameters"
+} from "./received/ReceivedIncomingRequestParameters"
 import {
-    IRequireManualDecisionParams,
-    RequireManualDecisionParams
-} from "./requireManualDecision/RequireManualDecisionParams"
+    IRequireManualDecisionOfIncomingRequestParameters,
+    RequireManualDecisionOfIncomingRequestParameters
+} from "./requireManualDecision/RequireManualDecisionOfIncomingRequestParameters"
 
 export class IncomingRequestsController extends ConsumptionBaseController {
     private consumptionRequests: IDatabaseCollection
@@ -73,13 +70,13 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     public async received(params: IReceivedIncomingRequestParameters): Promise<ConsumptionRequest> {
         const parsedParams = await ReceivedIncomingRequestParameters.from(params)
 
-        const infoFromSource = this.extractInfoFromSource(parsedParams.sourceObject)
+        const infoFromSource = this.extractInfoFromSource(parsedParams.requestSourceObject)
 
         const consumptionRequest = await ConsumptionRequest.from({
-            id: parsedParams.content.id ? CoreId.from(parsedParams.content.id) : await CoreId.generate(),
+            id: parsedParams.receivedRequest.id ?? (await CoreId.generate()),
             createdAt: CoreDate.utc(),
             status: ConsumptionRequestStatus.Open,
-            content: parsedParams.content,
+            content: parsedParams.receivedRequest,
             isOwn: infoFromSource.isOwn,
             peer: infoFromSource.peer,
             source: { reference: infoFromSource.sourceReference, type: infoFromSource.sourceType },
@@ -89,39 +86,6 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         await this.consumptionRequests.create(consumptionRequest)
 
         return consumptionRequest
-    }
-
-    public async checkPrerequisites(
-        params: ICheckPrerequisitesOfOutgoingRequestParameters
-    ): Promise<ConsumptionRequest> {
-        const parsedParams = await CheckPrerequisitesOfOutgoingRequestParameters.from(params)
-        const request = await this.getOrThrow(parsedParams.requestId)
-
-        this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.Open)
-
-        for (const item of request.content.items) {
-            if (item instanceof RequestItem) {
-                const processor = this.processorRegistry.getProcessorForItem(item)
-                const prerequisitesFulfilled = await processor.checkPrerequisitesOfIncomingRequestItem(item)
-                if (!prerequisitesFulfilled) {
-                    return request
-                }
-            } else {
-                for (const childItem of item.items) {
-                    const processor = this.processorRegistry.getProcessorForItem(childItem)
-                    const prerequisitesFulfilled = await processor.checkPrerequisitesOfIncomingRequestItem(childItem)
-                    if (!prerequisitesFulfilled) {
-                        return request
-                    }
-                }
-            }
-        }
-
-        request.changeStatus(ConsumptionRequestStatus.DecisionRequired)
-
-        await this.update(request)
-
-        return request
     }
 
     private extractInfoFromSource(source: Message | RelationshipTemplate): InfoFromSource {
@@ -154,8 +118,43 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         }
     }
 
-    public async requireManualDecision(params: IRequireManualDecisionParams): Promise<ConsumptionRequest> {
-        const parsedParams = await RequireManualDecisionParams.from(params)
+    public async checkPrerequisites(
+        params: ICheckPrerequisitesOfIncomingRequestParameters
+    ): Promise<ConsumptionRequest> {
+        const parsedParams = await CheckPrerequisitesOfIncomingRequestParameters.from(params)
+        const request = await this.getOrThrow(parsedParams.requestId)
+
+        this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.Open)
+
+        for (const item of request.content.items) {
+            if (item instanceof RequestItem) {
+                const processor = this.processorRegistry.getProcessorForItem(item)
+                const prerequisitesFulfilled = await processor.checkPrerequisitesOfIncomingRequestItem(item)
+                if (!prerequisitesFulfilled) {
+                    return request
+                }
+            } else {
+                for (const childItem of item.items) {
+                    const processor = this.processorRegistry.getProcessorForItem(childItem)
+                    const prerequisitesFulfilled = await processor.checkPrerequisitesOfIncomingRequestItem(childItem)
+                    if (!prerequisitesFulfilled) {
+                        return request
+                    }
+                }
+            }
+        }
+
+        request.changeStatus(ConsumptionRequestStatus.DecisionRequired)
+
+        await this.update(request)
+
+        return request
+    }
+
+    public async requireManualDecision(
+        params: IRequireManualDecisionOfIncomingRequestParameters
+    ): Promise<ConsumptionRequest> {
+        const parsedParams = await RequireManualDecisionOfIncomingRequestParameters.from(params)
         const request = await this.getOrThrow(parsedParams.requestId)
 
         this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.DecisionRequired)
@@ -190,6 +189,15 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return ValidationResult.fromItems(itemResults)
     }
 
+    private async canDecideGroup(
+        params: DecideRequestItemGroupParameters,
+        requestItemGroup: RequestItemGroup,
+        action: "Accept" | "Reject"
+    ) {
+        const itemResults = await this.canDecideItems(params.items, requestItemGroup.items, action)
+        return ValidationResult.fromItems(itemResults)
+    }
+
     private async canDecideItems(
         params: IDecideRequestItemParameters[],
         items: (RequestItem | RequestItemGroup)[],
@@ -219,15 +227,6 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         }
 
         return validationResults
-    }
-
-    private async canDecideGroup(
-        params: DecideRequestItemGroupParameters,
-        requestItemGroup: RequestItemGroup,
-        action: "Accept" | "Reject"
-    ) {
-        const itemResults = await this.canDecideItems(params.items, requestItemGroup.items, action)
-        return ValidationResult.fromItems(itemResults)
     }
 
     private canDecideItem(params: DecideRequestItemParameters, requestItem: RequestItem, action: "Accept" | "Reject") {
@@ -300,6 +299,16 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return consumptionResponse
     }
 
+    private async decideGroup(groupItemParam: DecideRequestItemGroupParameters, requestItemGroup: RequestItemGroup) {
+        const items = (await this.decideItems(groupItemParam.items, requestItemGroup.items)) as ResponseItem[]
+
+        const group = await ResponseItemGroup.from({
+            items: items,
+            metadata: requestItemGroup.responseMetadata
+        })
+        return group
+    }
+
     private async decideItems(
         params: (IDecideRequestItemParameters | IDecideRequestItemGroupParameters)[],
         requestItems: (RequestItemGroup | RequestItem)[]
@@ -339,16 +348,6 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         throw new Error("Unknown params type")
     }
 
-    private async decideGroup(groupItemParam: DecideRequestItemGroupParameters, requestItemGroup: RequestItemGroup) {
-        const items = (await this.decideItems(groupItemParam.items, requestItemGroup.items)) as ResponseItem[]
-
-        const group = await ResponseItemGroup.from({
-            items: items,
-            metadata: requestItemGroup.responseMetadata
-        })
-        return group
-    }
-
     public async complete(params: ICompleteIncomingRequestParameters): Promise<ConsumptionRequest> {
         const parsedParams = await CompleteIncomingRequestParameters.from(params)
         const request = await this.getOrThrow(parsedParams.requestId)
@@ -361,9 +360,9 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
         let responseSource: "Message" | "RelationshipChange"
 
-        if (parsedParams.responseSource instanceof Message) {
+        if (parsedParams.responseSourceObject instanceof Message) {
             responseSource = "Message"
-        } else if (parsedParams.responseSource instanceof RelationshipChange) {
+        } else if (parsedParams.responseSourceObject instanceof RelationshipChange) {
             responseSource = "RelationshipChange"
         } else {
             throw new Error("Unknown response source")
@@ -371,7 +370,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
         request.response!.source = await ConsumptionResponseSource.from({
             type: responseSource,
-            reference: parsedParams.responseSource.id
+            reference: parsedParams.responseSourceObject.id
         })
 
         request.changeStatus(ConsumptionRequestStatus.Completed)

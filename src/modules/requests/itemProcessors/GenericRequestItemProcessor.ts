@@ -1,6 +1,6 @@
 import { AcceptResponseItem, RejectResponseItem, RequestItem, ResponseItem, ResponseItemResult } from "@nmshd/content"
-import { AcceptRequestItemParameters } from "../incoming/decideRequestParameters/AcceptRequestItemParameters"
-import { RejectRequestItemParameters } from "../incoming/decideRequestParameters/RejectRequestItemParameters"
+import { AcceptRequestItemParameters } from "../incoming/decide/AcceptRequestItemParameters"
+import { RejectRequestItemParameters } from "../incoming/decide/RejectRequestItemParameters"
 import { IRequestItemProcessor } from "./IRequestItemProcessor"
 import { ValidationResult } from "./ValidationResult"
 

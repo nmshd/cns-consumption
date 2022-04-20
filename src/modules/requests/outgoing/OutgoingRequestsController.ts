@@ -57,10 +57,10 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
 
         for (const requestItem of items) {
             if (requestItem instanceof RequestItem) {
-                const canCreateItem = await this.canCreateRequestItem(requestItem)
+                const canCreateItem = await this.canCreateItem(requestItem)
                 results.push(canCreateItem)
             } else {
-                const result = await this.canCreateRequestItemGroup(requestItem)
+                const result = await this.canCreateItemGroup(requestItem)
                 results.push(result)
             }
         }
@@ -68,16 +68,16 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         return results
     }
 
-    private async canCreateRequestItem(requestItem: RequestItem) {
+    private async canCreateItem(requestItem: RequestItem) {
         const processor = this.processorRegistry.getProcessorForItem(requestItem)
         return await processor.canCreateOutgoingRequestItem(requestItem)
     }
 
-    private async canCreateRequestItemGroup(requestItem: RequestItemGroup) {
+    private async canCreateItemGroup(requestItem: RequestItemGroup) {
         const innerResults: ValidationResult[] = []
 
         for (const innerRequestItem of requestItem.items) {
-            const canCreateItem = await this.canCreateRequestItem(innerRequestItem)
+            const canCreateItem = await this.canCreateItem(innerRequestItem)
             innerResults.push(canCreateItem)
         }
 
@@ -168,7 +168,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
             throw new Error(canComplete.message)
         }
 
-        await this.applyItems(request, parsedParams)
+        await this.applyItems(request.content.items, parsedParams.receivedResponse.items)
 
         let responseSource: "Message" | "RelationshipChange"
 
@@ -232,29 +232,24 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     }
 
     private async applyItems(
-        request: ConsumptionRequest,
-        params: CompleteOugoingRequestParameters
-    ): Promise<ValidationResult> {
-        for (let i = 0; i < params.receivedResponse.items.length; i++) {
-            const requestItem = request.content.items[i]
+        requestItems: (RequestItem | RequestItemGroup)[],
+        responseItems: (ResponseItem | ResponseItemGroup)[]
+    ): Promise<void> {
+        for (let i = 0; i < responseItems.length; i++) {
+            const requestItem = requestItems[i]
             if (requestItem instanceof RequestItem) {
-                const responseItem = params.receivedResponse.items[i] as ResponseItem
-                const processor = this.processorRegistry.getProcessorForItem(requestItem)
-                await processor.applyIncomingResponseItem(responseItem, requestItem)
-            } else if (requestItem instanceof RequestItemGroup) {
-                const responseGroup = params.receivedResponse.items[i] as ResponseItemGroup
-
-                for (let j = 0; j < requestItem.items.length; j++) {
-                    const groupRequestItem = requestItem.items[j]
-                    const groupResponseItem = responseGroup.items[j]
-
-                    const processor = this.processorRegistry.getProcessorForItem(groupRequestItem)
-                    await processor.applyIncomingResponseItem(groupResponseItem, requestItem)
-                }
+                const responseItem = responseItems[i] as ResponseItem
+                await this.applyItem(requestItem, responseItem)
+            } else {
+                const responseItemGroup = responseItems[i] as ResponseItemGroup
+                await this.applyItems(requestItem.items, responseItemGroup.items)
             }
         }
+    }
 
-        return ValidationResult.success()
+    private async applyItem(requestItem: RequestItem, responseItem: ResponseItem) {
+        const processor = this.processorRegistry.getProcessorForItem(requestItem)
+        await processor.applyIncomingResponseItem(responseItem, requestItem)
     }
 
     public async get(id: ICoreId): Promise<ConsumptionRequest | undefined> {

@@ -13,13 +13,13 @@ export class CompleteOugoingRequestParameters extends SerializableAsync implemen
     @validate()
     public requestId: CoreId
 
-    @serialize({ unionTypes: [Message, RelationshipChange] })
-    @validate()
-    public responseSourceObject: Message | RelationshipChange
-
     @serialize()
     @validate()
     public receivedResponse: Response
+
+    @serialize({ unionTypes: [Message, RelationshipChange] })
+    @validate()
+    public responseSourceObject: Message | RelationshipChange
 
     public static override async from(
         value: ICompleteOugoingRequestParameters

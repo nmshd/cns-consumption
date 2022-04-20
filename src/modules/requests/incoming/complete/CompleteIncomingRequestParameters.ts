@@ -3,7 +3,7 @@ import { CoreId, ICoreId, IMessage, IRelationshipChange, Message, RelationshipCh
 
 export interface ICompleteIncomingRequestParameters extends ISerializableAsync {
     requestId: ICoreId
-    responseSource: IMessage | IRelationshipChange
+    responseSourceObject: IMessage | IRelationshipChange
 }
 
 export class CompleteIncomingRequestParameters extends SerializableAsync implements ICompleteIncomingRequestParameters {
@@ -13,7 +13,7 @@ export class CompleteIncomingRequestParameters extends SerializableAsync impleme
 
     @serialize({ unionTypes: [Message, RelationshipChange] })
     @validate()
-    public responseSource: Message | RelationshipChange
+    public responseSourceObject: Message | RelationshipChange
 
     public static override async from(
         value: ICompleteIncomingRequestParameters

@@ -87,7 +87,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
             describe("Received", function () {
                 it("creates an incoming Request with an incoming Message as sourceObject", async function () {
                     const incomingMessage = await TestObjectFactory.createIncomingMessage(currentIdentity)
-                    await When.iCreateAnIncomingRequestWith({ sourceObject: incomingMessage })
+                    await When.iCreateAnIncomingRequestWith({ requestSourceObject: incomingMessage })
                     await Then.theCreatedRequestHasAllProperties(
                         incomingMessage.cache!.createdBy,
                         incomingMessage.id,
@@ -99,7 +99,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
                 it("creates an incoming Request with an incoming RelationshipTemplate as source", async function () {
                     const incomingTemplate = await TestObjectFactory.createIncomingRelationshipTemplate()
-                    await When.iCreateAnIncomingRequestWith({ sourceObject: incomingTemplate })
+                    await When.iCreateAnIncomingRequestWith({ requestSourceObject: incomingTemplate })
                     await Then.theCreatedRequestHasAllProperties(
                         incomingTemplate.cache!.createdBy,
                         incomingTemplate.id,
@@ -112,7 +112,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 it("uses the ID of the given Request if it exists", async function () {
                     const request = await TestObjectFactory.createRequestWithOneItem({ id: await CoreId.generate() })
 
-                    await When.iCreateAnIncomingRequestWith({ content: request })
+                    await When.iCreateAnIncomingRequestWith({ receivedRequest: request })
                     await Then.theRequestHasTheId(request.id!)
                 })
 
@@ -132,11 +132,11 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
                 it("throws on syntactically invalid input", async function () {
                     const paramsWithoutSource = {
-                        content: await TestObjectFactory.createRequestWithOneItem()
+                        receivedRequest: await TestObjectFactory.createRequestWithOneItem()
                     }
                     await TestUtil.expectThrowsAsync(
                         consumptionController.incomingRequests.received(paramsWithoutSource as any),
-                        "*source*Value is not defined*"
+                        "*requestSourceObject*Value is not defined*"
                     )
                 })
             })
@@ -902,7 +902,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 it("can handle valid input with a Message as responseSource", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Decided)
                     await When.iCompleteTheIncomingRequestWith({
-                        responseSource: TestObjectFactory.createOutgoingIMessage(accountController.identity.address)
+                        responseSourceObject: TestObjectFactory.createOutgoingIMessage(
+                            accountController.identity.address
+                        )
                     })
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Completed)
                     await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "Message" })
@@ -916,7 +918,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         accountController.identity.address
                     )
                     await When.iCompleteTheIncomingRequestWith({
-                        responseSource: outgoingRelationshipCreationChange
+                        responseSourceObject: outgoingRelationshipCreationChange
                     })
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Completed)
                     await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "RelationshipChange" })

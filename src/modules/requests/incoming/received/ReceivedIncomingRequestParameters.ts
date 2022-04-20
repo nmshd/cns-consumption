@@ -3,20 +3,19 @@ import { IRequest, Request } from "@nmshd/content"
 import { IMessage, IRelationshipTemplate, Message, RelationshipTemplate } from "@nmshd/transport"
 
 export interface IReceivedIncomingRequestParameters extends ISerializableAsync {
-    // id?: CoreId
-    content: IRequest
-    sourceObject: IMessage | IRelationshipTemplate
+    receivedRequest: IRequest
+    requestSourceObject: IMessage | IRelationshipTemplate
 }
 
 @type("ReceivedIncomingRequestParameters")
 export class ReceivedIncomingRequestParameters extends SerializableAsync implements IReceivedIncomingRequestParameters {
     @serialize()
     @validate()
-    public content: Request
+    public receivedRequest: Request
 
     @serialize({ unionTypes: [Message, RelationshipTemplate] })
     @validate()
-    public sourceObject: Message | RelationshipTemplate
+    public requestSourceObject: Message | RelationshipTemplate
 
     public static override async from(
         params: IReceivedIncomingRequestParameters
