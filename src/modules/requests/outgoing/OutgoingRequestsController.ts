@@ -11,7 +11,7 @@ import { ConsumptionResponse } from "../local/ConsumptionResponse"
 import {
     CompleteOugoingRequestParameters,
     ICompleteOugoingRequestParameters
-} from "./completeOutgoingRequest/CompleteOutgoingRequest"
+} from "./completeOutgoingRequest/CompleteOutgoingRequestParameters"
 import {
     CreateOutgoingRequestParameters,
     ICreateOutgoingRequestParameters
@@ -163,9 +163,9 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         await this.doComplete(request, parsedParams)
 
         const consumptionResponse = await ConsumptionResponse.from({
-            content: parsedParams.response,
+            content: parsedParams.receivedResponse,
             createdAt: CoreDate.utc(),
-            source: { reference: parsedParams.sourceObject.id, type: "Message" }
+            source: { reference: parsedParams.responseSourceObject.id, type: "Message" }
         })
 
         request.response = consumptionResponse
@@ -180,10 +180,10 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         request: ConsumptionRequest,
         params: CompleteOugoingRequestParameters
     ): Promise<ValidationResult> {
-        for (let i = 0; i < params.response.items.length; i++) {
+        for (let i = 0; i < params.receivedResponse.items.length; i++) {
             const requestItem = request.content.items[i]
             if (requestItem instanceof RequestItem) {
-                const responseItem = params.response.items[i] as ResponseItem
+                const responseItem = params.receivedResponse.items[i] as ResponseItem
                 const processor = this.processorRegistry.getProcessorForItem(requestItem)
                 const canApplyItem = await processor.canApplyIncomingResponseItem(responseItem, requestItem)
 
@@ -191,7 +191,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
                     return canApplyItem
                 }
             } else if (requestItem instanceof RequestItemGroup) {
-                const responseGroup = params.response.items[i] as ResponseItemGroup
+                const responseGroup = params.receivedResponse.items[i] as ResponseItemGroup
 
                 for (let j = 0; j < requestItem.items.length; j++) {
                     const groupRequestItem = requestItem.items[j]
@@ -217,14 +217,14 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         request: ConsumptionRequest,
         params: CompleteOugoingRequestParameters
     ): Promise<ValidationResult> {
-        for (let i = 0; i < params.response.items.length; i++) {
+        for (let i = 0; i < params.receivedResponse.items.length; i++) {
             const requestItem = request.content.items[i]
             if (requestItem instanceof RequestItem) {
-                const responseItem = params.response.items[i] as ResponseItem
+                const responseItem = params.receivedResponse.items[i] as ResponseItem
                 const processor = this.processorRegistry.getProcessorForItem(requestItem)
                 await processor.applyIncomingResponseItem(responseItem, requestItem)
             } else if (requestItem instanceof RequestItemGroup) {
-                const responseGroup = params.response.items[i] as ResponseItemGroup
+                const responseGroup = params.receivedResponse.items[i] as ResponseItemGroup
 
                 for (let j = 0; j < requestItem.items.length; j++) {
                     const groupRequestItem = requestItem.items[j]

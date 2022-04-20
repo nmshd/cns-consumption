@@ -441,16 +441,16 @@ export class RequestsWhen {
 
     public async iTryToCompleteTheOutgoingRequestWith(params: {
         requestId?: ICoreId
-        sourceObject?: IMessage
-        response?: Omit<IResponse, "id">
+        responseSourceObject?: IMessage
+        receivedResponse?: Omit<IResponse, "id">
     }): Promise<void> {
         params.requestId ??= this.context.givenConsumptionRequest!.id
-        params.sourceObject ??= TestObjectFactory.createIncomingIMessage(
+        params.responseSourceObject ??= TestObjectFactory.createIncomingIMessage(
             this.context.accountController.identity.address
         )
-        params.response ??= await TestObjectFactory.createResponse()
+        params.receivedResponse ??= await TestObjectFactory.createResponse()
 
-        params.response.requestId = params.requestId
+        params.receivedResponse.requestId = params.requestId
 
         this.context.actionToTry = async () => {
             await this.context.outgoingRequestsController.complete(params as ICompleteOugoingRequestParameters)
@@ -461,7 +461,7 @@ export class RequestsWhen {
         this.context.actionToTry = async () => {
             await this.context.outgoingRequestsController.complete({
                 requestId: this.context.givenConsumptionRequest!.id,
-                response: await TestObjectFactory.createResponse()
+                receivedResponse: await TestObjectFactory.createResponse()
             } as any)
         }
 
@@ -583,23 +583,23 @@ export class RequestsWhen {
 
         this.context.consumptionRequestAfterAction = await this.context.outgoingRequestsController.complete({
             requestId: this.context.givenConsumptionRequest!.id,
-            sourceObject: responseSource,
-            response: responseContent
+            responseSourceObject: responseSource,
+            receivedResponse: responseContent
         })
     }
 
     public async iCompleteTheOutgoingRequestWith(params: {
         requestId?: ICoreId
-        sourceObject?: IMessage
-        response?: Omit<IResponse, "id">
+        responseSourceObject?: IMessage
+        receivedResponse?: Omit<IResponse, "id">
     }): Promise<void> {
         params.requestId ??= this.context.givenConsumptionRequest!.id
-        params.sourceObject ??= TestObjectFactory.createIncomingIMessage(
+        params.responseSourceObject ??= TestObjectFactory.createIncomingIMessage(
             this.context.accountController.identity.address
         )
-        params.response ??= await TestObjectFactory.createResponse()
+        params.receivedResponse ??= await TestObjectFactory.createResponse()
 
-        params.response.requestId = params.requestId
+        params.receivedResponse.requestId = params.requestId
 
         await this.context.outgoingRequestsController.complete(params as ICompleteOugoingRequestParameters)
     }

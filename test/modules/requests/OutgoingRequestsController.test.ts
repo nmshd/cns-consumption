@@ -456,7 +456,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                             status: ConsumptionRequestStatus.Open,
                             content: testParams.request
                         })
-                        await When.iCompleteTheOutgoingRequestWith({ response: testParams.response })
+                        await When.iCompleteTheOutgoingRequestWith({ receivedResponse: testParams.response })
                         await Then.applyIncomingResponseItemIsCalledOnTheRequestItemProcessor(testParams.numberOfCalls)
                     }
                 )
@@ -523,7 +523,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                             status: ConsumptionRequestStatus.Open,
                             content: testParams.request
                         })
-                        await When.iTryToCompleteTheOutgoingRequestWith({ response: testParams.response })
+                        await When.iTryToCompleteTheOutgoingRequestWith({ receivedResponse: testParams.response })
                         await Then.itThrowsAnErrorWithTheErrorMessage("aMessage")
                     }
                 )
@@ -531,7 +531,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                 it("throws on syntactically invalid input", async function () {
                     await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Open)
                     await When.iTryToCallCompleteWithoutSourceObject()
-                    await Then.itThrowsAnErrorWithTheErrorMessage("*sourceObject*Value is not defined*")
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*responseSourceObject*Value is not defined*")
                 })
 
                 it("throws when no Request with the given id exists in DB", async function () {

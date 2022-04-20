@@ -4,8 +4,8 @@ import { CoreId, ICoreId, IMessage, Message } from "@nmshd/transport"
 
 export interface ICompleteOugoingRequestParameters extends ISerializableAsync {
     requestId: ICoreId
-    sourceObject: IMessage
-    response: IResponse
+    responseSourceObject: IMessage
+    receivedResponse: IResponse
 }
 
 export class CompleteOugoingRequestParameters extends SerializableAsync implements ICompleteOugoingRequestParameters {
@@ -15,11 +15,11 @@ export class CompleteOugoingRequestParameters extends SerializableAsync implemen
 
     @serialize()
     @validate()
-    public sourceObject: Message
+    public responseSourceObject: Message
 
     @serialize()
     @validate()
-    public response: Response
+    public receivedResponse: Response
 
     public static override async from(
         value: ICompleteOugoingRequestParameters
