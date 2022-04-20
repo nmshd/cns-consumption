@@ -20,6 +20,7 @@ import {
 import {
     IRequest,
     IRequestItemGroup,
+    Request,
     RequestItemGroup,
     ResponseItem,
     ResponseItemGroup,
@@ -962,6 +963,78 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     const outgoingRequest = await Given.anOutgoingRequest()
                     await When.iGetTheIncomingRequestWith(outgoingRequest.id)
                     await Then.iExpectUndefinedToBeReturned()
+                })
+            })
+
+            describe("Flows for incoming Requests", function () {
+                it("Incoming Request via RelationshipTemplate", async function () {
+                    const request = await Request.from({
+                        items: [await TestRequestItem.from({ mustBeAccepted: false })]
+                    })
+                    const template = TestObjectFactory.createIncomingIRelationshipTemplate()
+
+                    let cnsRequest = await consumptionController.incomingRequests.received({
+                        receivedRequest: request,
+                        requestSourceObject: template
+                    })
+
+                    cnsRequest = await consumptionController.incomingRequests.checkPrerequisites({
+                        requestId: cnsRequest.id
+                    })
+
+                    cnsRequest = await consumptionController.incomingRequests.requireManualDecision({
+                        requestId: cnsRequest.id
+                    })
+                    cnsRequest = await consumptionController.incomingRequests.accept({
+                        requestId: cnsRequest.id,
+                        items: [await AcceptRequestItemParameters.from({})]
+                    })
+
+                    const relationshipChange = TestObjectFactory.createOutgoingIRelationshipChange(
+                        RelationshipChangeType.Creation,
+                        accountController.identity.address
+                    )
+
+                    cnsRequest = await consumptionController.incomingRequests.complete({
+                        requestId: cnsRequest.id,
+                        responseSourceObject: relationshipChange
+                    })
+
+                    expect(cnsRequest).to.exist
+                })
+
+                it("Incoming Request via Message", async function () {
+                    const request = await Request.from({
+                        id: await CoreId.generate(),
+                        items: [await TestRequestItem.from({ mustBeAccepted: false })]
+                    })
+                    const incomingMessage = TestObjectFactory.createIncomingIMessage(accountController.identity.address)
+
+                    let cnsRequest = await consumptionController.incomingRequests.received({
+                        receivedRequest: request,
+                        requestSourceObject: incomingMessage
+                    })
+
+                    cnsRequest = await consumptionController.incomingRequests.checkPrerequisites({
+                        requestId: cnsRequest.id
+                    })
+
+                    cnsRequest = await consumptionController.incomingRequests.requireManualDecision({
+                        requestId: cnsRequest.id
+                    })
+                    cnsRequest = await consumptionController.incomingRequests.accept({
+                        requestId: cnsRequest.id,
+                        items: [await AcceptRequestItemParameters.from({})]
+                    })
+
+                    const responseMessage = TestObjectFactory.createOutgoingIMessage(accountController.identity.address)
+
+                    cnsRequest = await consumptionController.incomingRequests.complete({
+                        requestId: cnsRequest.id,
+                        responseSourceObject: responseMessage
+                    })
+
+                    expect(cnsRequest).to.exist
                 })
             })
         })

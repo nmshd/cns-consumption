@@ -14,12 +14,15 @@ import {
     ValidationResult
 } from "@nmshd/consumption"
 import {
+    AcceptResponseItem,
     IAcceptResponseItem,
     IRequest,
     IRequestItemGroup,
     IResponse,
     IResponseItemGroup,
+    Request,
     RequestItemGroup,
+    Response,
     ResponseItemResult,
     ResponseResult
 } from "@nmshd/content"
@@ -583,6 +586,86 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     await When.iGetTheOutgoingRequestWith(theIdOfTheRequest)
                     await Then.iExpectUndefinedToBeReturned()
                 }).timeout(5000)
+            })
+
+            describe("Flows for outgoing Requests", function () {
+                it("Outgoing Request via RelationshipTemplate", async function () {
+                    const request = await Request.from({
+                        items: [await TestRequestItem.from({ mustBeAccepted: false })]
+                    })
+                    const template = TestObjectFactory.createOutgoingIRelationshipTemplate(
+                        accountController.identity.address
+                    )
+
+                    const canCreate = await consumptionController.outgoingRequests.canCreate({
+                        content: request,
+                        peer: template.cache!.createdBy
+                    })
+                    expect(canCreate.isSuccess()).to.be.true
+
+                    let cnsRequest = await consumptionController.outgoingRequests.create({
+                        content: request,
+                        peer: template.cache!.createdBy
+                    })
+
+                    cnsRequest = await consumptionController.outgoingRequests.sent({
+                        requestId: cnsRequest.id,
+                        requestSourceObject: template
+                    })
+
+                    cnsRequest = await consumptionController.outgoingRequests.complete({
+                        requestId: cnsRequest.id,
+                        receivedResponse: await Response.from({
+                            requestId: cnsRequest.id,
+                            result: ResponseResult.Accepted,
+                            items: [await AcceptResponseItem.from({ result: ResponseItemResult.Accepted })]
+                        }),
+                        responseSourceObject: TestObjectFactory.createOutgoingIRelationshipChange(
+                            RelationshipChangeType.Creation,
+                            accountController.identity.address
+                        )
+                    })
+
+                    expect(cnsRequest).to.exist
+                })
+
+                it("Outgoing Request via Message", async function () {
+                    const request = await Request.from({
+                        id: await CoreId.generate(),
+                        items: [await TestRequestItem.from({ mustBeAccepted: false })]
+                    })
+                    const incomingMessage = TestObjectFactory.createOutgoingIMessage(accountController.identity.address)
+
+                    const canCreate = await consumptionController.outgoingRequests.canCreate({
+                        content: request,
+                        peer: incomingMessage.cache!.createdBy
+                    })
+                    expect(canCreate.isSuccess()).to.be.true
+
+                    let cnsRequest = await consumptionController.outgoingRequests.create({
+                        content: request,
+                        peer: incomingMessage.cache!.createdBy
+                    })
+
+                    cnsRequest = await consumptionController.outgoingRequests.sent({
+                        requestId: cnsRequest.id,
+                        requestSourceObject: incomingMessage
+                    })
+
+                    cnsRequest = await consumptionController.outgoingRequests.complete({
+                        requestId: cnsRequest.id,
+                        receivedResponse: await Response.from({
+                            requestId: cnsRequest.id,
+                            result: ResponseResult.Accepted,
+                            items: [await AcceptResponseItem.from({ result: ResponseItemResult.Accepted })]
+                        }),
+                        responseSourceObject: TestObjectFactory.createIncomingIMessage(
+                            accountController.identity.address
+                        )
+                    })
+
+                    expect(cnsRequest).to.exist
+                })
             })
         })
     }
