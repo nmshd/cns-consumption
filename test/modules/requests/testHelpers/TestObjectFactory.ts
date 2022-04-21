@@ -148,7 +148,10 @@ export class TestObjectFactory {
         return await RelationshipTemplate.from(this.createIncomingIRelationshipTemplate())
     }
 
-    public static createIncomingIRelationshipChange(type: RelationshipChangeType): IRelationshipChange {
+    public static createIncomingIRelationshipChange(
+        type: RelationshipChangeType,
+        requestId?: string
+    ): IRelationshipChange {
         return {
             // @ts-expect-error
             "@type": "RelationshipChange",
@@ -159,7 +162,19 @@ export class TestObjectFactory {
             request: {
                 createdAt: CoreDate.utc(),
                 createdBy: CoreAddress.from("id1"),
-                createdByDevice: CoreId.from("DVC1")
+                createdByDevice: CoreId.from("DVC1"),
+                content: {
+                    "@type": "Response",
+                    result: ResponseResult.Accepted,
+                    items: [
+                        {
+                            // @ts-expect-error
+                            "@type": "AcceptResponseItem",
+                            result: ResponseItemResult.Accepted
+                        }
+                    ],
+                    requestId: CoreId.from(requestId ?? "CNSREQ1")
+                } as IResponse
             }
         }
     }
@@ -220,7 +235,7 @@ export class TestObjectFactory {
         return await RelationshipTemplate.from(this.createOutgoingIRelationshipTemplate(creator))
     }
 
-    public static createOutgoingIRelationshipTemplate(creator: CoreAddress): IRelationshipTemplate {
+    public static createOutgoingIRelationshipTemplate(creator: CoreAddress, content?: IRequest): IRelationshipTemplate {
         return {
             // @ts-expect-error
             "@type": "RelationshipTemplate",
@@ -231,7 +246,7 @@ export class TestObjectFactory {
                 CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
             ),
             cache: {
-                content: {},
+                content: content ?? {},
                 createdAt: CoreDate.utc(),
                 createdBy: creator,
                 createdByDevice: CoreId.from("senderDeviceId"),

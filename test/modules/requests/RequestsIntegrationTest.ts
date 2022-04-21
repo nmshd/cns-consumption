@@ -13,6 +13,7 @@ import {
     ICompleteIncomingRequestParameters,
     ICompleteOugoingRequestParameters,
     IConsumptionRequestSource,
+    ICreateOutgoingRequestFromRelationshipCreationChangeParameters,
     ICreateOutgoingRequestParameters,
     IncomingRequestsController,
     IReceivedIncomingRequestParameters,
@@ -40,8 +41,8 @@ import {
     IConfigOverwrite,
     ICoreId,
     IMessage,
-    IRelationshipChange,
     Message,
+    RelationshipChangeType,
     RelationshipTemplate
 } from "@nmshd/transport"
 import { expect } from "chai"
@@ -534,6 +535,25 @@ export class RequestsWhen {
         this.context.consumptionRequestAfterAction = await this.context.outgoingRequestsController.create(params)
     }
 
+    public async iCreateAnOutgoingRequestFromRelationshipCreationChange(): Promise<void> {
+        await this.iCreateAnOutgoingRequestFromRelationshipCreationChangeWith({})
+    }
+
+    public async iCreateAnOutgoingRequestFromRelationshipCreationChangeWith(
+        params: Partial<ICreateOutgoingRequestFromRelationshipCreationChangeParameters>
+    ): Promise<void> {
+        params.template ??= TestObjectFactory.createOutgoingIRelationshipTemplate(
+            this.context.accountController.identity.address,
+            await TestObjectFactory.createRequestWithOneItem()
+        )
+        params.creationChange ??= TestObjectFactory.createIncomingIRelationshipChange(RelationshipChangeType.Creation)
+
+        this.context.consumptionRequestAfterAction =
+            await this.context.outgoingRequestsController.createFromRelationshipCreationChange(
+                params as ICreateOutgoingRequestFromRelationshipCreationChangeParameters
+            )
+    }
+
     public async iCreateAnIncomingRequestWithSource(sourceObject: Message | RelationshipTemplate): Promise<void> {
         const request = await TestObjectFactory.createRequestWithOneItem()
 
@@ -615,7 +635,7 @@ export class RequestsWhen {
 
     public async iCompleteTheOutgoingRequestWith(params: {
         requestId?: ICoreId
-        responseSourceObject?: IMessage | IRelationshipChange
+        responseSourceObject?: IMessage
         receivedResponse?: Omit<IResponse, "id">
     }): Promise<void> {
         params.requestId ??= this.context.givenConsumptionRequest!.id
@@ -732,6 +752,25 @@ export class RequestsWhen {
         return Promise.resolve()
     }
 
+    public iTryToCreateAnOutgoingRequestFromCreationChangeWithoutCreationChange(): Promise<void> {
+        const paramsWithoutCreationChange: Omit<
+            ICreateOutgoingRequestFromRelationshipCreationChangeParameters,
+            "creationChange"
+        > = {
+            template: TestObjectFactory.createOutgoingIRelationshipTemplate(
+                this.context.accountController.identity.address
+            )
+        }
+
+        this.context.actionToTry = async () => {
+            await this.context.outgoingRequestsController.createFromRelationshipCreationChange(
+                paramsWithoutCreationChange as any
+            )
+        }
+
+        return Promise.resolve()
+    }
+
     public iTryToRejectARequestWithSyntacticallyInvalidInput(): Promise<void> {
         const paramsWithoutItems: Omit<IRejectRequestParameters, "items"> = {
             requestId: CoreId.from("CNSREQ1")
@@ -801,7 +840,7 @@ export class RequestsThen {
         expect(this.context.consumptionRequestAfterAction!.response).to.be.instanceOf(ConsumptionResponse)
         expect(this.context.consumptionRequestAfterAction!.response!.content).to.be.instanceOf(Response)
         expect(this.context.consumptionRequestAfterAction!.response!.content.requestId.toString()).to.equal(
-            this.context.givenConsumptionRequest!.id.toString()
+            (this.context.consumptionRequestAfterAction ?? this.context.givenConsumptionRequest!).id.toString()
         )
 
         return Promise.resolve()
@@ -888,7 +927,7 @@ export class RequestsThen {
         expect(requestInDatabase.toJSON()).to.deep.equal(this.context.consumptionRequestAfterAction!.toJSON())
     }
 
-    public theRequestHasTheId(id: CoreId): Promise<void> {
+    public theRequestHasTheId(id: CoreId | string): Promise<void> {
         expect(this.context.consumptionRequestAfterAction!.id.toString()).to.equal(id.toString())
         return Promise.resolve()
     }

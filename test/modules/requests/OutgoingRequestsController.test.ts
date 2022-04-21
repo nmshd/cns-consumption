@@ -12,15 +12,12 @@ import {
     ValidationResult
 } from "@nmshd/consumption"
 import {
-    AcceptResponseItem,
     IAcceptResponseItem,
     IRequest,
     IRequestItemGroup,
     IResponse,
     IResponseItemGroup,
-    Request,
     RequestItemGroup,
-    Response,
     ResponseItemResult,
     ResponseResult
 } from "@nmshd/content"
@@ -92,12 +89,14 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     [
                         {
                             params: {
+                                isPersonalized: true,
                                 peer: CoreId.from("")
                             },
                             expectedErrorMessage: "*content*Value is not defined*"
                         },
                         {
                             params: {
+                                isPersonalized: true,
                                 peer: CoreId.from(""),
                                 content: {}
                             },
@@ -265,6 +264,33 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                 })
             })
 
+            describe("CreateFromRelationshipCreationChange", function () {
+                it("combines calls to create, sent and complete", async function () {
+                    await When.iCreateAnOutgoingRequestFromRelationshipCreationChange()
+                    await Then.theCreatedOutgoingRequestHasAllProperties()
+                    await Then.theRequestIsInStatus(ConsumptionRequestStatus.Completed)
+                    await Then.theRequestHasItsSourcePropertySet()
+                    await Then.theRequestHasItsResponsePropertySetCorrectly()
+                    await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "RelationshipChange" })
+                    await Then.theNewRequestIsPersistedInTheDatabase()
+                })
+
+                it("uses the id from the Creation Change content for the created Consumption Request", async function () {
+                    await When.iCreateAnOutgoingRequestFromRelationshipCreationChangeWith({
+                        creationChange: TestObjectFactory.createIncomingIRelationshipChange(
+                            RelationshipChangeType.Creation,
+                            "requestIdReceivedFromPeer"
+                        )
+                    })
+                    await Then.theRequestHasTheId("requestIdReceivedFromPeer")
+                })
+
+                it("throws on syntactically invalid input", async function () {
+                    await When.iTryToCreateAnOutgoingRequestFromCreationChangeWithoutCreationChange()
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*creationChange*Value is not defined*")
+                })
+            })
+
             describe("Sent", function () {
                 it("can handle valid input", async function () {
                     await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
@@ -286,59 +312,29 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.itThrowsAnErrorWithTheErrorMessage("*Consumption Request has to be in status 'Draft'*")
                 })
 
-                const paramsWithValidSources = [
-                    {
-                        sourceObjectFactory: TestObjectFactory.createOutgoingIMessage,
-                        expectedSourceType: "Message"
-                    },
-                    {
-                        sourceObjectFactory: TestObjectFactory.createOutgoingIRelationshipTemplate,
-                        expectedSourceType: "RelationshipTemplate"
-                    }
-                ]
-                itParam(
-                    "sets the source property depending on the given source",
-                    paramsWithValidSources,
-                    async function (testParams) {
-                        const source = testParams.sourceObjectFactory(accountController.identity.address)
+                it("sets the source property depending on the given source", async function () {
+                    const source = TestObjectFactory.createOutgoingIMessage(accountController.identity.address)
 
-                        await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
-                        await When.iCallSentWith({ requestSourceObject: source })
-                        await Then.theRequestHasItsSourcePropertySetTo({
-                            type: testParams.expectedSourceType as any,
-                            reference: source.id
-                        })
-                    }
-                )
+                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
+                    await When.iCallSentWith({ requestSourceObject: source })
+                    await Then.theRequestHasItsSourcePropertySetTo({
+                        type: "Message",
+                        reference: source.id
+                    })
+                })
 
                 it("throws when no Request with the given id exists in DB", async function () {
                     await When.iTryToCallSentWith({ requestId: CoreId.from("nonExistentId") })
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
 
-                const paramsWithInvalidSources = [
-                    {
-                        description: "an incmoming Message",
-                        sourceObjectFactory: TestObjectFactory.createIncomingIMessage,
-                        expectedSourceType: "Message"
-                    },
-                    {
-                        description: "an incmoming RelationshipTemplate",
-                        sourceObjectFactory: TestObjectFactory.createIncomingIRelationshipTemplate,
-                        expectedSourceType: "RelationshipTemplate"
-                    }
-                ]
-                itParam(
-                    "throws when passing ${value.description}",
-                    paramsWithInvalidSources,
-                    async function (testParams) {
-                        const invalidSource = testParams.sourceObjectFactory(accountController.identity.address)
+                it("throws when passing an incoming Message", async function () {
+                    const invalidSource = TestObjectFactory.createIncomingIMessage(accountController.identity.address)
 
-                        await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
-                        await When.iTryToCallSentWith({ requestSourceObject: invalidSource })
-                        await Then.itThrowsAnErrorWithTheErrorMessage("Cannot create outgoing Request from a peer*")
-                    }
-                )
+                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
+                    await When.iTryToCallSentWith({ requestSourceObject: invalidSource })
+                    await Then.itThrowsAnErrorWithTheErrorMessage("Cannot create outgoing Request from a peer*")
+                })
             })
 
             describe("Complete", function () {
@@ -351,20 +347,6 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Completed)
                     await Then.theRequestHasItsResponsePropertySetCorrectly()
                     await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "Message" })
-                    await Then.theNewRequestIsPersistedInTheDatabase()
-                })
-
-                it("can handle valid input with a RelationshipChange as responseSourceObject", async function () {
-                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Open)
-                    const incomingRelationshipCreationChange = TestObjectFactory.createIncomingIRelationshipChange(
-                        RelationshipChangeType.Creation
-                    )
-                    await When.iCompleteTheOutgoingRequestWith({
-                        responseSourceObject: incomingRelationshipCreationChange
-                    })
-                    await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Completed)
-                    await Then.theRequestHasItsResponsePropertySetCorrectly()
-                    await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "RelationshipChange" })
                     await Then.theNewRequestIsPersistedInTheDatabase()
                 })
 
@@ -576,86 +558,6 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     await When.iGetTheOutgoingRequestWith(theIdOfTheRequest)
                     await Then.iExpectUndefinedToBeReturned()
                 }).timeout(5000)
-            })
-
-            describe("Flows for outgoing Requests", function () {
-                it("Outgoing Request via RelationshipTemplate", async function () {
-                    const request = await Request.from({
-                        items: [await TestRequestItem.from({ mustBeAccepted: false })]
-                    })
-                    const template = TestObjectFactory.createOutgoingIRelationshipTemplate(
-                        accountController.identity.address
-                    )
-
-                    const canCreate = await consumptionController.outgoingRequests.canCreate({
-                        content: request,
-                        peer: template.cache!.createdBy
-                    })
-                    expect(canCreate.isSuccess()).to.be.true
-
-                    let cnsRequest = await consumptionController.outgoingRequests.create({
-                        content: request,
-                        peer: template.cache!.createdBy
-                    })
-
-                    cnsRequest = await consumptionController.outgoingRequests.sent({
-                        requestId: cnsRequest.id,
-                        requestSourceObject: template
-                    })
-
-                    cnsRequest = await consumptionController.outgoingRequests.complete({
-                        requestId: cnsRequest.id,
-                        receivedResponse: await Response.from({
-                            requestId: cnsRequest.id,
-                            result: ResponseResult.Accepted,
-                            items: [await AcceptResponseItem.from({ result: ResponseItemResult.Accepted })]
-                        }),
-                        responseSourceObject: TestObjectFactory.createOutgoingIRelationshipChange(
-                            RelationshipChangeType.Creation,
-                            accountController.identity.address
-                        )
-                    })
-
-                    expect(cnsRequest).to.exist
-                })
-
-                it("Outgoing Request via Message", async function () {
-                    const request = await Request.from({
-                        id: await CoreId.generate(),
-                        items: [await TestRequestItem.from({ mustBeAccepted: false })]
-                    })
-                    const incomingMessage = TestObjectFactory.createOutgoingIMessage(accountController.identity.address)
-
-                    const canCreate = await consumptionController.outgoingRequests.canCreate({
-                        content: request,
-                        peer: incomingMessage.cache!.createdBy
-                    })
-                    expect(canCreate.isSuccess()).to.be.true
-
-                    let cnsRequest = await consumptionController.outgoingRequests.create({
-                        content: request,
-                        peer: incomingMessage.cache!.createdBy
-                    })
-
-                    cnsRequest = await consumptionController.outgoingRequests.sent({
-                        requestId: cnsRequest.id,
-                        requestSourceObject: incomingMessage
-                    })
-
-                    cnsRequest = await consumptionController.outgoingRequests.complete({
-                        requestId: cnsRequest.id,
-                        receivedResponse: await Response.from({
-                            requestId: cnsRequest.id,
-                            result: ResponseResult.Accepted,
-                            items: [await AcceptResponseItem.from({ result: ResponseItemResult.Accepted })]
-                        }),
-                        responseSourceObject: TestObjectFactory.createIncomingIMessage(
-                            accountController.identity.address
-                        )
-                    })
-
-                    expect(cnsRequest).to.exist
-                })
             })
         })
     }

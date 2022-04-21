@@ -1,6 +1,7 @@
 import { IDatabaseCollection } from "@js-soft/docdb-access-abstractions"
-import { RequestItem, RequestItemGroup, ResponseItem, ResponseItemGroup } from "@nmshd/content"
+import { Request, RequestItem, RequestItemGroup, Response, ResponseItem, ResponseItemGroup } from "@nmshd/content"
 import {
+    CoreAddress,
     CoreDate,
     CoreId,
     ICoreId,
@@ -20,6 +21,10 @@ import {
     CompleteOugoingRequestParameters,
     ICompleteOugoingRequestParameters
 } from "./completeOutgoingRequest/CompleteOutgoingRequestParameters"
+import {
+    CreateOutgoingRequestFromRelationshipCreationChangeParameters,
+    ICreateOutgoingRequestFromRelationshipCreationChangeParameters
+} from "./createFromRelationshipCreationChange/CreateOutgoingRequestFromRelationshipCreationChangeParameters"
 import {
     CreateOutgoingRequestParameters,
     ICreateOutgoingRequestParameters
@@ -89,34 +94,65 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     public async create(params: ICreateOutgoingRequestParameters): Promise<ConsumptionRequest> {
         const parsedParams = await CreateOutgoingRequestParameters.from(params)
 
-        const canCreateResult = await this.canCreate(parsedParams)
+        const id = await ConsumptionIds.request.generate()
+        parsedParams.content.id = id
+        const consumptionRequest = await this._create(id, parsedParams.content, parsedParams.peer)
+
+        return consumptionRequest
+    }
+
+    private async _create(id: CoreId, content: Request, peer: CoreAddress) {
+        const canCreateResult = await this.canCreate({
+            content,
+            peer
+        })
+
         if (canCreateResult.isError()) {
             throw new Error(canCreateResult.message)
         }
 
-        const id = await ConsumptionIds.request.generate()
-
-        parsedParams.content.id = id
-
         const consumptionRequest = await ConsumptionRequest.from({
             id: id,
-            content: parsedParams.content,
+            content: content,
             createdAt: CoreDate.utc(),
             isOwn: true,
-            peer: parsedParams.peer,
+            peer: peer,
             status: ConsumptionRequestStatus.Draft,
             statusLog: []
         })
 
         await this.consumptionRequests.create(consumptionRequest)
+        return consumptionRequest
+    }
+
+    public async createFromRelationshipCreationChange(
+        params: ICreateOutgoingRequestFromRelationshipCreationChangeParameters
+    ): Promise<ConsumptionRequest> {
+        const parsedParams = await CreateOutgoingRequestFromRelationshipCreationChangeParameters.from(params)
+
+        const peer = parsedParams.creationChange.request.createdBy
+        const id = (parsedParams.creationChange.request.content! as Response).requestId
+
+        await this._create(id, parsedParams.template.cache!.content as Request, peer)
+
+        await this._sent(id, parsedParams.template)
+
+        const consumptionRequest = await this._complete(
+            id,
+            parsedParams.creationChange,
+            parsedParams.creationChange.request.content! as Response
+        )
 
         return consumptionRequest
     }
 
     public async sent(params: ISentOutgoingRequestParameters): Promise<any> {
         const parsedParams = await SentOutgoingRequestParameters.from(params)
+        return await this._sent(parsedParams.requestId, parsedParams.requestSourceObject)
+    }
 
-        const request = await this.getOrThrow(parsedParams.requestId)
+    private async _sent(requestId: CoreId, requestSourceObject: Message | RelationshipTemplate): Promise<any> {
+        const request = await this.getOrThrow(requestId)
 
         if (request.status !== ConsumptionRequestStatus.Draft) {
             throw new Error("Consumption Request has to be in status 'Draft'.")
@@ -125,8 +161,8 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         request.changeStatus(ConsumptionRequestStatus.Open)
 
         request.source = await ConsumptionRequestSource.from({
-            reference: parsedParams.requestSourceObject.id,
-            type: this.getSourceType(parsedParams.requestSourceObject)
+            reference: requestSourceObject.id,
+            type: this.getSourceType(requestSourceObject)
         })
 
         await this.update(request)
@@ -155,35 +191,46 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
 
     public async complete(params: ICompleteOugoingRequestParameters): Promise<ConsumptionRequest> {
         const parsedParams = await CompleteOugoingRequestParameters.from(params)
+        return await this._complete(
+            parsedParams.requestId,
+            parsedParams.responseSourceObject,
+            parsedParams.receivedResponse
+        )
+    }
 
-        const request = await this.getOrThrow(parsedParams.requestId)
+    private async _complete(
+        requestId: CoreId,
+        responseSourceObject: Message | RelationshipChange,
+        receivedResponse: Response
+    ): Promise<ConsumptionRequest> {
+        const request = await this.getOrThrow(requestId)
 
         if (request.status !== ConsumptionRequestStatus.Open) {
             throw new Error("Consumption Request has to be in status 'Open'.")
         }
 
-        const canComplete = await this.canComplete(request, parsedParams)
+        const canComplete = await this.canComplete(request, receivedResponse)
 
         if (canComplete.isError()) {
             throw new Error(canComplete.message)
         }
 
-        await this.applyItems(request.content.items, parsedParams.receivedResponse.items)
+        await this.applyItems(request.content.items, receivedResponse.items)
 
         let responseSource: "Message" | "RelationshipChange"
 
-        if (parsedParams.responseSourceObject instanceof Message) {
+        if (responseSourceObject instanceof Message) {
             responseSource = "Message"
-        } else if (parsedParams.responseSourceObject instanceof RelationshipChange) {
+        } else if (responseSourceObject instanceof RelationshipChange) {
             responseSource = "RelationshipChange"
         } else {
             throw new Error("Invalid responseSourceObject")
         }
 
         const consumptionResponse = await ConsumptionResponse.from({
-            content: parsedParams.receivedResponse,
+            content: receivedResponse,
             createdAt: CoreDate.utc(),
-            source: { reference: parsedParams.responseSourceObject.id, type: responseSource }
+            source: { reference: responseSourceObject.id, type: responseSource }
         })
 
         request.response = consumptionResponse
@@ -194,14 +241,11 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         return request
     }
 
-    private async canComplete(
-        request: ConsumptionRequest,
-        params: CompleteOugoingRequestParameters
-    ): Promise<ValidationResult> {
-        for (let i = 0; i < params.receivedResponse.items.length; i++) {
+    private async canComplete(request: ConsumptionRequest, receivedResponse: Response): Promise<ValidationResult> {
+        for (let i = 0; i < receivedResponse.items.length; i++) {
             const requestItem = request.content.items[i]
             if (requestItem instanceof RequestItem) {
-                const responseItem = params.receivedResponse.items[i] as ResponseItem
+                const responseItem = receivedResponse.items[i] as ResponseItem
                 const processor = this.processorRegistry.getProcessorForItem(requestItem)
                 const canApplyItem = await processor.canApplyIncomingResponseItem(responseItem, requestItem)
 
@@ -209,7 +253,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
                     return canApplyItem
                 }
             } else if (requestItem instanceof RequestItemGroup) {
-                const responseGroup = params.receivedResponse.items[i] as ResponseItemGroup
+                const responseGroup = receivedResponse.items[i] as ResponseItemGroup
 
                 for (let j = 0; j < requestItem.items.length; j++) {
                     const groupRequestItem = requestItem.items[j]
