@@ -1,8 +1,13 @@
 /* eslint-disable jest/expect-expect */
-import { Request, Response } from "@nmshd/content"
+import { AcceptResponseItem, Request, Response } from "@nmshd/content"
 import { AccountController, CoreDate, Message, Relationship, RelationshipTemplate, Transport } from "@nmshd/transport"
 import { expect } from "chai"
-import { AcceptRequestItemParameters, ConsumptionController, ConsumptionRequest } from "../../../src"
+import {
+    AcceptRequestItemParameters,
+    ConsumptionController,
+    ConsumptionRequest,
+    ConsumptionRequestStatus
+} from "../../../src"
 import { TestUtil } from "../../core/TestUtil"
 import { RequestsIntegrationTest } from "./RequestsIntegrationTest"
 import { TestRequestItem } from "./testHelpers/TestRequestItem"
@@ -114,29 +119,31 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                 sRelationship = newRelationships[0]
             }).timeout(20000)
 
-            it("sender: create Consumption Request and mark it as sent", async function () {
-                sConsumptionRequest = await sConsumptionController.outgoingRequests.create({
-                    peer: sRelationship.peer.address,
-                    content: sTemplate.cache!.content as Request
-                })
-                sConsumptionRequest = await sConsumptionController.outgoingRequests.sent({
-                    requestId: sConsumptionRequest.id,
-                    requestSourceObject: sTemplate
-                })
+            it("sender: create Consumption Request and Response from Relationship Change", async function () {
+                sConsumptionRequest =
+                    await sConsumptionController.outgoingRequests.createFromRelationshipCreationChange({
+                        template: sTemplate,
+                        creationChange: sRelationship.cache!.changes[0]
+                    })
             })
 
-            it("sender: accept Relationship Change", async function () {
-                sRelationship = await sAccountController.relationships.acceptChange(sRelationship.cache!.changes[0], {})
-            })
+            it("expectations", function () {
+                // in the end, both Consumption Requests should be completed
+                expect(rConsumptionRequest.status).to.equal(ConsumptionRequestStatus.Completed)
+                expect(sConsumptionRequest.status).to.equal(ConsumptionRequestStatus.Completed)
 
-            it("sender: complete Consumption Request", async function () {
-                const response = sRelationship.cache!.changes[0].request.content! as Response
+                // the ids of the Consumption Requests should be equal
+                expect(rConsumptionRequest.id.toString()).to.equal(sConsumptionRequest.id.toString())
 
-                sConsumptionRequest = await sConsumptionController.outgoingRequests.complete({
-                    requestId: sConsumptionRequest.id,
-                    responseSourceObject: sRelationship.cache!.changes[0],
-                    receivedResponse: response
-                })
+                // make sure (de-)serialization worked as expected
+                expect(sTemplate.cache!.content).to.be.instanceOf(Request)
+                expect(rTemplate.cache!.content).to.be.instanceOf(Request)
+                expect(sConsumptionRequest.content.items[0]).to.be.instanceOf(TestRequestItem)
+                expect(rConsumptionRequest.content.items[0]).to.be.instanceOf(TestRequestItem)
+                expect(sRelationship.cache!.changes[0].request.content).to.be.instanceOf(Response)
+                expect(rRelationship.cache!.changes[0].request.content).to.be.instanceOf(Response)
+                expect(sConsumptionRequest.response!.content.items[0]).to.be.instanceOf(AcceptResponseItem)
+                expect(rConsumptionRequest.response!.content.items[0]).to.be.instanceOf(AcceptResponseItem)
             })
         })
 
@@ -255,6 +262,25 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                     responseSourceObject: sMessageWithResponse,
                     receivedResponse: sMessageWithResponse.cache!.content as Response
                 })
+            })
+
+            it("expectations", function () {
+                // in the end, both Consumption Requests should be completed
+                expect(rConsumptionRequest.status).to.equal(ConsumptionRequestStatus.Completed)
+                expect(sConsumptionRequest.status).to.equal(ConsumptionRequestStatus.Completed)
+
+                // the ids of the Consumption Requests should be equal
+                expect(rConsumptionRequest.id.toString()).to.equal(sConsumptionRequest.id.toString())
+
+                // make sure (de-)serialization worked as expected
+                expect(sMessageWithRequest.cache!.content).to.be.instanceOf(Request)
+                expect(rMessageWithRequest.cache!.content).to.be.instanceOf(Request)
+                expect(sConsumptionRequest.content.items[0]).to.be.instanceOf(TestRequestItem)
+                expect(rConsumptionRequest.content.items[0]).to.be.instanceOf(TestRequestItem)
+                expect(sMessageWithResponse.cache!.content).to.be.instanceOf(Response)
+                expect(rMessageWithResponse.cache!.content).to.be.instanceOf(Response)
+                expect(sConsumptionRequest.response!.content.items[0]).to.be.instanceOf(AcceptResponseItem)
+                expect(rConsumptionRequest.response!.content.items[0]).to.be.instanceOf(AcceptResponseItem)
             })
         })
     }
