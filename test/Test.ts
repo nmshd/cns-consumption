@@ -1,8 +1,6 @@
 import { IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import { IConfigOverwrite } from "@nmshd/transport"
-import { use } from "chai"
-import chaiExclude from "chai-exclude"
 import { AttributeTest } from "./modules/attributes/Attribute.test"
 import { RelationshipInfoTest } from "./modules/relationships/RelationshipInfo.test"
 import { RelationshipInfoNoTemplateTest } from "./modules/relationships/RelationshipInfoNoTemplate.test"
@@ -15,8 +13,6 @@ import { ConsumptionRequestTest } from "./modules/requests/local/ConsumptionRequ
 import { OutgoingRequestControllerTests } from "./modules/requests/OutgoingRequestsController.test"
 import { RequestEnd2EndTests } from "./modules/requests/RequestEnd2End.test"
 import { RequestItemProcessorRegistryTests } from "./modules/requests/RequestItemProcessorRegistry.test"
-
-use(chaiExclude)
 
 export enum BackboneEnvironment {
     Local = "http://enmeshed.local",
