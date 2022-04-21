@@ -1,15 +1,6 @@
 import { serialize, type, validate } from "@js-soft/ts-serval"
-import { ContentJSON } from "@nmshd/content"
 import { CoreDate, CoreSerializable, ICoreDate, ICoreSerializable } from "@nmshd/transport"
 import { ConsumptionRequestStatus } from "./ConsumptionRequestStatus"
-
-export interface ConsumptionRequestStatusLogEntryJSON extends ContentJSON {
-    createdAt: string
-    oldStatus: ConsumptionRequestStatus
-    newStatus: ConsumptionRequestStatus
-    data?: object
-    code?: string
-}
 
 export interface IConsumptionRequestStatusLogEntry extends ICoreSerializable {
     createdAt: ICoreDate
@@ -41,9 +32,7 @@ export class ConsumptionRequestStatusLogEntry extends CoreSerializable implement
     @validate({ nullable: true })
     public code?: string
 
-    public static override from(
-        value: IConsumptionRequestStatusLogEntry | ConsumptionRequestStatusLogEntryJSON
-    ): ConsumptionRequestStatusLogEntry {
+    public static override from(value: IConsumptionRequestStatusLogEntry): ConsumptionRequestStatusLogEntry {
         return super.fromT<ConsumptionRequestStatusLogEntry>(value, ConsumptionRequestStatusLogEntry)
     }
 }
