@@ -24,12 +24,7 @@ import {
     ResponseItemGroup,
     ResponseItemResult
 } from "@nmshd/content"
-import {
-    AccountController,
-    CoreAddress,
-    CoreId, RelationshipChangeType,
-    Transport
-} from "@nmshd/transport"
+import { AccountController, CoreAddress, CoreId, RelationshipChangeType, Transport } from "@nmshd/transport"
 import { expect } from "chai"
 import itParam from "mocha-param"
 import { TestUtil } from "../../core/TestUtil"
