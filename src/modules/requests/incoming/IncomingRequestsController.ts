@@ -8,9 +8,9 @@ import {
     ResponseResult
 } from "@nmshd/content"
 import {
-    CoreAddress,
     CoreDate,
     CoreId,
+    ICoreAddress,
     ICoreId,
     Message,
     RelationshipChange,
@@ -21,7 +21,7 @@ import { ConsumptionBaseController, ConsumptionControllerName } from "../../../c
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
 import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProcessorRegistry"
 import { ValidationResult } from "../itemProcessors/ValidationResult"
-import { ConsumptionRequest } from "../local/ConsumptionRequest"
+import { ConsumptionRequest, IConsumptionRequestSource } from "../local/ConsumptionRequest"
 import { ConsumptionRequestStatus } from "../local/ConsumptionRequestStatus"
 import { ConsumptionResponse, ConsumptionResponseSource } from "../local/ConsumptionResponse"
 import {
@@ -77,9 +77,9 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             createdAt: CoreDate.utc(),
             status: ConsumptionRequestStatus.Open,
             content: parsedParams.receivedRequest,
-            isOwn: infoFromSource.isOwn,
+            isOwn: false,
             peer: infoFromSource.peer,
-            source: { reference: infoFromSource.sourceReference, type: infoFromSource.sourceType },
+            source: infoFromSource.source,
             statusLog: []
         })
 
@@ -100,10 +100,11 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         if (message.isOwn) throw new Error("Cannot create incoming Request from own Message")
 
         return {
-            isOwn: this.parent.accountController.identity.isMe(message.cache!.createdBy),
             peer: message.cache!.createdBy,
-            sourceReference: message.id,
-            sourceType: "Message"
+            source: {
+                reference: message.id,
+                type: "Message"
+            }
         }
     }
 
@@ -111,10 +112,11 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         if (template.isOwn) throw new Error("Cannot create incoming Request from own Relationship Template")
 
         return {
-            isOwn: this.parent.accountController.identity.isMe(template.cache!.createdBy),
             peer: template.cache!.createdBy,
-            sourceReference: template.id,
-            sourceType: "RelationshipTemplate"
+            source: {
+                reference: template.id,
+                type: "RelationshipTemplate"
+            }
         }
     }
 
@@ -410,8 +412,6 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 }
 
 interface InfoFromSource {
-    isOwn: boolean
-    peer: CoreAddress
-    sourceReference: CoreId
-    sourceType: "Message" | "RelationshipTemplate"
+    peer: ICoreAddress
+    source: IConsumptionRequestSource
 }
