@@ -31,7 +31,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
             let consumptionRequestSender: ConsumptionRequest
 
             before(async function () {
-                this.timeout(5000)
+                this.timeout(30000)
                 await transport.init()
 
                 await TestUtil.clearAccounts(that.connection)
@@ -69,8 +69,6 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                     templateSender.id,
                     templateSender.secretKey
                 )
-
-                expect(templateRecipient.cache!.content).to.be.instanceOf(Request)
             })
 
             it("recipient: create Consumption Request", async function () {
@@ -117,7 +115,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
             it("sender: syncEverything to get Relationship Change with Response", async function () {
                 const newRelationships = await TestUtil.syncUntilHasRelationships(accountControllerSender)
                 relationshipSender = newRelationships[0]
-            }).timeout(5000)
+            }).timeout(20000)
 
             it("sender: create Consumption Request and mark it as sent", async function () {
                 consumptionRequestSender = await consumptionControllerSender.outgoingRequests.create({
@@ -162,7 +160,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
             let messageWithResponseOfSender: Message
 
             before(async function () {
-                this.timeout(5000)
+                this.timeout(30000)
                 await transport.init()
 
                 await TestUtil.clearAccounts(that.connection)
@@ -212,7 +210,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
             it("recipient: syncEverything to get Message with Request", async function () {
                 const messages = await TestUtil.syncUntilHasMessages(accountControllerRecipient)
                 messageWithRequestOfRecipient = messages[0]
-            }).timeout(5000)
+            }).timeout(20000)
 
             it("recipient: create Consumption Request", async function () {
                 consumptionRequestRecipient = await consumptionControllerRecipient.incomingRequests.received({
@@ -258,7 +256,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
             it("sender: syncEverything to get Message with Response", async function () {
                 const messages = await TestUtil.syncUntilHasMessages(accountControllerSender)
                 messageWithResponseOfSender = messages[0]
-            }).timeout(5000)
+            }).timeout(20000)
 
             it("sender: complete Consumption Request", async function () {
                 consumptionRequestSender = await consumptionControllerSender.outgoingRequests.complete({
