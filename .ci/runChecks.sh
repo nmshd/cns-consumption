@@ -6,4 +6,4 @@ npm run lint:tsc
 npm run lint:prettier
 npm run lint:eslint
 npx license-check
-npx better-npm-audit audit --exclude 1069976
+npx better-npm-audit audit
