@@ -1,13 +1,13 @@
 /* eslint-disable jest/expect-expect */
-import { AcceptResponseItem, Request, Response } from "@nmshd/content"
-import { AccountController, CoreDate, Message, Relationship, RelationshipTemplate, Transport } from "@nmshd/transport"
-import { expect } from "chai"
 import {
     AcceptRequestItemParameters,
     ConsumptionController,
     ConsumptionRequest,
     ConsumptionRequestStatus
-} from "../../../src"
+} from "@nmshd/consumption"
+import { AcceptResponseItem, Request, Response } from "@nmshd/content"
+import { AccountController, CoreDate, Message, Relationship, RelationshipTemplate, Transport } from "@nmshd/transport"
+import { expect } from "chai"
 import { TestUtil } from "../../core/TestUtil"
 import { RequestsIntegrationTest } from "./RequestsIntegrationTest"
 import { TestRequestItem } from "./testHelpers/TestRequestItem"
