@@ -6,7 +6,6 @@ import { SimpleLoggerFactory } from "@js-soft/simple-logger"
 import { ISerializableAsync, SerializableAsync } from "@js-soft/ts-serval"
 import { sleep } from "@js-soft/ts-utils"
 import { ConsumptionController } from "@nmshd/consumption"
-// import { RelationshipCreationChangeRequestBody, RelationshipTemplateBody } from "@nmshd/content"
 import { CoreBuffer } from "@nmshd/crypto"
 import {
     AccountController,
