@@ -3,7 +3,6 @@ import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionErrors
 import { ConsumptionController } from "../../consumption/ConsumptionController"
 import { RelationshipInfo } from "./local/RelationshipInfo"
 import { RelationshipInfoUtil } from "./RelationshipInfoUtil"
-// import { RelationshipInfoUtil } from "./RelationshipInfoUtil"
 
 export class RelationshipInfoController extends ConsumptionBaseController {
     private relationshipInfo: SynchronizedCollection

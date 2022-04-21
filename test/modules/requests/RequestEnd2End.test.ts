@@ -18,17 +18,17 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
         })
 
         describe("End2End Request/Response via Relationship Template/ChangeRequest", function () {
-            let accountControllerSender: AccountController
-            let consumptionControllerSender: ConsumptionController
-            let accountControllerRecipient: AccountController
-            let consumptionControllerRecipient: ConsumptionController
+            let sAccountController: AccountController
+            let sConsumptionController: ConsumptionController
+            let rAccountController: AccountController
+            let rConsumptionController: ConsumptionController
 
-            let templateSender: RelationshipTemplate
-            let templateRecipient: RelationshipTemplate
-            let consumptionRequestRecipient: ConsumptionRequest
-            let relationshipRecipient: Relationship
-            let relationshipSender: Relationship
-            let consumptionRequestSender: ConsumptionRequest
+            let sTemplate: RelationshipTemplate
+            let rTemplate: RelationshipTemplate
+            let rConsumptionRequest: ConsumptionRequest
+            let rRelationship: Relationship
+            let sRelationship: Relationship
+            let sConsumptionRequest: ConsumptionRequest
 
             before(async function () {
                 this.timeout(30000)
@@ -37,17 +37,15 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                 await TestUtil.clearAccounts(that.connection)
                 const accounts = await TestUtil.provideAccounts(transport, 2)
 
-                ;({ accountController: accountControllerSender, consumptionController: consumptionControllerSender } =
+                ;({ accountController: sAccountController, consumptionController: sConsumptionController } =
                     accounts[0])
-                consumptionControllerSender.incomingRequests.processorRegistry.registerProcessorForType(
+                sConsumptionController.incomingRequests.processorRegistry.registerProcessorForType(
                     TestRequestItemProcessor,
                     TestRequestItem
                 )
-                ;({
-                    accountController: accountControllerRecipient,
-                    consumptionController: consumptionControllerRecipient
-                } = accounts[1])
-                consumptionControllerRecipient.incomingRequests.processorRegistry.registerProcessorForType(
+                ;({ accountController: rAccountController, consumptionController: rConsumptionController } =
+                    accounts[1])
+                rConsumptionController.incomingRequests.processorRegistry.registerProcessorForType(
                     TestRequestItemProcessor,
                     TestRequestItem
                 )
@@ -57,7 +55,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                 const request = await Request.from({
                     items: [await TestRequestItem.from({ mustBeAccepted: false })]
                 })
-                templateSender = await accountControllerSender.relationshipTemplates.sendRelationshipTemplate({
+                sTemplate = await sAccountController.relationshipTemplates.sendRelationshipTemplate({
                     content: request,
                     expiresAt: CoreDate.utc().add({ hours: 1 }),
                     maxNumberOfRelationships: 1
@@ -65,99 +63,95 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
             })
 
             it("recipient: load Relationship Template", async function () {
-                templateRecipient = await accountControllerRecipient.relationshipTemplates.loadPeerRelationshipTemplate(
-                    templateSender.id,
-                    templateSender.secretKey
+                rTemplate = await rAccountController.relationshipTemplates.loadPeerRelationshipTemplate(
+                    sTemplate.id,
+                    sTemplate.secretKey
                 )
             })
 
             it("recipient: create Consumption Request", async function () {
-                consumptionRequestRecipient = await consumptionControllerRecipient.incomingRequests.received({
-                    receivedRequest: templateRecipient.cache!.content as Request,
-                    requestSourceObject: templateRecipient
+                rConsumptionRequest = await rConsumptionController.incomingRequests.received({
+                    receivedRequest: rTemplate.cache!.content as Request,
+                    requestSourceObject: rTemplate
                 })
             })
 
             it("recipient: check prerequisites of Consumption Request", async function () {
-                consumptionRequestRecipient = await consumptionControllerRecipient.incomingRequests.checkPrerequisites({
-                    requestId: consumptionRequestRecipient.id
+                rConsumptionRequest = await rConsumptionController.incomingRequests.checkPrerequisites({
+                    requestId: rConsumptionRequest.id
                 })
             })
 
             it("recipient: require manual decision of Consumption Request", async function () {
-                consumptionRequestRecipient =
-                    await consumptionControllerRecipient.incomingRequests.requireManualDecision({
-                        requestId: consumptionRequestRecipient.id
-                    })
+                rConsumptionRequest = await rConsumptionController.incomingRequests.requireManualDecision({
+                    requestId: rConsumptionRequest.id
+                })
             })
 
             it("recipient: accept Consumption Request", async function () {
-                consumptionRequestRecipient = await consumptionControllerRecipient.incomingRequests.accept({
-                    requestId: consumptionRequestRecipient.id,
+                rConsumptionRequest = await rConsumptionController.incomingRequests.accept({
+                    requestId: rConsumptionRequest.id,
                     items: [await AcceptRequestItemParameters.from({})]
                 })
             })
 
             it("recipient: create Relationship with Response in Relationship Change", async function () {
-                relationshipRecipient = await accountControllerRecipient.relationships.sendRelationship({
-                    template: templateRecipient,
-                    content: consumptionRequestRecipient.response!.content
+                rRelationship = await rAccountController.relationships.sendRelationship({
+                    template: rTemplate,
+                    content: rConsumptionRequest.response!.content
                 })
             })
 
             it("recipient: complete Consumption Request", async function () {
-                consumptionRequestRecipient = await consumptionControllerRecipient.incomingRequests.complete({
-                    requestId: consumptionRequestRecipient.id,
-                    responseSourceObject: relationshipRecipient.cache!.changes[0]
+                rConsumptionRequest = await rConsumptionController.incomingRequests.complete({
+                    requestId: rConsumptionRequest.id,
+                    responseSourceObject: rRelationship.cache!.changes[0]
                 })
             })
 
             it("sender: syncEverything to get Relationship Change with Response", async function () {
-                const newRelationships = await TestUtil.syncUntilHasRelationships(accountControllerSender)
-                relationshipSender = newRelationships[0]
+                const newRelationships = await TestUtil.syncUntilHasRelationships(sAccountController)
+                sRelationship = newRelationships[0]
             }).timeout(20000)
 
             it("sender: create Consumption Request and mark it as sent", async function () {
-                consumptionRequestSender = await consumptionControllerSender.outgoingRequests.create({
-                    peer: relationshipSender.peer.address,
-                    content: templateSender.cache!.content as Request
+                sConsumptionRequest = await sConsumptionController.outgoingRequests.create({
+                    peer: sRelationship.peer.address,
+                    content: sTemplate.cache!.content as Request
                 })
-                consumptionRequestSender = await consumptionControllerSender.outgoingRequests.sent({
-                    requestId: consumptionRequestSender.id,
-                    requestSourceObject: templateSender
+                sConsumptionRequest = await sConsumptionController.outgoingRequests.sent({
+                    requestId: sConsumptionRequest.id,
+                    requestSourceObject: sTemplate
                 })
             })
 
             it("sender: accept Relationship Change", async function () {
-                relationshipSender = await accountControllerSender.relationships.acceptChange(
-                    relationshipSender.cache!.changes[0],
-                    {}
-                )
+                sRelationship = await sAccountController.relationships.acceptChange(sRelationship.cache!.changes[0], {})
             })
 
             it("sender: complete Consumption Request", async function () {
-                const response = relationshipSender.cache!.changes[0].request.content! as Response
+                const response = sRelationship.cache!.changes[0].request.content! as Response
 
-                consumptionRequestSender = await consumptionControllerSender.outgoingRequests.complete({
-                    requestId: consumptionRequestSender.id,
-                    responseSourceObject: relationshipSender.cache!.changes[0],
+                sConsumptionRequest = await sConsumptionController.outgoingRequests.complete({
+                    requestId: sConsumptionRequest.id,
+                    responseSourceObject: sRelationship.cache!.changes[0],
                     receivedResponse: response
                 })
             })
         })
 
         describe("End2End Request/Response via Messages", function () {
-            let accountControllerSender: AccountController
-            let consumptionControllerSender: ConsumptionController
-            let accountControllerRecipient: AccountController
-            let consumptionControllerRecipient: ConsumptionController
+            let sAccountController: AccountController
+            let sConsumptionController: ConsumptionController
+            let rAccountController: AccountController
+            let rConsumptionController: ConsumptionController
 
-            let consumptionRequestSender: ConsumptionRequest
-            let messageWithRequestOfSender: Message
-            let messageWithRequestOfRecipient: Message
-            let consumptionRequestRecipient: ConsumptionRequest
-            let messageWithResponseOfRecipient: Message
-            let messageWithResponseOfSender: Message
+            let sConsumptionRequest: ConsumptionRequest
+            let sMessageWithRequest: Message
+            let rMessageWithRequest: Message
+            let rConsumptionRequest: ConsumptionRequest
+            let rMessageWithResponse: Message
+            let sMessageWithResponse: Message
 
             before(async function () {
                 this.timeout(30000)
@@ -166,103 +160,100 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                 await TestUtil.clearAccounts(that.connection)
                 const accounts = await TestUtil.provideAccounts(transport, 2)
 
-                ;({ accountController: accountControllerSender, consumptionController: consumptionControllerSender } =
+                ;({ accountController: sAccountController, consumptionController: sConsumptionController } =
                     accounts[0])
-                consumptionControllerSender.incomingRequests.processorRegistry.registerProcessorForType(
+                sConsumptionController.incomingRequests.processorRegistry.registerProcessorForType(
                     TestRequestItemProcessor,
                     TestRequestItem
                 )
-                ;({
-                    accountController: accountControllerRecipient,
-                    consumptionController: consumptionControllerRecipient
-                } = accounts[1])
-                consumptionControllerRecipient.incomingRequests.processorRegistry.registerProcessorForType(
+                ;({ accountController: rAccountController, consumptionController: rConsumptionController } =
+                    accounts[1])
+                rConsumptionController.incomingRequests.processorRegistry.registerProcessorForType(
                     TestRequestItemProcessor,
                     TestRequestItem
                 )
 
-                await TestUtil.addRelationship(accountControllerSender, accountControllerRecipient)
+                await TestUtil.addRelationship(sAccountController, rAccountController)
             })
 
             it("sender: create Consumption Request", async function () {
-                consumptionRequestSender = await consumptionControllerSender.outgoingRequests.create({
+                sConsumptionRequest = await sConsumptionController.outgoingRequests.create({
                     content: await Request.from({
                         items: [await TestRequestItem.from({ mustBeAccepted: false })]
                     }),
-                    peer: accountControllerRecipient.identity.address
+                    peer: rAccountController.identity.address
                 })
             })
 
             it("sender: send Message with Request", async function () {
-                messageWithRequestOfSender = await accountControllerSender.messages.sendMessage({
-                    content: consumptionRequestSender.content,
-                    recipients: [accountControllerRecipient.identity.address]
+                sMessageWithRequest = await sAccountController.messages.sendMessage({
+                    content: sConsumptionRequest.content,
+                    recipients: [rAccountController.identity.address]
                 })
             })
 
             it("sender: mark Consumption Request as sent", async function () {
-                consumptionRequestSender = await consumptionControllerSender.outgoingRequests.sent({
-                    requestId: consumptionRequestSender.id,
-                    requestSourceObject: messageWithRequestOfSender
+                sConsumptionRequest = await sConsumptionController.outgoingRequests.sent({
+                    requestId: sConsumptionRequest.id,
+                    requestSourceObject: sMessageWithRequest
                 })
             })
 
             it("recipient: syncEverything to get Message with Request", async function () {
-                const messages = await TestUtil.syncUntilHasMessages(accountControllerRecipient)
-                messageWithRequestOfRecipient = messages[0]
+                const messages = await TestUtil.syncUntilHasMessages(rAccountController)
+                rMessageWithRequest = messages[0]
             }).timeout(20000)
 
             it("recipient: create Consumption Request", async function () {
-                consumptionRequestRecipient = await consumptionControllerRecipient.incomingRequests.received({
-                    receivedRequest: messageWithRequestOfRecipient.cache!.content as Request,
-                    requestSourceObject: messageWithRequestOfRecipient
+                rConsumptionRequest = await rConsumptionController.incomingRequests.received({
+                    receivedRequest: rMessageWithRequest.cache!.content as Request,
+                    requestSourceObject: rMessageWithRequest
                 })
             })
 
             it("recipient: check prerequisites of Consumption Request", async function () {
-                consumptionRequestRecipient = await consumptionControllerRecipient.incomingRequests.checkPrerequisites({
-                    requestId: consumptionRequestRecipient.id
+                rConsumptionRequest = await rConsumptionController.incomingRequests.checkPrerequisites({
+                    requestId: rConsumptionRequest.id
                 })
             })
 
             it("recipient: require manual decision of Consumption Request", async function () {
-                consumptionRequestRecipient =
-                    await consumptionControllerRecipient.incomingRequests.requireManualDecision({
-                        requestId: consumptionRequestRecipient.id
-                    })
+                rConsumptionRequest = await rConsumptionController.incomingRequests.requireManualDecision({
+                    requestId: rConsumptionRequest.id
+                })
             })
 
             it("recipient: accept Consumption Request", async function () {
-                consumptionRequestRecipient = await consumptionControllerRecipient.incomingRequests.accept({
-                    requestId: consumptionRequestRecipient.id,
+                rConsumptionRequest = await rConsumptionController.incomingRequests.accept({
+                    requestId: rConsumptionRequest.id,
                     items: [await AcceptRequestItemParameters.from({})]
                 })
             })
 
             it("recipient: send Message with Response", async function () {
-                messageWithResponseOfRecipient = await accountControllerRecipient.messages.sendMessage({
-                    content: consumptionRequestRecipient.response!.content,
-                    recipients: [accountControllerSender.identity.address]
+                rMessageWithResponse = await rAccountController.messages.sendMessage({
+                    content: rConsumptionRequest.response!.content,
+                    recipients: [sAccountController.identity.address]
                 })
             })
 
             it("recipient: complete Consumption Request", async function () {
-                consumptionRequestRecipient = await consumptionControllerRecipient.incomingRequests.complete({
-                    requestId: consumptionRequestRecipient.id,
-                    responseSourceObject: messageWithResponseOfRecipient
+                rConsumptionRequest = await rConsumptionController.incomingRequests.complete({
+                    requestId: rConsumptionRequest.id,
+                    responseSourceObject: rMessageWithResponse
                 })
             })
 
             it("sender: syncEverything to get Message with Response", async function () {
-                const messages = await TestUtil.syncUntilHasMessages(accountControllerSender)
-                messageWithResponseOfSender = messages[0]
+                const messages = await TestUtil.syncUntilHasMessages(sAccountController)
+                sMessageWithResponse = messages[0]
             }).timeout(20000)
 
             it("sender: complete Consumption Request", async function () {
-                consumptionRequestSender = await consumptionControllerSender.outgoingRequests.complete({
-                    requestId: consumptionRequestSender.id,
-                    responseSourceObject: messageWithResponseOfSender,
-                    receivedResponse: messageWithResponseOfSender.cache!.content as Response
+                sConsumptionRequest = await sConsumptionController.outgoingRequests.complete({
+                    requestId: sConsumptionRequest.id,
+                    responseSourceObject: sMessageWithResponse,
+                    receivedResponse: sMessageWithResponse.cache!.content as Response
                 })
             })
         })
