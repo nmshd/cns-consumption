@@ -1,5 +1,3 @@
-import { IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
-import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import { Result } from "@js-soft/ts-utils"
 import {
     AcceptRequestItemParameters,
@@ -29,9 +27,7 @@ import {
 import {
     AccountController,
     CoreAddress,
-    CoreId,
-    IConfigOverwrite,
-    RelationshipChangeType,
+    CoreId, RelationshipChangeType,
     Transport
 } from "@nmshd/transport"
 import { expect } from "chai"
@@ -49,10 +45,6 @@ import { ITestRequestItem, TestRequestItem } from "./testHelpers/TestRequestItem
 import { TestRequestItemProcessor } from "./testHelpers/TestRequestItemProcessor"
 
 export class IncomingRequestControllerTests extends RequestsIntegrationTest {
-    public constructor(config: IConfigOverwrite, connection: IDatabaseConnection, loggerFactory: ILoggerFactory) {
-        super(config, connection, loggerFactory)
-    }
-
     public run(): void {
         const that = this
         const transport = new Transport(that.connection, that.config, that.loggerFactory)

@@ -1,4 +1,3 @@
-import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import {
     AcceptRequestItemParameters,
     ConsumptionRequest,
@@ -11,10 +10,6 @@ import { UnitTest } from "../../core/UnitTest"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
 
 export class DecideRequestParametersValidatorTests extends UnitTest {
-    public constructor(protected override loggerFactory: ILoggerFactory) {
-        super(loggerFactory)
-    }
-
     public run(): void {
         let validator: DecideRequestParametersValidator
 

@@ -1,41 +1,15 @@
-import { IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
-import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import {
     AcceptRequestItemParameters,
     GenericRequestItemProcessor,
     RejectRequestItemParameters
 } from "@nmshd/consumption"
 import { AcceptResponseItem, RejectResponseItem } from "@nmshd/content"
-import { IConfigOverwrite } from "@nmshd/transport"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestRequestItem } from "./testHelpers/TestRequestItem"
 
 export class GenericRequestItemProcessorTests extends IntegrationTest {
-    public constructor(
-        protected override config: IConfigOverwrite,
-        protected override connection: IDatabaseConnection,
-        protected override loggerFactory: ILoggerFactory
-    ) {
-        super(config, connection, loggerFactory)
-    }
-
     public run(): void {
-        // const that = this
-        // const transport = new Transport(that.connection, that.config, that.loggerFactory)
-        // let defaultAccount: Account
-
-        // before(async function () {
-        // await TestUtil.clearAccounts(that.connection)
-        // await transport.init()
-        // const accountController = (await TestUtil.provideAccounts(transport, 1))[0]
-        // const consumptionController = await new ConsumptionController(transport, accountController).init()
-        // defaultAccount = {
-        //     accountController,
-        //     consumptionController
-        // }
-        // })
-
         describe("RequestItemProcessor", function () {
             /* ****** Incoming RequestItems ******* */
             describe("CheckPrerequisitesOfIncomingRequestItem", function () {

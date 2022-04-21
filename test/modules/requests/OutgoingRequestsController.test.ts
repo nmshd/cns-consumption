@@ -1,5 +1,3 @@
-import { IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
-import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import { Result } from "@js-soft/ts-utils"
 import {
     ConsumptionController,
@@ -26,7 +24,7 @@ import {
     ResponseItemResult,
     ResponseResult
 } from "@nmshd/content"
-import { AccountController, CoreId, IConfigOverwrite, RelationshipChangeType, Transport } from "@nmshd/transport"
+import { AccountController, CoreId, RelationshipChangeType, Transport } from "@nmshd/transport"
 import { expect } from "chai"
 import itParam from "mocha-param"
 import { TestUtil } from "../../core/TestUtil"
@@ -48,14 +46,6 @@ export class AlwaysTrueDecideRequestParamsValidator extends DecideRequestParamet
 }
 
 export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
-    public constructor(
-        protected override config: IConfigOverwrite,
-        protected override connection: IDatabaseConnection,
-        protected override loggerFactory: ILoggerFactory
-    ) {
-        super(config, connection, loggerFactory)
-    }
-
     public run(): void {
         const that = this
         const transport = new Transport(that.connection, that.config, that.loggerFactory)
