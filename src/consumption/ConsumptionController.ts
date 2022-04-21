@@ -9,6 +9,7 @@ import {
     SharedItemsController
 } from "../modules"
 import { IncomingRequestsController } from "../modules/requests/incoming/IncomingRequestsController"
+import { RequestsController } from "../modules/requestsOld/RequestsController"
 
 export class ConsumptionController {
     public constructor(public readonly transport: Transport, public readonly accountController: AccountController) {}
@@ -26,6 +27,11 @@ export class ConsumptionController {
     private _outgoingRequests: OutgoingRequestsController
     public get outgoingRequests(): OutgoingRequestsController {
         return this._outgoingRequests
+    }
+
+    private _requests: RequestsController
+    public get requests(): RequestsController {
+        return this._requests
     }
 
     private _incomingRequests: IncomingRequestsController
@@ -54,6 +60,7 @@ export class ConsumptionController {
         const processorRegistry = new RequestItemProcessorRegistry()
         this._outgoingRequests = await new OutgoingRequestsController(this, processorRegistry).init()
         this._incomingRequests = await new IncomingRequestsController(this, processorRegistry).init()
+        this._requests = await new RequestsController(this).init()
         this._settings = await new SettingsController(this).init()
         this._sharedItems = await new SharedItemsController(this).init()
         this._relationshipInfo = await new RelationshipInfoController(this).init()
