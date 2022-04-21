@@ -31,7 +31,6 @@ export * from "./requests/outgoing/createFromRelationshipCreationChange/CreateOu
 export * from "./requests/outgoing/createOutgoingRequest/CreateOutgoingRequestParameters"
 export * from "./requests/outgoing/OutgoingRequestsController"
 export * from "./requests/outgoing/sentOutgoingRequest/SentOutgoingRequestParameters"
-export * from "./requestsOld/local/ConsumptionRequestOld"
 export * from "./settings/local/Setting"
 export * from "./settings/SettingsController"
 export * from "./sharedItems/local/SharedItem"
