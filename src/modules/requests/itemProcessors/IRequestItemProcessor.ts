@@ -8,13 +8,16 @@ export interface IRequestItemProcessor<
     TAcceptParams extends AcceptRequestItemParameters = AcceptRequestItemParameters,
     TRejectParams extends RejectRequestItemParameters = RejectRequestItemParameters
 > {
-    checkPrerequisitesOfIncomingRequestItem(_requestItem: TRequestItem): Promise<boolean>
-    canAccept(requestItem: TRequestItem, params: TAcceptParams): Promise<ValidationResult>
-    canReject(requestItem: TRequestItem, params: TRejectParams): Promise<ValidationResult>
+    checkPrerequisitesOfIncomingRequestItem(_requestItem: TRequestItem): Promise<boolean> | boolean
+    canAccept(requestItem: TRequestItem, params: TAcceptParams): Promise<ValidationResult> | ValidationResult
+    canReject(requestItem: TRequestItem, params: TRejectParams): Promise<ValidationResult> | ValidationResult
     accept(requestItem: TRequestItem, params: TAcceptParams): Promise<AcceptResponseItem>
     reject(requestItem: TRequestItem, params: TRejectParams): Promise<RejectResponseItem>
 
-    canCreateOutgoingRequestItem(_requestItem: TRequestItem): Promise<ValidationResult>
-    canApplyIncomingResponseItem(_responseItem: ResponseItem, _requestItem: TRequestItem): Promise<ValidationResult>
-    applyIncomingResponseItem(_responseItem: ResponseItem, _requestItem: TRequestItem): Promise<void>
+    canCreateOutgoingRequestItem(_requestItem: TRequestItem): Promise<ValidationResult> | ValidationResult
+    canApplyIncomingResponseItem(
+        _responseItem: ResponseItem,
+        _requestItem: TRequestItem
+    ): Promise<ValidationResult> | ValidationResult
+    applyIncomingResponseItem(_responseItem: ResponseItem, _requestItem: TRequestItem): Promise<void> | void
 }

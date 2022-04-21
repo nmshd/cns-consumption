@@ -10,16 +10,16 @@ export class GenericRequestItemProcessor<
     TRejectParams extends RejectRequestItemParameters = RejectRequestItemParameters
 > implements IRequestItemProcessor<TRequestItem, TAcceptParams, TRejectParams>
 {
-    public checkPrerequisitesOfIncomingRequestItem(_requestItem: TRequestItem): Promise<boolean> {
-        return Promise.resolve(true)
+    public checkPrerequisitesOfIncomingRequestItem(_requestItem: TRequestItem): Promise<boolean> | boolean {
+        return true
     }
 
-    public canAccept(_requestItem: TRequestItem, _params: TAcceptParams): Promise<ValidationResult> {
-        return Promise.resolve(ValidationResult.success())
+    public canAccept(_requestItem: TRequestItem, _params: TAcceptParams): Promise<ValidationResult> | ValidationResult {
+        return ValidationResult.success()
     }
 
-    public canReject(_requestItem: TRequestItem, _params: TRejectParams): Promise<ValidationResult> {
-        return Promise.resolve(ValidationResult.success())
+    public canReject(_requestItem: TRequestItem, _params: TRejectParams): Promise<ValidationResult> | ValidationResult {
+        return ValidationResult.success()
     }
 
     public async accept(requestItem: TRequestItem, _params: TAcceptParams): Promise<AcceptResponseItem> {
@@ -39,16 +39,15 @@ export class GenericRequestItemProcessor<
     public canApplyIncomingResponseItem(
         _responseItem: AcceptResponseItem,
         _requestItem: TRequestItem
-    ): Promise<ValidationResult> {
-        return Promise.resolve(ValidationResult.success())
+    ): Promise<ValidationResult> | ValidationResult {
+        return ValidationResult.success()
     }
 
-    public canCreateOutgoingRequestItem(_requestItem: TRequestItem): Promise<ValidationResult> {
-        return Promise.resolve(ValidationResult.success())
+    public canCreateOutgoingRequestItem(_requestItem: TRequestItem): Promise<ValidationResult> | ValidationResult {
+        return ValidationResult.success()
     }
 
-    public applyIncomingResponseItem(_responseItem: ResponseItem, _requestItem: TRequestItem): Promise<void> {
+    public applyIncomingResponseItem(_responseItem: ResponseItem, _requestItem: TRequestItem): Promise<void> | void {
         // do nothing
-        return Promise.resolve()
     }
 }

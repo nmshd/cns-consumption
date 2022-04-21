@@ -59,30 +59,30 @@ export class TestRequestItemProcessor extends GenericRequestItemProcessor<
         return Promise.resolve()
     }
 
-    public override checkPrerequisitesOfIncomingRequestItem(_requestItem: TestRequestItem): Promise<boolean> {
+    public override checkPrerequisitesOfIncomingRequestItem(_requestItem: TestRequestItem): Promise<boolean> | boolean {
         if (_requestItem.shouldFailAtCheckPrerequisitesOfIncomingRequestItem) {
-            return Promise.resolve(false)
+            return false
         }
-        return Promise.resolve(true)
+        return true
     }
 
-    public override accept(
+    public override async accept(
         requestItem: TestRequestItem,
         params: AcceptRequestItemParameters
     ): Promise<AcceptResponseItem> {
         if (requestItem.shouldThrowOnAccept) {
             throw new Error("Accept failed for testing purposes.")
         }
-        return super.accept(requestItem, params)
+        return await super.accept(requestItem, params)
     }
 
-    public override reject(
+    public override async reject(
         requestItem: TestRequestItem,
         params: RejectRequestItemParameters
     ): Promise<RejectResponseItem> {
         if (requestItem.shouldThrowOnReject) {
             throw new Error("Reject failed for testing purposes.")
         }
-        return super.reject(requestItem, params)
+        return await super.reject(requestItem, params)
     }
 }
