@@ -17,7 +17,7 @@ export class ConsumptionRequestStatusLogEntry extends CoreSerializable implement
     public createdAt: CoreDate
 
     @serialize()
-    @validate({ nullable: true })
+    @validate()
     public oldStatus: ConsumptionRequestStatus
 
     @serialize()
