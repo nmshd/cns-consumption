@@ -2,8 +2,7 @@ name: Publish
 
 on:
   push:
-    branches:
-      - main
+    branches: [main, release/**]
 
 jobs:
   run-checks:
@@ -18,7 +17,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: 14
+          node-version: 16
           registry-url: https://registry.npmjs.org/
       - run: sudo apt-get update && sudo apt-get install jq -y
       - run: npm ci
@@ -26,7 +25,7 @@ jobs:
         env:
           BUILD_NUMBER: ${{ github.run_number }}
           COMMIT_HASH: ${{ github.sha }}
-      - run: npm publish
+      - run: bash .ci/publish.sh
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     needs: ["run-checks"]
