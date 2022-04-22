@@ -20,7 +20,7 @@ export class RelationshipInfoController extends ConsumptionBaseController {
 
     public async getRelationshipInfo(id: CoreId): Promise<RelationshipInfo | undefined> {
         const result = await this.relationshipInfo.read(id.toString())
-        return result ? await RelationshipInfo.from(result) : undefined
+        return result ? RelationshipInfo.from(result) : undefined
     }
 
     public async getRelationshipInfoByRelationship(relationshipId: CoreId): Promise<RelationshipInfo | undefined> {

@@ -3,7 +3,7 @@ import { LokiJsConnection } from "@js-soft/docdb-access-loki"
 import { MongoDbConnection } from "@js-soft/docdb-access-mongo"
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import { SimpleLoggerFactory } from "@js-soft/simple-logger"
-import { ISerializableAsync, SerializableAsync } from "@js-soft/ts-serval"
+import { ISerializableAsync, Serializable, SerializableAsync } from "@js-soft/ts-serval"
 import { sleep } from "@js-soft/ts-utils"
 import { ConsumptionController } from "@nmshd/consumption"
 import { CoreBuffer } from "@nmshd/crypto"
@@ -215,7 +215,7 @@ export class TestUtil {
             maxNumberOfRelationships: 1
         })
 
-        const templateToken = await TokenContentRelationshipTemplate.from({
+        const templateToken = TokenContentRelationshipTemplate.from({
             templateId: templateFrom.id,
             secretKey: templateFrom.secretKey
         })
@@ -226,7 +226,7 @@ export class TestUtil {
             ephemeral: false
         })
 
-        const tokenRef = await token.truncate()
+        const tokenRef = token.truncate()
 
         const receivedToken = await to.tokens.loadPeerTokenByTruncated(tokenRef, false)
 
@@ -371,7 +371,7 @@ export class TestUtil {
             expiresAt: CoreDate.utc().add({ minutes: 5 }),
             maxNumberOfRelationships: 1
         })
-        const templateToken = await TokenContentRelationshipTemplate.from({
+        const templateToken = TokenContentRelationshipTemplate.from({
             templateId: template.id,
             secretKey: template.secretKey
         })
@@ -382,7 +382,7 @@ export class TestUtil {
             ephemeral: false
         })
 
-        const tokenRef = await token.truncate()
+        const tokenRef = token.truncate()
         return tokenRef
     }
 
@@ -456,7 +456,7 @@ export class TestUtil {
             addresses.push(controller.identity.address)
         }
         if (!content) {
-            content = await SerializableAsync.from({ content: "TestContent" }, SerializableAsync)
+            content = Serializable.fromUnknown({ content: "TestContent" })
         }
         return await from.messages.sendMessage({
             recipients: addresses,

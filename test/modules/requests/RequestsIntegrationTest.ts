@@ -114,23 +114,23 @@ export class RequestsGiven {
     }
 
     public async anIncomingRequestWithAnItemAndAGroupInStatus(status: ConsumptionRequestStatus): Promise<void> {
-        const content = await Request.from({
+        const content = Request.from({
             "@type": "Request",
             items: [
-                await TestRequestItem.from({
+                TestRequestItem.from({
                     mustBeAccepted: false,
                     responseMetadata: {
                         outerItemMetaKey: "outerItemMetaValue"
                     }
                 }),
-                await RequestItemGroup.from({
+                RequestItemGroup.from({
                     "@type": "RequestItemGroup",
                     mustBeAccepted: false,
                     responseMetadata: {
                         groupMetaKey: "groupMetaValue"
                     },
                     items: [
-                        await TestRequestItem.from({
+                        TestRequestItem.from({
                             responseMetadata: {
                                 innerItemMetaKey: "innerItemMetaValue"
                             },
@@ -150,12 +150,10 @@ export class RequestsGiven {
         status?: ConsumptionRequestStatus
     }): Promise<ConsumptionRequest> {
         params.id ??= await ConsumptionIds.request.generate()
-        params.content ??= await TestObjectFactory.createRequestWithOneItem({ id: params.id })
+        params.content ??= TestObjectFactory.createRequestWithOneItem({ id: params.id })
         params.status ??= ConsumptionRequestStatus.Open
 
-        const requestSource = await TestObjectFactory.createIncomingMessage(
-            this.context.accountController.identity.address
-        )
+        const requestSource = TestObjectFactory.createIncomingMessage(this.context.accountController.identity.address)
 
         const consumptionRequest = await this.context.incomingRequestsController.received({
             receivedRequest: params.content,
@@ -188,7 +186,7 @@ export class RequestsGiven {
         if (isStatusAAfterStatusB(status, consumptionRequest.status)) {
             consumptionRequest = await this.context.incomingRequestsController.accept({
                 requestId: consumptionRequest.id,
-                items: [await AcceptRequestItemParameters.from({})]
+                items: [AcceptRequestItemParameters.from({})]
             })
         }
 
@@ -217,7 +215,7 @@ export class RequestsGiven {
         params.status ??= ConsumptionRequestStatus.Open
         params.content ??= {
             items: [
-                await TestRequestItem.from({
+                TestRequestItem.from({
                     mustBeAccepted: false
                 })
             ]
@@ -274,7 +272,7 @@ export class RequestsWhen {
     }
 
     public async iCallCanAcceptWith(params: Partial<IAcceptRequestParameters>): Promise<ValidationResult> {
-        params.items ??= [await AcceptRequestItemParameters.from({})]
+        params.items ??= [AcceptRequestItemParameters.from({})]
         params.requestId ??= this.context.givenConsumptionRequest!.id
 
         this.context.validationResult = await this.context.incomingRequestsController.canAccept(
@@ -307,7 +305,7 @@ export class RequestsWhen {
     }
 
     public async iCallCanRejectWith(params: Partial<IRejectRequestParameters>): Promise<ValidationResult> {
-        params.items ??= [await RejectRequestItemParameters.from({})]
+        params.items ??= [RejectRequestItemParameters.from({})]
         params.requestId ??= this.context.givenConsumptionRequest!.id
 
         this.context.validationResult = await this.context.incomingRequestsController.canReject(
@@ -359,15 +357,15 @@ export class RequestsWhen {
         this.context.actionToTry = async () => {
             await this.context.incomingRequestsController.accept({
                 requestId: this.context.givenConsumptionRequest!.id,
-                items: [await AcceptRequestItemParameters.from({})]
+                items: [AcceptRequestItemParameters.from({})]
             })
         }
         return Promise.resolve()
     }
 
-    public async iTryToAcceptWith(params: Partial<IAcceptRequestParameters>): Promise<void> {
+    public iTryToAcceptWith(params: Partial<IAcceptRequestParameters>): void {
         params.requestId ??= this.context.givenConsumptionRequest!.id
-        params.items ??= [await AcceptRequestItemParameters.from({})]
+        params.items ??= [AcceptRequestItemParameters.from({})]
 
         this.context.actionToTry = async () => {
             await this.context.incomingRequestsController.accept(params as IAcceptRequestParameters)
@@ -378,15 +376,15 @@ export class RequestsWhen {
         this.context.actionToTry = async () => {
             await this.context.incomingRequestsController.reject({
                 requestId: this.context.givenConsumptionRequest!.id,
-                items: [await RejectRequestItemParameters.from({})]
+                items: [RejectRequestItemParameters.from({})]
             })
         }
         return Promise.resolve()
     }
 
-    public async iTryToRejectWith(params: Partial<IRejectRequestParameters>): Promise<void> {
+    public iTryToRejectWith(params: Partial<IRejectRequestParameters>): void {
         params.requestId ??= this.context.givenConsumptionRequest!.id
-        params.items ??= [await RejectRequestItemParameters.from({})]
+        params.items ??= [RejectRequestItemParameters.from({})]
 
         this.context.actionToTry = async () => {
             await this.context.incomingRequestsController.reject(params as IRejectRequestParameters)
@@ -443,7 +441,7 @@ export class RequestsWhen {
 
     public async iCallSentWith(params: Partial<ISentOutgoingRequestParameters>): Promise<void> {
         params.requestId ??= this.context.givenConsumptionRequest!.id
-        params.requestSourceObject ??= await TestObjectFactory.createOutgoingMessage(
+        params.requestSourceObject ??= TestObjectFactory.createOutgoingMessage(
             this.context.accountController.identity.address
         )
 
@@ -453,20 +451,20 @@ export class RequestsWhen {
         })
     }
 
-    public async iTryToCompleteTheOutgoingRequest(): Promise<void> {
-        await this.iTryToCompleteTheOutgoingRequestWith({})
+    public iTryToCompleteTheOutgoingRequest(): void {
+        this.iTryToCompleteTheOutgoingRequestWith({})
     }
 
-    public async iTryToCompleteTheOutgoingRequestWith(params: {
+    public iTryToCompleteTheOutgoingRequestWith(params: {
         requestId?: ICoreId
         responseSourceObject?: IMessage
         receivedResponse?: Omit<IResponse, "id">
-    }): Promise<void> {
+    }): void {
         params.requestId ??= this.context.givenConsumptionRequest!.id
         params.responseSourceObject ??= TestObjectFactory.createIncomingIMessage(
             this.context.accountController.identity.address
         )
-        params.receivedResponse ??= await TestObjectFactory.createResponse()
+        params.receivedResponse ??= TestObjectFactory.createResponse()
 
         params.receivedResponse.requestId = params.requestId
 
@@ -479,20 +477,20 @@ export class RequestsWhen {
         this.context.actionToTry = async () => {
             await this.context.outgoingRequestsController.complete({
                 requestId: this.context.givenConsumptionRequest!.id,
-                receivedResponse: await TestObjectFactory.createResponse()
+                receivedResponse: TestObjectFactory.createResponse()
             } as any)
         }
 
         return Promise.resolve()
     }
 
-    public async iTryToCallSent(): Promise<void> {
-        await this.iTryToCallSentWith({})
+    public iTryToCallSent(): void {
+        this.iTryToCallSentWith({})
     }
 
-    public async iTryToCallSentWith(params: Partial<ISentOutgoingRequestParameters>): Promise<void> {
+    public iTryToCallSentWith(params: Partial<ISentOutgoingRequestParameters>): void {
         params.requestId ??= this.context.givenConsumptionRequest!.id
-        params.requestSourceObject ??= await TestObjectFactory.createOutgoingMessage(
+        params.requestSourceObject ??= TestObjectFactory.createOutgoingMessage(
             this.context.accountController.identity.address
         )
 
@@ -507,7 +505,7 @@ export class RequestsWhen {
         const realParams: ICreateOutgoingRequestParameters = {
             content: params?.content ?? {
                 items: [
-                    await TestRequestItem.from({
+                    TestRequestItem.from({
                         mustBeAccepted: false
                     })
                 ]
@@ -525,7 +523,7 @@ export class RequestsWhen {
         const params: ICreateOutgoingRequestParameters = {
             content: {
                 items: [
-                    await TestRequestItem.from({
+                    TestRequestItem.from({
                         mustBeAccepted: false
                     })
                 ]
@@ -545,7 +543,7 @@ export class RequestsWhen {
     ): Promise<void> {
         params.template ??= TestObjectFactory.createOutgoingIRelationshipTemplate(
             this.context.accountController.identity.address,
-            await TestObjectFactory.createRequestWithOneItem()
+            TestObjectFactory.createRequestWithOneItem()
         )
         params.creationChange ??= TestObjectFactory.createIncomingIRelationshipChange(RelationshipChangeType.Creation)
 
@@ -556,7 +554,7 @@ export class RequestsWhen {
     }
 
     public async iCreateAnIncomingRequestWithSource(sourceObject: Message | RelationshipTemplate): Promise<void> {
-        const request = await TestObjectFactory.createRequestWithOneItem()
+        const request = TestObjectFactory.createRequestWithOneItem()
 
         this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.received({
             receivedRequest: request,
@@ -565,8 +563,8 @@ export class RequestsWhen {
     }
 
     public async iCreateAnIncomingRequestWith(params: Partial<IReceivedIncomingRequestParameters>): Promise<void> {
-        params.receivedRequest ??= await TestObjectFactory.createRequestWithOneItem()
-        params.requestSourceObject ??= await TestObjectFactory.createIncomingMessage(
+        params.receivedRequest ??= TestObjectFactory.createRequestWithOneItem()
+        params.requestSourceObject ??= TestObjectFactory.createIncomingMessage(
             this.context.accountController.identity.address
         )
 
@@ -597,7 +595,7 @@ export class RequestsWhen {
 
     public async iAcceptTheRequest(params?: Omit<IAcceptRequestParameters, "requestId">): Promise<void> {
         params ??= {
-            items: [await AcceptRequestItemParameters.from({})]
+            items: [AcceptRequestItemParameters.from({})]
         }
 
         this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.accept({
@@ -608,7 +606,7 @@ export class RequestsWhen {
 
     public async iRejectTheRequest(params?: Omit<IAcceptRequestParameters, "requestId">): Promise<void> {
         params ??= {
-            items: [await RejectRequestItemParameters.from({})]
+            items: [RejectRequestItemParameters.from({})]
         }
 
         this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.reject({
@@ -618,13 +616,11 @@ export class RequestsWhen {
     }
 
     public async iCompleteTheOutgoingRequest(): Promise<void> {
-        const responseSource = await TestObjectFactory.createIncomingMessage(
-            this.context.accountController.identity.address
-        )
+        const responseSource = TestObjectFactory.createIncomingMessage(this.context.accountController.identity.address)
         const responseContent = {
             result: ResponseResult.Accepted,
             requestId: this.context.givenConsumptionRequest!.id,
-            items: [await AcceptResponseItem.from({ result: ResponseItemResult.Accepted })]
+            items: [AcceptResponseItem.from({ result: ResponseItemResult.Accepted })]
         } as IResponse
 
         this.context.consumptionRequestAfterAction = await this.context.outgoingRequestsController.complete({
@@ -643,7 +639,7 @@ export class RequestsWhen {
         params.responseSourceObject ??= TestObjectFactory.createIncomingIMessage(
             this.context.accountController.identity.address
         )
-        params.receivedResponse ??= await TestObjectFactory.createResponse()
+        params.receivedResponse ??= TestObjectFactory.createResponse()
 
         params.receivedResponse.requestId = params.requestId
 
@@ -724,11 +720,11 @@ export class RequestsWhen {
         return Promise.resolve()
     }
 
-    public async iTryToCreateAnOutgoingRequest(): Promise<void> {
+    public iTryToCreateAnOutgoingRequest(): void {
         const params: ICreateOutgoingRequestParameters = {
             content: {
                 items: [
-                    await TestRequestItem.from({
+                    TestRequestItem.from({
                         mustBeAccepted: false
                     })
                 ]
@@ -913,7 +909,7 @@ export class RequestsThen {
         const requestDoc = await this.context.requestsCollection.read(
             this.context.consumptionRequestAfterAction!.id.toString()
         )
-        const requestInDatabase = await ConsumptionRequest.from(requestDoc)
+        const requestInDatabase = ConsumptionRequest.from(requestDoc)
 
         expect(requestInDatabase).to.exist
         expect(requestInDatabase.toJSON()).to.deep.equal(this.context.consumptionRequestAfterAction!.toJSON())
@@ -923,7 +919,7 @@ export class RequestsThen {
         const requestDoc = await this.context.requestsCollection.read(
             this.context.consumptionRequestAfterAction!.id.toString()
         )
-        const requestInDatabase = await ConsumptionRequest.from(requestDoc)
+        const requestInDatabase = ConsumptionRequest.from(requestDoc)
 
         expect(requestInDatabase.toJSON()).to.deep.equal(this.context.consumptionRequestAfterAction!.toJSON())
     }

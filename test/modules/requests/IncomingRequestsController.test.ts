@@ -74,7 +74,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
             describe("Received", function () {
                 it("creates an incoming Request with an incoming Message as sourceObject", async function () {
-                    const incomingMessage = await TestObjectFactory.createIncomingMessage(currentIdentity)
+                    const incomingMessage = TestObjectFactory.createIncomingMessage(currentIdentity)
                     await When.iCreateAnIncomingRequestWith({ requestSourceObject: incomingMessage })
                     await Then.theCreatedRequestHasAllProperties(
                         incomingMessage.cache!.createdBy,
@@ -86,7 +86,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("creates an incoming Request with an incoming RelationshipTemplate as source", async function () {
-                    const incomingTemplate = await TestObjectFactory.createIncomingRelationshipTemplate()
+                    const incomingTemplate = TestObjectFactory.createIncomingRelationshipTemplate()
                     await When.iCreateAnIncomingRequestWith({ requestSourceObject: incomingTemplate })
                     await Then.theCreatedRequestHasAllProperties(
                         incomingTemplate.cache!.createdBy,
@@ -98,20 +98,20 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("uses the ID of the given Request if it exists", async function () {
-                    const request = await TestObjectFactory.createRequestWithOneItem({ id: await CoreId.generate() })
+                    const request = TestObjectFactory.createRequestWithOneItem({ id: await CoreId.generate() })
 
                     await When.iCreateAnIncomingRequestWith({ receivedRequest: request })
                     await Then.theRequestHasTheId(request.id!)
                 })
 
                 it("cannot create incoming Request with an outgoing Message as source", async function () {
-                    const outgoingMessage = await TestObjectFactory.createOutgoingMessage(currentIdentity)
+                    const outgoingMessage = TestObjectFactory.createOutgoingMessage(currentIdentity)
                     await When.iTryToCreateAnIncomingRequestWith({ sourceObject: outgoingMessage })
                     await Then.itThrowsAnErrorWithTheErrorMessage("Cannot create incoming Request from own Message")
                 })
 
                 it("cannot create incoming Request with an outgoing RelationshipTemplate as source", async function () {
-                    const outgoingTemplate = await TestObjectFactory.createOutgoingRelationshipTemplate(currentIdentity)
+                    const outgoingTemplate = TestObjectFactory.createOutgoingRelationshipTemplate(currentIdentity)
                     await When.iTryToCreateAnIncomingRequestWith({ sourceObject: outgoingTemplate })
                     await Then.itThrowsAnErrorWithTheErrorMessage(
                         "Cannot create incoming Request from own Relationship Template"
@@ -120,7 +120,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
                 it("throws on syntactically invalid input", async function () {
                     const paramsWithoutSource = {
-                        receivedRequest: await TestObjectFactory.createRequestWithOneItem()
+                        receivedRequest: TestObjectFactory.createRequestWithOneItem()
                     }
                     await TestUtil.expectThrowsAsync(
                         consumptionController.incomingRequests.received(paramsWithoutSource as any),
@@ -362,20 +362,20 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 it("returns a validation result that contains a sub result for each item", async function () {
                     const request = {
                         items: [
-                            await TestRequestItem.from({
+                            TestRequestItem.from({
                                 mustBeAccepted: false
                             }),
-                            await RequestItemGroup.from({
+                            RequestItemGroup.from({
                                 mustBeAccepted: false,
                                 items: [
-                                    await TestRequestItem.from({
+                                    TestRequestItem.from({
                                         mustBeAccepted: false,
                                         shouldFailAtCanAccept: true
                                     }),
-                                    await TestRequestItem.from({
+                                    TestRequestItem.from({
                                         mustBeAccepted: false
                                     }),
-                                    await TestRequestItem.from({
+                                    TestRequestItem.from({
                                         mustBeAccepted: false,
                                         shouldFailAtCanAccept: true
                                     })
@@ -563,20 +563,20 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 it("returns a validation result that contains a sub result for each item", async function () {
                     const request = {
                         items: [
-                            await TestRequestItem.from({
+                            TestRequestItem.from({
                                 mustBeAccepted: false
                             }),
-                            await RequestItemGroup.from({
+                            RequestItemGroup.from({
                                 mustBeAccepted: false,
                                 items: [
-                                    await TestRequestItem.from({
+                                    TestRequestItem.from({
                                         mustBeAccepted: false,
                                         shouldFailAtCanReject: true
                                     }),
-                                    await TestRequestItem.from({
+                                    TestRequestItem.from({
                                         mustBeAccepted: false
                                     }),
-                                    await TestRequestItem.from({
+                                    TestRequestItem.from({
                                         mustBeAccepted: false,
                                         shouldFailAtCanReject: true
                                     })
@@ -655,9 +655,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iAcceptTheRequest({
                         items: [
-                            await AcceptRequestItemParameters.from({}),
-                            await DecideRequestItemGroupParameters.from({
-                                items: [await RejectRequestItemParameters.from({})]
+                            AcceptRequestItemParameters.from({}),
+                            DecideRequestItemGroupParameters.from({
+                                items: [RejectRequestItemParameters.from({})]
                             })
                         ]
                     })
@@ -673,9 +673,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iAcceptTheRequest({
                         items: [
-                            await AcceptRequestItemParameters.from({}),
-                            await DecideRequestItemGroupParameters.from({
-                                items: [await RejectRequestItemParameters.from({})]
+                            AcceptRequestItemParameters.from({}),
+                            DecideRequestItemGroupParameters.from({
+                                items: [RejectRequestItemParameters.from({})]
                             })
                         ]
                     })
@@ -693,9 +693,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iAcceptTheRequest({
                         items: [
-                            await AcceptRequestItemParameters.from({}),
-                            await DecideRequestItemGroupParameters.from({
-                                items: [await RejectRequestItemParameters.from({})]
+                            AcceptRequestItemParameters.from({}),
+                            DecideRequestItemGroupParameters.from({
+                                items: [RejectRequestItemParameters.from({})]
                             })
                         ]
                     })
@@ -720,7 +720,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 it("throws when canAccept returns an error", async function () {
                     await Given.anIncomingRequestWith({
                         content: {
-                            items: [await TestRequestItem.from({ mustBeAccepted: false, shouldFailAtCanAccept: true })]
+                            items: [TestRequestItem.from({ mustBeAccepted: false, shouldFailAtCanAccept: true })]
                         },
                         status: ConsumptionRequestStatus.DecisionRequired
                     })
@@ -732,14 +732,14 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
                 it("throws when no Consumption Request with the given id exists in DB", async function () {
                     const nonExistentId = CoreId.from("nonExistentId")
-                    await When.iTryToAcceptWith({ requestId: nonExistentId })
+                    When.iTryToAcceptWith({ requestId: nonExistentId })
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
 
                 it("throws when at least one RequestItemProcessor throws", async function () {
                     await Given.anIncomingRequestWith({
                         content: {
-                            items: [await TestRequestItem.from({ mustBeAccepted: false, shouldThrowOnAccept: true })]
+                            items: [TestRequestItem.from({ mustBeAccepted: false, shouldThrowOnAccept: true })]
                         },
                         status: ConsumptionRequestStatus.DecisionRequired
                     })
@@ -777,9 +777,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iRejectTheRequest({
                         items: [
-                            await RejectRequestItemParameters.from({}),
-                            await DecideRequestItemGroupParameters.from({
-                                items: [await RejectRequestItemParameters.from({})]
+                            RejectRequestItemParameters.from({}),
+                            DecideRequestItemGroupParameters.from({
+                                items: [RejectRequestItemParameters.from({})]
                             })
                         ]
                     })
@@ -795,9 +795,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iRejectTheRequest({
                         items: [
-                            await RejectRequestItemParameters.from({}),
-                            await DecideRequestItemGroupParameters.from({
-                                items: [await RejectRequestItemParameters.from({})]
+                            RejectRequestItemParameters.from({}),
+                            DecideRequestItemGroupParameters.from({
+                                items: [RejectRequestItemParameters.from({})]
                             })
                         ]
                     })
@@ -815,9 +815,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iRejectTheRequest({
                         items: [
-                            await RejectRequestItemParameters.from({}),
-                            await DecideRequestItemGroupParameters.from({
-                                items: [await RejectRequestItemParameters.from({})]
+                            RejectRequestItemParameters.from({}),
+                            DecideRequestItemGroupParameters.from({
+                                items: [RejectRequestItemParameters.from({})]
                             })
                         ]
                     })
@@ -842,7 +842,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 it("throws when canReject returns an error", async function () {
                     await Given.anIncomingRequestWith({
                         content: {
-                            items: [await TestRequestItem.from({ mustBeAccepted: false, shouldFailAtCanReject: true })]
+                            items: [TestRequestItem.from({ mustBeAccepted: false, shouldFailAtCanReject: true })]
                         },
                         status: ConsumptionRequestStatus.DecisionRequired
                     })
@@ -854,14 +854,14 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
                 it("throws when no Consumption Request with the given id exists in DB", async function () {
                     const nonExistentId = CoreId.from("nonExistentId")
-                    await When.iTryToRejectWith({ requestId: nonExistentId })
+                    When.iTryToRejectWith({ requestId: nonExistentId })
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
 
                 it("throws when at least one RequestItemProcessor throws", async function () {
                     await Given.anIncomingRequestWith({
                         content: {
-                            items: [await TestRequestItem.from({ mustBeAccepted: false, shouldThrowOnReject: true })]
+                            items: [TestRequestItem.from({ mustBeAccepted: false, shouldThrowOnReject: true })]
                         },
                         status: ConsumptionRequestStatus.DecisionRequired
                     })
@@ -955,8 +955,8 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
             describe("Flows for incoming Requests", function () {
                 it("Incoming Request via RelationshipTemplate", async function () {
-                    const request = await Request.from({
-                        items: [await TestRequestItem.from({ mustBeAccepted: false })]
+                    const request = Request.from({
+                        items: [TestRequestItem.from({ mustBeAccepted: false })]
                     })
                     const template = TestObjectFactory.createIncomingIRelationshipTemplate()
 
@@ -974,7 +974,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     })
                     cnsRequest = await consumptionController.incomingRequests.accept({
                         requestId: cnsRequest.id,
-                        items: [await AcceptRequestItemParameters.from({})]
+                        items: [AcceptRequestItemParameters.from({})]
                     })
 
                     const relationshipChange = TestObjectFactory.createOutgoingIRelationshipChange(
@@ -991,9 +991,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("Incoming Request via Message", async function () {
-                    const request = await Request.from({
+                    const request = Request.from({
                         id: await CoreId.generate(),
-                        items: [await TestRequestItem.from({ mustBeAccepted: false })]
+                        items: [TestRequestItem.from({ mustBeAccepted: false })]
                     })
                     const incomingMessage = TestObjectFactory.createIncomingIMessage(accountController.identity.address)
 
@@ -1011,7 +1011,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     })
                     cnsRequest = await consumptionController.incomingRequests.accept({
                         requestId: cnsRequest.id,
-                        items: [await AcceptRequestItemParameters.from({})]
+                        items: [AcceptRequestItemParameters.from({})]
                     })
 
                     const responseMessage = TestObjectFactory.createOutgoingIMessage(accountController.identity.address)

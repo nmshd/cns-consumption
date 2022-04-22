@@ -82,7 +82,7 @@ export class Setting extends CoreSynchronizable implements ISetting {
     @serialize()
     public metadataModifiedAt?: CoreDate
 
-    public static override async from(value: ISetting): Promise<Setting> {
-        return await super.fromT(value, Setting)
+    public static from(value: ISetting): Setting {
+        return this.fromAny(value)
     }
 }

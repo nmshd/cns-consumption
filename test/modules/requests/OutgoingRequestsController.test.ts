@@ -197,13 +197,13 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     const validationResult = await When.iCallCanCreateForAnOutgoingRequest({
                         content: {
                             items: [
-                                await TestRequestItem.from({
+                                TestRequestItem.from({
                                     mustBeAccepted: false
                                 }),
-                                await RequestItemGroup.from({
+                                RequestItemGroup.from({
                                     mustBeAccepted: false,
                                     items: [
-                                        await TestRequestItem.from({
+                                        TestRequestItem.from({
                                             mustBeAccepted: false,
                                             shouldFailAtCanCreateOutgoingRequestItem: true
                                         })
@@ -257,7 +257,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                         return Promise.resolve(ValidationResult.error("aCode", "aMessage"))
                     }
 
-                    await When.iTryToCreateAnOutgoingRequest()
+                    When.iTryToCreateAnOutgoingRequest()
                     await Then.itThrowsAnErrorWithTheErrorMessage("aMessage")
 
                     consumptionController.outgoingRequests.canCreate = oldCanCreate
@@ -308,7 +308,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
 
                 it("throws when the Consumption Request is not in status 'Draft' ", async function () {
                     await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Open)
-                    await When.iTryToCallSent()
+                    When.iTryToCallSent()
                     await Then.itThrowsAnErrorWithTheErrorMessage("*Consumption Request has to be in status 'Draft'*")
                 })
 
@@ -324,7 +324,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("throws when no Request with the given id exists in DB", async function () {
-                    await When.iTryToCallSentWith({ requestId: CoreId.from("nonExistentId") })
+                    When.iTryToCallSentWith({ requestId: CoreId.from("nonExistentId") })
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
 
@@ -332,7 +332,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     const invalidSource = TestObjectFactory.createIncomingIMessage(accountController.identity.address)
 
                     await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
-                    await When.iTryToCallSentWith({ requestSourceObject: invalidSource })
+                    When.iTryToCallSentWith({ requestSourceObject: invalidSource })
                     await Then.itThrowsAnErrorWithTheErrorMessage("Cannot create outgoing Request from a peer*")
                 })
             })
@@ -516,7 +516,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                             status: ConsumptionRequestStatus.Open,
                             content: testParams.request
                         })
-                        await When.iTryToCompleteTheOutgoingRequestWith({ receivedResponse: testParams.response })
+                        When.iTryToCompleteTheOutgoingRequestWith({ receivedResponse: testParams.response })
                         await Then.itThrowsAnErrorWithTheErrorMessage("aMessage")
                     }
                 )
@@ -528,13 +528,13 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("throws when no Request with the given id exists in DB", async function () {
-                    await When.iTryToCompleteTheOutgoingRequestWith({ requestId: CoreId.from("nonExistentId") })
+                    When.iTryToCompleteTheOutgoingRequestWith({ requestId: CoreId.from("nonExistentId") })
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
 
                 it("throws when the Consumption Request is not in status 'Open'", async function () {
                     await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
-                    await When.iTryToCompleteTheOutgoingRequest()
+                    When.iTryToCompleteTheOutgoingRequest()
                     await Then.itThrowsAnErrorWithTheErrorMessage("*Consumption Request has to be in status 'Open'*")
                 })
             })

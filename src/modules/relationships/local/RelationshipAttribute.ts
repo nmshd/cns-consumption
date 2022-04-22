@@ -1,15 +1,15 @@
-import { ISerializableAsync, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval"
+import { ISerializable, Serializable, serialize, type, validate } from "@js-soft/ts-serval"
 import { Attribute, IAttribute } from "@nmshd/content"
 import { CoreId, ICoreId } from "@nmshd/transport"
 
-export interface IRelationshipAttribute extends ISerializableAsync {
+export interface IRelationshipAttribute extends ISerializable {
     name: string
     content: IAttribute
     sharedItem: ICoreId
 }
 
 @type("RelationshipAttribute")
-export class RelationshipAttribute extends SerializableAsync implements IRelationshipAttribute {
+export class RelationshipAttribute extends Serializable implements IRelationshipAttribute {
     @validate()
     @serialize()
     public name: string
@@ -22,7 +22,7 @@ export class RelationshipAttribute extends SerializableAsync implements IRelatio
     @serialize()
     public sharedItem: CoreId
 
-    public static override async from(value: IRelationshipAttribute): Promise<RelationshipAttribute> {
-        return await super.fromT(value, RelationshipAttribute)
+    public static from(value: IRelationshipAttribute): RelationshipAttribute {
+        return this.fromAny(value)
     }
 }

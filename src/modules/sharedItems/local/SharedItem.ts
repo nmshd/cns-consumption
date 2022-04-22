@@ -90,7 +90,7 @@ export class SharedItem extends CoreSynchronizable implements ISharedItem {
     @serialize()
     public metadataModifiedAt?: CoreDate
 
-    public static override async from(value: ISharedItem): Promise<SharedItem> {
-        return await super.fromT(value, SharedItem)
+    public static from(value: ISharedItem): SharedItem {
+        return this.fromAny(value)
     }
 }

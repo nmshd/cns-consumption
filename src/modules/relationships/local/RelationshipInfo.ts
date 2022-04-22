@@ -67,7 +67,7 @@ export class RelationshipInfo extends CoreSynchronizable implements IRelationshi
 
     public static async fromRelationship(relationship: Relationship): Promise<RelationshipInfo> {
         if (typeof relationship.metadata === "undefined") {
-            return await RelationshipInfo.from({
+            return RelationshipInfo.from({
                 id: await ConsumptionIds.relationshipInfo.generate(),
                 relationshipId: relationship.id,
                 attributes: [],
@@ -75,10 +75,10 @@ export class RelationshipInfo extends CoreSynchronizable implements IRelationshi
                 title: relationship.peer.address.address.substring(3, 9)
             })
         }
-        return await RelationshipInfo.from(relationship.metadata)
+        return RelationshipInfo.from(relationship.metadata)
     }
 
-    public static override async from(value: IRelationshipInfo): Promise<RelationshipInfo> {
-        return await super.fromT(value, RelationshipInfo)
+    public static from(value: IRelationshipInfo): RelationshipInfo {
+        return this.fromAny(value)
     }
 }

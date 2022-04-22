@@ -4,25 +4,25 @@ import {
     CoreAddress,
     CoreDate,
     CoreId,
-    CoreSerializableAsync,
+    CoreSerializable,
     CoreSynchronizable,
     ICoreAddress,
     ICoreDate,
     ICoreId,
-    ICoreSerializableAsync,
+    ICoreSerializable,
     ICoreSynchronizable
 } from "@nmshd/transport"
 import { ConsumptionRequestStatus } from "./ConsumptionRequestStatus"
 import { ConsumptionRequestStatusLogEntry, IConsumptionRequestStatusLogEntry } from "./ConsumptionRequestStatusLogEntry"
 import { ConsumptionResponse, IConsumptionResponse } from "./ConsumptionResponse"
 
-export interface IConsumptionRequestSource extends ICoreSerializableAsync {
+export interface IConsumptionRequestSource extends ICoreSerializable {
     type: "Message" | "RelationshipTemplate"
     reference: ICoreId
 }
 
 @type("ConsumptionRequestSource")
-export class ConsumptionRequestSource extends CoreSerializableAsync implements IConsumptionRequestSource {
+export class ConsumptionRequestSource extends CoreSerializable implements IConsumptionRequestSource {
     @serialize()
     @validate()
     public type: "Message" | "RelationshipTemplate"
@@ -31,8 +31,8 @@ export class ConsumptionRequestSource extends CoreSerializableAsync implements I
     @validate()
     public reference: CoreId
 
-    public static override from(value: IConsumptionRequestSource): Promise<ConsumptionRequestSource> {
-        return super.fromT(value, ConsumptionRequestSource)
+    public static from(value: IConsumptionRequestSource): ConsumptionRequestSource {
+        return this.fromAny(value)
     }
 }
 
@@ -102,7 +102,7 @@ export class ConsumptionRequest extends CoreSynchronizable implements IConsumpti
         this.changeStatus(ConsumptionRequestStatus.Open)
     }
 
-    public static override async from(value: IConsumptionRequest): Promise<ConsumptionRequest> {
-        return await super.fromT<ConsumptionRequest>(value, ConsumptionRequest)
+    public static from(value: IConsumptionRequest): ConsumptionRequest {
+        return this.fromAny(value)
     }
 }

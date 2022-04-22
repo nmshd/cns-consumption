@@ -1,21 +1,21 @@
-import { ISerializableAsync, SerializableAsync, serialize, validate } from "@js-soft/ts-serval"
+import { ISerializable, Serializable, serialize, validate } from "@js-soft/ts-serval"
 import { CoreId, ICoreId } from "@nmshd/transport"
 
-export interface IRequireManualDecisionOfIncomingRequestParameters extends ISerializableAsync {
+export interface IRequireManualDecisionOfIncomingRequestParameters extends ISerializable {
     requestId: ICoreId
 }
 
 export class RequireManualDecisionOfIncomingRequestParameters
-    extends SerializableAsync
+    extends Serializable
     implements IRequireManualDecisionOfIncomingRequestParameters
 {
     @serialize()
     @validate()
     public requestId: CoreId
 
-    public static override async from(
+    public static from(
         value: IRequireManualDecisionOfIncomingRequestParameters
-    ): Promise<RequireManualDecisionOfIncomingRequestParameters> {
-        return await super.fromT(value, RequireManualDecisionOfIncomingRequestParameters)
+    ): RequireManualDecisionOfIncomingRequestParameters {
+        return this.fromAny(value)
     }
 }

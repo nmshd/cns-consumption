@@ -52,7 +52,7 @@ export class Draft extends CoreSynchronizable implements IDraft {
     @serialize()
     public metadataModifiedAt?: CoreDate
 
-    public static override async from(value: IDraft | Draft): Promise<Draft> {
-        return (await super.from(value, Draft)) as Draft
+    public static from(value: IDraft | Draft): Draft {
+        return this.fromAny(value)
     }
 }

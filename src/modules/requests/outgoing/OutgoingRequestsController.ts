@@ -48,7 +48,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     }
 
     public async canCreate(params: ICreateOutgoingRequestParameters): Promise<ValidationResult> {
-        const parsedParams = await CreateOutgoingRequestParameters.from(params)
+        const parsedParams = CreateOutgoingRequestParameters.from(params)
 
         const innerResults = await this.canCreateItems(parsedParams.content.items)
 
@@ -92,7 +92,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     }
 
     public async create(params: ICreateOutgoingRequestParameters): Promise<ConsumptionRequest> {
-        const parsedParams = await CreateOutgoingRequestParameters.from(params)
+        const parsedParams = CreateOutgoingRequestParameters.from(params)
 
         const id = await ConsumptionIds.request.generate()
         parsedParams.content.id = id
@@ -111,7 +111,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
             throw new Error(canCreateResult.message)
         }
 
-        const consumptionRequest = await ConsumptionRequest.from({
+        const consumptionRequest = ConsumptionRequest.from({
             id: id,
             content: content,
             createdAt: CoreDate.utc(),
@@ -128,7 +128,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     public async createFromRelationshipCreationChange(
         params: ICreateOutgoingRequestFromRelationshipCreationChangeParameters
     ): Promise<ConsumptionRequest> {
-        const parsedParams = await CreateOutgoingRequestFromRelationshipCreationChangeParameters.from(params)
+        const parsedParams = CreateOutgoingRequestFromRelationshipCreationChangeParameters.from(params)
 
         const peer = parsedParams.creationChange.request.createdBy
         const id = (parsedParams.creationChange.request.content! as Response).requestId
@@ -147,7 +147,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     }
 
     public async sent(params: ISentOutgoingRequestParameters): Promise<ConsumptionRequest> {
-        const parsedParams = await SentOutgoingRequestParameters.from(params)
+        const parsedParams = SentOutgoingRequestParameters.from(params)
         return await this._sent(parsedParams.requestId, parsedParams.requestSourceObject)
     }
 
@@ -161,7 +161,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
 
         request.changeStatus(ConsumptionRequestStatus.Open)
 
-        request.source = await ConsumptionRequestSource.from({
+        request.source = ConsumptionRequestSource.from({
             reference: requestSourceObject.id,
             type: this.getSourceType(requestSourceObject)
         })
@@ -191,7 +191,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     }
 
     public async complete(params: ICompleteOugoingRequestParameters): Promise<ConsumptionRequest> {
-        const parsedParams = await CompleteOugoingRequestParameters.from(params)
+        const parsedParams = CompleteOugoingRequestParameters.from(params)
         return await this._complete(
             parsedParams.requestId,
             parsedParams.responseSourceObject,
@@ -226,7 +226,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
             throw new Error("Invalid responseSourceObject")
         }
 
-        const consumptionResponse = await ConsumptionResponse.from({
+        const consumptionResponse = ConsumptionResponse.from({
             content: receivedResponse,
             createdAt: CoreDate.utc(),
             source: { reference: responseSourceObject.id, type: responseSource }
@@ -297,7 +297,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
 
     public async get(id: ICoreId): Promise<ConsumptionRequest | undefined> {
         const requestDoc = await this.consumptionRequests.findOne({ id: id.toString(), isOwn: true })
-        const request = requestDoc ? await ConsumptionRequest.from(requestDoc) : undefined
+        const request = requestDoc ? ConsumptionRequest.from(requestDoc) : undefined
         return request
     }
 

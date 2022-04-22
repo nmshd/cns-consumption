@@ -20,7 +20,7 @@ export class DraftsController extends ConsumptionBaseController {
 
     public async getDraft(id: CoreId): Promise<Draft | undefined> {
         const result = await this.drafts.read(id.toString())
-        return result ? await Draft.from(result) : undefined
+        return result ? Draft.from(result) : undefined
     }
 
     public async getDrafts(query?: any): Promise<Draft[]> {
@@ -29,7 +29,7 @@ export class DraftsController extends ConsumptionBaseController {
     }
 
     public async createDraft(content: SerializableAsync, type = ""): Promise<Draft> {
-        const draft = await Draft.from({
+        const draft = Draft.from({
             id: await ConsumptionIds.draft.generate(),
             content: content,
             createdAt: new CoreDate(),

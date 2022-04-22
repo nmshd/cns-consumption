@@ -60,7 +60,7 @@ export class RelationshipInfoUtil {
     private async createRelationshipInfo(relationship: Relationship): Promise<RelationshipInfo> {
         const peerAddress = relationship.peer.address
         const truncatedAddress = peerAddress.address.substring(3, 9)
-        const info = await RelationshipInfo.from({
+        const info = RelationshipInfo.from({
             attributes: [],
             id: await ConsumptionIds.relationshipInfo.generate(),
             isPinned: false,
@@ -76,7 +76,7 @@ export class RelationshipInfoUtil {
         const attributeMap = new Map<string, RelationshipAttribute>()
         for (const item of items) {
             if (item.content instanceof Attribute) {
-                const relAttr = await RelationshipAttribute.from({
+                const relAttr = RelationshipAttribute.from({
                     name: item.content.name,
                     sharedItem: item.id,
                     content: item.content
@@ -154,7 +154,7 @@ export class RelationshipInfoUtil {
         }
 
         for (const attribute of missingItems) {
-            const sharedItem = await SharedItem.from({
+            const sharedItem = SharedItem.from({
                 id: await ConsumptionIds.sharedItem.generate(),
                 content: attribute,
                 sharedAt: sharedAt,
@@ -227,7 +227,7 @@ export class RelationshipInfoUtil {
         }
 
         for (const attribute of missingItems) {
-            const sharedItem = await SharedItem.from({
+            const sharedItem = SharedItem.from({
                 id: await ConsumptionIds.sharedItem.generate(),
                 content: attribute,
                 sharedAt: sharedAt,

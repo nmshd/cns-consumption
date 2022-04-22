@@ -19,7 +19,7 @@ export class SharedItemsController extends ConsumptionBaseController {
 
     public async getSharedItem(id: CoreId): Promise<SharedItem | undefined> {
         const result = await this.sharedItems.read(id.toString())
-        return result ? await SharedItem.from(result) : undefined
+        return result ? SharedItem.from(result) : undefined
     }
 
     public async getSharedItems(query?: any): Promise<SharedItem[]> {

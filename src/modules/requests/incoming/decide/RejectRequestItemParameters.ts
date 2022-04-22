@@ -16,7 +16,7 @@ export class RejectRequestItemParameters extends DecideRequestItemParameters imp
     @validate({ nullable: true })
     public message?: string
 
-    public static override async from(params: IRejectRequestItemParameters): Promise<RejectRequestItemParameters> {
-        return await super.fromT(params, RejectRequestItemParameters)
+    public static from(value: IRejectRequestItemParameters): RejectRequestItemParameters {
+        return this.fromAny(value)
     }
 }

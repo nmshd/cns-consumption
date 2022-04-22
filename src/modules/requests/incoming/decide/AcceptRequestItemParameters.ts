@@ -5,7 +5,7 @@ export interface IAcceptRequestItemParameters extends ISerializableAsync {}
 
 @type("AcceptRequestItemParameters")
 export class AcceptRequestItemParameters extends DecideRequestItemParameters implements IAcceptRequestItemParameters {
-    public static override async from(params: IAcceptRequestItemParameters): Promise<AcceptRequestItemParameters> {
-        return await super.fromT(params, AcceptRequestItemParameters)
+    public static from(value: IAcceptRequestItemParameters): AcceptRequestItemParameters {
+        return this.fromAny(value)
     }
 }

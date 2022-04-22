@@ -68,11 +68,11 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     }
 
     public async received(params: IReceivedIncomingRequestParameters): Promise<ConsumptionRequest> {
-        const parsedParams = await ReceivedIncomingRequestParameters.from(params)
+        const parsedParams = ReceivedIncomingRequestParameters.from(params)
 
         const infoFromSource = this.extractInfoFromSource(parsedParams.requestSourceObject)
 
-        const consumptionRequest = await ConsumptionRequest.from({
+        const consumptionRequest = ConsumptionRequest.from({
             id: parsedParams.receivedRequest.id ?? (await CoreId.generate()),
             createdAt: CoreDate.utc(),
             status: ConsumptionRequestStatus.Open,
@@ -123,7 +123,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     public async checkPrerequisites(
         params: ICheckPrerequisitesOfIncomingRequestParameters
     ): Promise<ConsumptionRequest> {
-        const parsedParams = await CheckPrerequisitesOfIncomingRequestParameters.from(params)
+        const parsedParams = CheckPrerequisitesOfIncomingRequestParameters.from(params)
         const request = await this.getOrThrow(parsedParams.requestId)
 
         this.assertRequestStatus(request, ConsumptionRequestStatus.Open)
@@ -156,7 +156,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     public async requireManualDecision(
         params: IRequireManualDecisionOfIncomingRequestParameters
     ): Promise<ConsumptionRequest> {
-        const parsedParams = await RequireManualDecisionOfIncomingRequestParameters.from(params)
+        const parsedParams = RequireManualDecisionOfIncomingRequestParameters.from(params)
         const request = await this.getOrThrow(parsedParams.requestId)
 
         this.assertRequestStatus(request, ConsumptionRequestStatus.DecisionRequired)
@@ -168,12 +168,12 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     }
 
     public async canAccept(params: IAcceptRequestParameters): Promise<ValidationResult> {
-        const parsedParams = await AcceptRequestParameters.from(params)
+        const parsedParams = AcceptRequestParameters.from(params)
         return await this.canDecide(parsedParams, "Accept")
     }
 
     public async canReject(params: IRejectRequestParameters): Promise<ValidationResult> {
-        const parsedParams = await RejectRequestParameters.from(params)
+        const parsedParams = RejectRequestParameters.from(params)
         return await this.canDecide(parsedParams, "Reject")
     }
 
@@ -243,7 +243,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
                 "Cannot accept the Request with the given parameters. Call 'canAccept' to get more information."
             )
         }
-        return await this.decide(await AcceptRequestParameters.from(params))
+        return await this.decide(AcceptRequestParameters.from(params))
     }
 
     public async reject(params: IRejectRequestParameters): Promise<ConsumptionRequest> {
@@ -253,7 +253,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
                 "Cannot reject the Request with the given parameters. Call 'canReject' to get more information."
             )
         }
-        return await this.decide(await RejectRequestParameters.from(params))
+        return await this.decide(RejectRequestParameters.from(params))
     }
 
     private async decide(params: DecideRequestParameters) {
@@ -287,13 +287,13 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         const requestItems = request.content.items
         const responseItems = await this.decideItems(params.items, requestItems)
 
-        const response = await Response.from({
+        const response = Response.from({
             result: params instanceof AcceptRequestParameters ? ResponseResult.Accepted : ResponseResult.Rejected,
             requestId: request.id,
             items: responseItems
         })
 
-        const consumptionResponse = await ConsumptionResponse.from({
+        const consumptionResponse = ConsumptionResponse.from({
             content: response,
             createdAt: CoreDate.utc()
         })
@@ -304,7 +304,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     private async decideGroup(groupItemParam: DecideRequestItemGroupParameters, requestItemGroup: RequestItemGroup) {
         const items = (await this.decideItems(groupItemParam.items, requestItemGroup.items)) as ResponseItem[]
 
-        const group = await ResponseItemGroup.from({
+        const group = ResponseItemGroup.from({
             items: items,
             metadata: requestItemGroup.responseMetadata
         })
@@ -351,7 +351,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     }
 
     public async complete(params: ICompleteIncomingRequestParameters): Promise<ConsumptionRequest> {
-        const parsedParams = await CompleteIncomingRequestParameters.from(params)
+        const parsedParams = CompleteIncomingRequestParameters.from(params)
         const request = await this.getOrThrow(parsedParams.requestId)
 
         if (request.isOwn) {
@@ -370,7 +370,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             throw new Error("Unknown response source")
         }
 
-        request.response!.source = await ConsumptionResponseSource.from({
+        request.response!.source = ConsumptionResponseSource.from({
             type: responseSource,
             reference: parsedParams.responseSourceObject.id
         })
@@ -384,7 +384,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
     public async get(id: ICoreId): Promise<ConsumptionRequest | undefined> {
         const requestDoc = await this.consumptionRequests.findOne({ id: id.toString(), isOwn: false })
-        const request = requestDoc ? await ConsumptionRequest.from(requestDoc) : undefined
+        const request = requestDoc ? ConsumptionRequest.from(requestDoc) : undefined
         return request
     }
 

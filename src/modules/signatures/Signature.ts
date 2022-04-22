@@ -1,6 +1,6 @@
 import { serialize, type, validate } from "@js-soft/ts-serval"
 import { CoreBuffer, CryptoHash, CryptoSignature, CryptoSignaturePublicKey } from "@nmshd/crypto"
-import { CoreCrypto, CoreSerializableAsync, ICoreSerializableAsync } from "@nmshd/transport"
+import { CoreCrypto, CoreSerializable, ICoreSerializableAsync } from "@nmshd/transport"
 import { ISignatureContent, SignatureContent } from "./SignatureContent"
 
 export interface ISignature extends ICoreSerializableAsync {
@@ -9,7 +9,7 @@ export interface ISignature extends ICoreSerializableAsync {
 }
 
 @type("Signature")
-export class Signature extends CoreSerializableAsync {
+export class Signature extends CoreSerializable {
     @validate()
     @serialize()
     public content: SignatureContent
@@ -18,13 +18,16 @@ export class Signature extends CoreSerializableAsync {
     @serialize()
     public signature: CryptoSignature
 
-    public static override async from(value: ISignature): Promise<Signature> {
-        const signature = await CryptoSignature.fromBase64(value.signature)
-        return await super.fromT<Signature>({ content: value.content, signature: signature }, Signature)
+    protected static override preFrom(value: any): any {
+        if (value.signature instanceof CryptoSignature) {
+            value.signature = CryptoSignature.fromBase64(value.signature)
+        }
+
+        return value
     }
 
-    public static override async deserialize(value: string): Promise<Signature> {
-        return await super.deserializeT<Signature>(value, Signature)
+    public static from(value: ISignature): Signature {
+        return this.fromAny(value)
     }
 
     public async verify(content: string, publicKey: CryptoSignaturePublicKey): Promise<boolean> {

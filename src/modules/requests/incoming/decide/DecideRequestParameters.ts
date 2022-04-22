@@ -1,14 +1,14 @@
-import { SerializableAsync, serialize, validate } from "@js-soft/ts-serval"
+import { ISerializable, Serializable, serialize, validate } from "@js-soft/ts-serval"
 import { CoreId, ICoreId } from "@nmshd/transport"
 import { DecideRequestItemGroupParameters, IDecideRequestItemGroupParameters } from "./DecideRequestItemGroupParameters"
 import { DecideRequestItemParameters, IDecideRequestItemParameters } from "./DecideRequestItemParameters"
 
-export interface IDecideRequestParameters {
+export interface IDecideRequestParameters extends ISerializable {
     requestId: ICoreId
     items: (IDecideRequestItemParameters | IDecideRequestItemGroupParameters)[]
 }
 
-export abstract class DecideRequestParameters extends SerializableAsync implements IDecideRequestParameters {
+export abstract class DecideRequestParameters extends Serializable implements IDecideRequestParameters {
     @serialize()
     @validate()
     public requestId: CoreId

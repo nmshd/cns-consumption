@@ -1,16 +1,16 @@
-import { ISerializableAsync, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval"
+import { ISerializable, Serializable, serialize, type, validate } from "@js-soft/ts-serval"
 import { IRequest, Request } from "@nmshd/content"
 import { CoreAddress, ICoreAddress } from "@nmshd/transport"
 
 export type IRequestWithoutId = Omit<IRequest, "id">
 
-export interface ICreateOutgoingRequestParameters extends ISerializableAsync {
+export interface ICreateOutgoingRequestParameters extends ISerializable {
     content: IRequestWithoutId
     peer: ICoreAddress
 }
 
 @type("CreateOutgoingRequestParameters")
-export class CreateOutgoingRequestParameters extends SerializableAsync implements ICreateOutgoingRequestParameters {
+export class CreateOutgoingRequestParameters extends Serializable implements ICreateOutgoingRequestParameters {
     @serialize()
     @validate()
     public content: Request
@@ -19,9 +19,7 @@ export class CreateOutgoingRequestParameters extends SerializableAsync implement
     @validate()
     public peer: CoreAddress
 
-    public static override async from(
-        value: ICreateOutgoingRequestParameters
-    ): Promise<CreateOutgoingRequestParameters> {
-        return await super.fromT(value, CreateOutgoingRequestParameters)
+    public static from(value: ICreateOutgoingRequestParameters): CreateOutgoingRequestParameters {
+        return this.fromAny(value)
     }
 }

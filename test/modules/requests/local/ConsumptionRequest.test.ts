@@ -15,17 +15,17 @@ import { TestRequestItem } from "../testHelpers/TestRequestItem"
 export class ConsumptionRequestTest extends UnitTest {
     public run(): void {
         describe("ConsumptionRequest", function () {
-            it("creates objects of all nested classes", async function () {
+            it("creates objects of all nested classes", function () {
                 const requestJSON: IConsumptionRequest = {
                     id: CoreId.from("CNSREQ1"),
                     isOwn: true,
                     peer: CoreAddress.from("id11"),
                     createdAt: CoreDate.from("2020-01-01T00:00:00.000Z"),
-                    content: await TestObjectFactory.createRequestWithOneItem(),
+                    content: TestObjectFactory.createRequestWithOneItem(),
                     source: { type: "Message", reference: CoreId.from("MSG1") },
                     response: {
                         createdAt: CoreDate.from("2020-01-01T00:00:00.000Z"),
-                        content: await TestObjectFactory.createResponse(),
+                        content: TestObjectFactory.createResponse(),
                         source: { reference: CoreId.from("MSG2"), type: "Message" }
                     },
                     status: ConsumptionRequestStatus.Open,
@@ -38,7 +38,7 @@ export class ConsumptionRequestTest extends UnitTest {
                     ]
                 }
 
-                const request = await ConsumptionRequest.from(requestJSON)
+                const request = ConsumptionRequest.from(requestJSON)
 
                 expect(request).to.be.instanceOf(ConsumptionRequest)
                 expect(request.content.items[0]).to.be.instanceOf(TestRequestItem)

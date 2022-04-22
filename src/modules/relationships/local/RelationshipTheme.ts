@@ -1,6 +1,6 @@
-import { ISerializableAsync, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval"
+import { ISerializable, Serializable, serialize, type, validate } from "@js-soft/ts-serval"
 
-export interface IRelationshipTheme extends ISerializableAsync {
+export interface IRelationshipTheme extends ISerializable {
     image: string
     imageBar: string
     backgroundColor: string
@@ -8,7 +8,7 @@ export interface IRelationshipTheme extends ISerializableAsync {
 }
 
 @type("RelationshipTheme")
-export class RelationshipTheme extends SerializableAsync implements IRelationshipTheme {
+export class RelationshipTheme extends Serializable implements IRelationshipTheme {
     @validate()
     @serialize()
     public image: string
@@ -25,7 +25,7 @@ export class RelationshipTheme extends SerializableAsync implements IRelationshi
     @serialize()
     public foregroundColor: string
 
-    public static override async from(value: IRelationshipTheme): Promise<RelationshipTheme> {
-        return await super.fromT(value, RelationshipTheme)
+    public static from(value: IRelationshipTheme): RelationshipTheme {
+        return this.fromAny(value)
     }
 }

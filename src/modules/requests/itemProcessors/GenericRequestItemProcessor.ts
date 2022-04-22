@@ -22,15 +22,15 @@ export class GenericRequestItemProcessor<
         return ValidationResult.success()
     }
 
-    public async accept(requestItem: TRequestItem, _params: TAcceptParams): Promise<AcceptResponseItem> {
-        return await AcceptResponseItem.from({
+    public accept(requestItem: TRequestItem, _params: TAcceptParams): AcceptResponseItem {
+        return AcceptResponseItem.from({
             result: ResponseItemResult.Accepted,
             metadata: requestItem.responseMetadata
         })
     }
 
-    public async reject(requestItem: TRequestItem, _params: TRejectParams): Promise<RejectResponseItem> {
-        return await RejectResponseItem.from({
+    public reject(requestItem: TRequestItem, _params: TRejectParams): RejectResponseItem {
+        return RejectResponseItem.from({
             result: ResponseItemResult.Rejected,
             metadata: requestItem.responseMetadata
         })
