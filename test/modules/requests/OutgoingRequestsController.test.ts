@@ -62,7 +62,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                 await transport.init()
                 ;({ accountController, consumptionController } = (await TestUtil.provideAccounts(transport, 1))[0])
 
-                consumptionController.incomingRequests.processorRegistry.registerProcessorForType(
+                consumptionController.incomingRequests.processorRegistry.registerProcessor(
                     TestRequestItemProcessor,
                     TestRequestItem
                 )

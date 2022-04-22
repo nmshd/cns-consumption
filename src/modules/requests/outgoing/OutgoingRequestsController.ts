@@ -157,9 +157,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     ): Promise<ConsumptionRequest> {
         const request = await this.getOrThrow(requestId)
 
-        if (request.status !== ConsumptionRequestStatus.Draft) {
-            throw new Error("Consumption Request has to be in status 'Draft'.")
-        }
+        this.assertRequestStatus(request, ConsumptionRequestStatus.Draft)
 
         request.changeStatus(ConsumptionRequestStatus.Open)
 
@@ -208,9 +206,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     ): Promise<ConsumptionRequest> {
         const request = await this.getOrThrow(requestId)
 
-        if (request.status !== ConsumptionRequestStatus.Open) {
-            throw new Error("Consumption Request has to be in status 'Open'.")
-        }
+        this.assertRequestStatus(request, ConsumptionRequestStatus.Open)
 
         const canComplete = await this.canComplete(request, receivedResponse)
 
@@ -319,5 +315,11 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
             throw TransportErrors.general.recordNotFound(ConsumptionRequest, request.id.toString())
         }
         await this.consumptionRequests.update(requestDoc, request)
+    }
+
+    private assertRequestStatus(request: ConsumptionRequest, ...status: ConsumptionRequestStatus[]) {
+        if (!status.includes(request.status)) {
+            throw new Error(`Consumption Request has to be in status '${status.join("/")}'.`)
+        }
     }
 }

@@ -1,5 +1,5 @@
 import { ISerializableAsync, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval"
-import { CoreId, ICoreId, IMessage, Message, RelationshipTemplate } from "@nmshd/transport"
+import { CoreId, ICoreId, IMessage, Message } from "@nmshd/transport"
 
 export interface ISentOutgoingRequestParameters extends ISerializableAsync {
     requestId: ICoreId
@@ -12,7 +12,7 @@ export class SentOutgoingRequestParameters extends SerializableAsync implements 
     @validate()
     public requestId: CoreId
 
-    @serialize({ unionTypes: [Message, RelationshipTemplate] })
+    @serialize()
     @validate()
     public requestSourceObject: Message
 

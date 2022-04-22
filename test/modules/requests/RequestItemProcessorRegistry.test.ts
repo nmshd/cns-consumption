@@ -45,20 +45,20 @@ export class RequestItemProcessorRegistryTests extends IntegrationTest {
             // The following test is considered as passed when no exception occurs
             // eslint-disable-next-line jest/expect-expect
             it("registerProcessorForType can register processors", function () {
-                registry.registerProcessorForType(TestRequestItemProcessor, TestRequestItem)
+                registry.registerProcessor(TestRequestItemProcessor, TestRequestItem)
             })
 
             it("registerProcessorForType throws exception when registering multiple processors for the same Request Item type", function () {
-                registry.registerProcessorForType(TestRequestItemProcessor, TestRequestItem)
+                registry.registerProcessor(TestRequestItemProcessor, TestRequestItem)
                 TestUtil.expectThrows(
-                    () => registry.registerProcessorForType(TestRequestItemProcessor, TestRequestItem),
+                    () => registry.registerProcessor(TestRequestItemProcessor, TestRequestItem),
                     "There is already a processor registered for 'TestRequestItem'*"
                 )
             })
 
             it("replaceProcessorForType allows replacing registered processors", function () {
-                registry.registerProcessorForType(TestRequestItemProcessor, TestRequestItem)
-                registry.replaceProcessorForType(TestRequestItemProcessor2, TestRequestItem)
+                registry.registerProcessor(TestRequestItemProcessor, TestRequestItem)
+                registry.replaceProcessor(TestRequestItemProcessor2, TestRequestItem)
 
                 const processor = registry.getProcessorForItem(new TestRequestItem())
 
@@ -66,7 +66,7 @@ export class RequestItemProcessorRegistryTests extends IntegrationTest {
             })
 
             it("getProcessorForItem returns an instance of the registered processor", async function () {
-                registry.registerProcessorForType(TestRequestItemProcessor, TestRequestItem)
+                registry.registerProcessor(TestRequestItemProcessor, TestRequestItem)
 
                 const item = await TestRequestItem.from({
                     mustBeAccepted: true
@@ -79,7 +79,7 @@ export class RequestItemProcessorRegistryTests extends IntegrationTest {
             })
 
             it("getProcessorForItem returns a new instance each time", async function () {
-                registry.registerProcessorForType(TestRequestItemProcessor, TestRequestItem)
+                registry.registerProcessor(TestRequestItemProcessor, TestRequestItem)
 
                 const item = await TestRequestItem.from({
                     mustBeAccepted: true
@@ -92,7 +92,7 @@ export class RequestItemProcessorRegistryTests extends IntegrationTest {
             })
 
             it("getProcessorForItem throws if no Processor was registered for the given Request Item", async function () {
-                registry.registerProcessorForType(TestRequestItemProcessor, TestRequestItem)
+                registry.registerProcessor(TestRequestItemProcessor, TestRequestItem)
 
                 const item = await TestRequestItemWithNoProcessor.from({
                     mustBeAccepted: true
@@ -106,8 +106,3 @@ export class RequestItemProcessorRegistryTests extends IntegrationTest {
         })
     }
 }
-
-// interface Account {
-//     accountController: AccountController
-//     consumptionController: ConsumptionController
-// }

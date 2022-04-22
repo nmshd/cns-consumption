@@ -21,7 +21,7 @@ export interface IConsumptionRequestSource extends ICoreSerializableAsync {
 
 @type("ConsumptionRequestSource")
 export class ConsumptionRequestSource extends CoreSerializableAsync implements IConsumptionRequestSource {
-    @serialize({ type: String })
+    @serialize()
     @validate()
     public type: "Message" | "RelationshipTemplate"
 

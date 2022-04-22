@@ -126,7 +126,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         const parsedParams = await CheckPrerequisitesOfIncomingRequestParameters.from(params)
         const request = await this.getOrThrow(parsedParams.requestId)
 
-        this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.Open)
+        this.assertRequestStatus(request, ConsumptionRequestStatus.Open)
 
         for (const item of request.content.items) {
             if (item instanceof RequestItem) {
@@ -159,7 +159,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         const parsedParams = await RequireManualDecisionOfIncomingRequestParameters.from(params)
         const request = await this.getOrThrow(parsedParams.requestId)
 
-        this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.DecisionRequired)
+        this.assertRequestStatus(request, ConsumptionRequestStatus.DecisionRequired)
 
         request.changeStatus(ConsumptionRequestStatus.ManualDecisionRequired)
         await this.update(request)
@@ -180,7 +180,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     private async canDecide(params: DecideRequestParameters, action: "Accept" | "Reject"): Promise<ValidationResult> {
         const request = await this.getOrThrow(params.requestId)
 
-        this.ensureRequestIsInStatus(
+        this.assertRequestStatus(
             request,
             ConsumptionRequestStatus.DecisionRequired,
             ConsumptionRequestStatus.ManualDecisionRequired
@@ -259,7 +259,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     private async decide(params: DecideRequestParameters) {
         const consumptionRequest = await this.getOrThrow(params.requestId)
 
-        this.ensureRequestIsInStatus(
+        this.assertRequestStatus(
             consumptionRequest,
             ConsumptionRequestStatus.DecisionRequired,
             ConsumptionRequestStatus.ManualDecisionRequired
@@ -358,7 +358,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             throw new Error("Cannot decide own Request")
         }
 
-        this.ensureRequestIsInStatus(request, ConsumptionRequestStatus.Decided)
+        this.assertRequestStatus(request, ConsumptionRequestStatus.Decided)
 
         let responseSource: "Message" | "RelationshipChange"
 
@@ -404,7 +404,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         await this.consumptionRequests.update(requestDoc, request)
     }
 
-    private ensureRequestIsInStatus(request: ConsumptionRequest, ...status: ConsumptionRequestStatus[]) {
+    private assertRequestStatus(request: ConsumptionRequest, ...status: ConsumptionRequestStatus[]) {
         if (!status.includes(request.status)) {
             throw new Error(`Consumption Request has to be in status '${status.join("/")}'.`)
         }
