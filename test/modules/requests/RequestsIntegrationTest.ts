@@ -496,8 +496,9 @@ export class RequestsWhen {
             this.context.accountController.identity.address
         )
 
-        this.context.actionToTry = async () =>
+        this.context.actionToTry = async () => {
             await this.context.outgoingRequestsController.sent(params as ISentOutgoingRequestParameters)
+        }
     }
 
     public async iCallCanCreateForAnOutgoingRequest(

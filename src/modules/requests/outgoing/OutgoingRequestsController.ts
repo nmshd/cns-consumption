@@ -146,12 +146,15 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         return consumptionRequest
     }
 
-    public async sent(params: ISentOutgoingRequestParameters): Promise<any> {
+    public async sent(params: ISentOutgoingRequestParameters): Promise<ConsumptionRequest> {
         const parsedParams = await SentOutgoingRequestParameters.from(params)
         return await this._sent(parsedParams.requestId, parsedParams.requestSourceObject)
     }
 
-    private async _sent(requestId: CoreId, requestSourceObject: Message | RelationshipTemplate): Promise<any> {
+    private async _sent(
+        requestId: CoreId,
+        requestSourceObject: Message | RelationshipTemplate
+    ): Promise<ConsumptionRequest> {
         const request = await this.getOrThrow(requestId)
 
         if (request.status !== ConsumptionRequestStatus.Draft) {
