@@ -5,7 +5,7 @@ export interface ICheckPrerequisitesOfIncomingRequestParameters extends ISeriali
     requestId: ICoreId
 }
 
-@type("CheckPrerequisitesOfOutgoingRequestParameters")
+@type("CheckPrerequisitesOfIncomingRequestParameters")
 export class CheckPrerequisitesOfIncomingRequestParameters
     extends SerializableAsync
     implements ICheckPrerequisitesOfIncomingRequestParameters
