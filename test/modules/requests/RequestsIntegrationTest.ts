@@ -69,7 +69,7 @@ export abstract class RequestsIntegrationTest extends IntegrationTest {
 }
 
 export class RequestsTestsContext {
-    public readonly requestsCollection: IDatabaseCollection // TODO: use for Givens??
+    public readonly requestsCollection: IDatabaseCollection
     public readonly incomingRequestsController: IncomingRequestsController
     public readonly outgoingRequestsController: OutgoingRequestsController
     public constructor(
