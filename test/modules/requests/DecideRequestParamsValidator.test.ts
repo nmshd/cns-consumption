@@ -59,14 +59,6 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                 expect(validationResult.isError).to.be.true
                 expect(validationResult.error.message).to.equal("Number of items in Request and Response do not match")
             })
-
-            // its("fails when number of items in a group is too low", function () {
-            //     expect(true).to.be.false
-            // })
-
-            // its("fails when number of items in a group is too high", function () {
-            //     expect(true).to.be.false
-            // })
         })
     }
 }
