@@ -1,4 +1,4 @@
-import { SerializableAsync } from "@js-soft/ts-serval"
+import { Serializable } from "@js-soft/ts-serval"
 import { CoreDate, CoreId, SynchronizedCollection } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionIds } from "../../consumption"
 import { ConsumptionController } from "../../consumption/ConsumptionController"
@@ -28,7 +28,7 @@ export class DraftsController extends ConsumptionBaseController {
         return await this.parseArray<Draft>(items, Draft)
     }
 
-    public async createDraft(content: SerializableAsync, type = ""): Promise<Draft> {
+    public async createDraft(content: Serializable, type = ""): Promise<Draft> {
         const draft = Draft.from({
             id: await ConsumptionIds.draft.generate(),
             content: content,

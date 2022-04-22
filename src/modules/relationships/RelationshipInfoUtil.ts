@@ -1,5 +1,5 @@
 import { ILogger } from "@js-soft/logging-abstractions"
-import { JSONWrapper, JSONWrapperAsync } from "@js-soft/ts-serval"
+import { JSONWrapper } from "@js-soft/ts-serval"
 import { Attribute, RelationshipCreationChangeRequestBody, RelationshipTemplateBody } from "@nmshd/content"
 import { CoreId, Relationship, RelationshipTemplate, TransportErrors, TransportLoggerFactory } from "@nmshd/transport"
 import { ConsumptionIds } from "../../consumption"
@@ -129,7 +129,7 @@ export class RelationshipInfoUtil {
         } else {
             // Try to parse the old template format (without types)
             let oldTemplateBody: any = body
-            if (body instanceof JSONWrapper || body instanceof JSONWrapperAsync) {
+            if (body instanceof JSONWrapper) {
                 oldTemplateBody = oldTemplateBody.value
             }
             if (oldTemplateBody?.attributes && Array.isArray(oldTemplateBody.attributes)) {
@@ -199,7 +199,7 @@ export class RelationshipInfoUtil {
         } else {
             // Try to parse the old request format (without types)
             let oldRequestBody: any = body
-            if (body instanceof JSONWrapper || body instanceof JSONWrapperAsync) {
+            if (body instanceof JSONWrapper) {
                 oldRequestBody = oldRequestBody.value
             }
 

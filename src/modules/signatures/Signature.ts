@@ -1,9 +1,9 @@
 import { serialize, type, validate } from "@js-soft/ts-serval"
 import { CoreBuffer, CryptoHash, CryptoSignature, CryptoSignaturePublicKey } from "@nmshd/crypto"
-import { CoreCrypto, CoreSerializable, ICoreSerializableAsync } from "@nmshd/transport"
+import { CoreCrypto, CoreSerializable, ICoreSerializable } from "@nmshd/transport"
 import { ISignatureContent, SignatureContent } from "./SignatureContent"
 
-export interface ISignature extends ICoreSerializableAsync {
+export interface ISignature extends ICoreSerializable {
     content: ISignatureContent
     signature: string
 }

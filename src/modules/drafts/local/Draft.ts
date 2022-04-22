@@ -1,4 +1,4 @@
-import { ISerializableAsync, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval"
+import { ISerializable, Serializable, serialize, type, validate } from "@js-soft/ts-serval"
 import { CoreDate, CoreSynchronizable, ICoreDate, ICoreSynchronizable } from "@nmshd/transport"
 import { nameof } from "ts-simple-nameof"
 
@@ -6,7 +6,7 @@ export interface IDraft extends ICoreSynchronizable {
     type: string
     createdAt: ICoreDate
     lastModifiedAt: ICoreDate
-    content: ISerializableAsync
+    content: ISerializable
     metadata?: any
     metadataModifiedAt?: ICoreDate
 }
@@ -42,7 +42,7 @@ export class Draft extends CoreSynchronizable implements IDraft {
 
     @validate()
     @serialize()
-    public content: SerializableAsync
+    public content: Serializable
 
     @validate({ nullable: true })
     @serialize({ any: true })
