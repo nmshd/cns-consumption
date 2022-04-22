@@ -5,10 +5,12 @@ import {
     CoreDate,
     CoreId,
     CoreSerializableAsync,
+    CoreSynchronizable,
     ICoreAddress,
     ICoreDate,
     ICoreId,
-    ICoreSerializableAsync
+    ICoreSerializableAsync,
+    ICoreSynchronizable
 } from "@nmshd/transport"
 import { ConsumptionRequestStatus } from "./ConsumptionRequestStatus"
 import { ConsumptionRequestStatusLogEntry, IConsumptionRequestStatusLogEntry } from "./ConsumptionRequestStatusLogEntry"
@@ -34,8 +36,7 @@ export class ConsumptionRequestSource extends CoreSerializableAsync implements I
     }
 }
 
-export interface IConsumptionRequest extends ICoreSerializableAsync {
-    id: ICoreId
+export interface IConsumptionRequest extends ICoreSynchronizable {
     isOwn: boolean
     peer: ICoreAddress
     createdAt: ICoreDate
@@ -47,11 +48,7 @@ export interface IConsumptionRequest extends ICoreSerializableAsync {
 }
 
 @type("ConsumptionRequest")
-export class ConsumptionRequest extends CoreSerializableAsync implements IConsumptionRequest {
-    @serialize()
-    @validate()
-    public id: CoreId
-
+export class ConsumptionRequest extends CoreSynchronizable implements IConsumptionRequest {
     @serialize()
     @validate()
     public isOwn: boolean

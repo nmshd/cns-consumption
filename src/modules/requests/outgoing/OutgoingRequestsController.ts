@@ -1,4 +1,3 @@
-import { IDatabaseCollection } from "@js-soft/docdb-access-abstractions"
 import { Request, RequestItem, RequestItemGroup, Response, ResponseItem, ResponseItemGroup } from "@nmshd/content"
 import {
     CoreAddress,
@@ -8,6 +7,7 @@ import {
     Message,
     RelationshipChange,
     RelationshipTemplate,
+    SynchronizedCollection,
     TransportErrors
 } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionIds } from "../../../consumption"
@@ -35,7 +35,7 @@ import {
 } from "./sentOutgoingRequest/SentOutgoingRequestParameters"
 
 export class OutgoingRequestsController extends ConsumptionBaseController {
-    private consumptionRequests: IDatabaseCollection
+    private consumptionRequests: SynchronizedCollection
 
     public constructor(parent: ConsumptionController, public readonly processorRegistry: RequestItemProcessorRegistry) {
         super(ConsumptionControllerName.RequestsController, parent)

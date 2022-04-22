@@ -1,4 +1,3 @@
-import { IDatabaseCollection } from "@js-soft/docdb-access-abstractions"
 import {
     RequestItem,
     RequestItemGroup,
@@ -15,6 +14,7 @@ import {
     Message,
     RelationshipChange,
     RelationshipTemplate,
+    SynchronizedCollection,
     TransportErrors
 } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName } from "../../../consumption"
@@ -53,7 +53,7 @@ import {
 } from "./requireManualDecision/RequireManualDecisionOfIncomingRequestParameters"
 
 export class IncomingRequestsController extends ConsumptionBaseController {
-    private consumptionRequests: IDatabaseCollection
+    private consumptionRequests: SynchronizedCollection
     private readonly decideRequestParamsValidator: DecideRequestParametersValidator =
         new DecideRequestParametersValidator()
 
