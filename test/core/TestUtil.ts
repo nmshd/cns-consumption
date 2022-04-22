@@ -5,7 +5,7 @@ import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import { SimpleLoggerFactory } from "@js-soft/simple-logger"
 import { ISerializableAsync, SerializableAsync } from "@js-soft/ts-serval"
 import { sleep } from "@js-soft/ts-utils"
-import { RelationshipCreationChangeRequestBody, RelationshipTemplateBody } from "@nmshd/content"
+import { ConsumptionController } from "@nmshd/consumption"
 import { CoreBuffer } from "@nmshd/crypto"
 import {
     AccountController,
@@ -39,34 +39,65 @@ export class TestUtil {
         TransportLoggerFactory.init(this.oldLogger)
     }
 
-    public static expectThrows(method: Function | Promise<any>, errorMessageRegexp: RegExp | string): void {
+    public static expectThrows(method: Function, customExceptionMatcher?: (e: Error) => void): void
+    public static expectThrows(method: Function, errorMessagePatternOrRegexp: RegExp): void
+    /**
+     *
+     * @param method The function which should throw the exception
+     * @param errorMessagePattern the pattern the error message should match (asterisks ('\*') are wildcards that correspond to '.\*' in regex)
+     */
+    public static expectThrows(method: Function, errorMessagePattern: string): void
+
+    public static expectThrows(
+        method: Function,
+        errorMessageRegexp: RegExp | string | ((e: Error) => void) | undefined
+    ): void {
         let error: Error | undefined
+
         try {
-            if (typeof method === "function") {
-                method()
-            }
-        } catch (err: any) {
+            method()
+        } catch (err: unknown) {
+            if (!(err instanceof Error)) throw err
+
             error = err
         }
-        expect(error).to.be.an("Error")
-        if (errorMessageRegexp) {
-            expect(error!.message).to.match(new RegExp(errorMessageRegexp))
+
+        expect(error).to.be.an("Error", "Expected an error to be thrown")
+
+        if (typeof errorMessageRegexp === "undefined") {
+            return
         }
+
+        if (typeof errorMessageRegexp === "function") {
+            errorMessageRegexp(error!)
+            return
+        }
+
+        if (typeof errorMessageRegexp === "string") {
+            errorMessageRegexp = new RegExp(errorMessageRegexp.replaceAll("*", ".*"))
+        }
+
+        expect(error!.message).to.match(new RegExp(errorMessageRegexp))
     }
 
     public static async expectThrowsAsync(
         method: Function | Promise<any>,
-        customExceptionMatcher: (e: Error) => void
+        customExceptionMatcher?: (e: Error) => void
     ): Promise<void>
+    public static async expectThrowsAsync(
+        method: Function | Promise<any>,
+        errorMessagePatternOrRegexp: RegExp
+    ): Promise<void>
+    /**
+     *
+     * @param method The function which should throw the exception
+     * @param errorMessagePattern the pattern the error message should match (asterisks ('\*') are wildcards that correspond to '.\*' in regex)
+     */
+    public static async expectThrowsAsync(method: Function | Promise<any>, errorMessagePattern: string): Promise<void>
 
     public static async expectThrowsAsync(
         method: Function | Promise<any>,
-        errorMessageRegexp: RegExp | string
-    ): Promise<void>
-
-    public static async expectThrowsAsync(
-        method: Function | Promise<any>,
-        errorMessageRegexp: RegExp | string | ((e: Error) => void)
+        errorMessageRegexp: RegExp | string | ((e: Error) => void) | undefined
     ): Promise<void> {
         let error: Error | undefined
         try {
@@ -75,19 +106,28 @@ export class TestUtil {
             } else {
                 await method
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
+            if (!(err instanceof Error)) throw err
+
             error = err
         }
-        expect(error).to.be.an("Error")
+
+        expect(error).to.be.an("Error", "Expected an error to be thrown")
+
+        if (typeof errorMessageRegexp === "undefined") {
+            return
+        }
 
         if (typeof errorMessageRegexp === "function") {
             errorMessageRegexp(error!)
             return
         }
 
-        if (errorMessageRegexp) {
-            expect(error!.message).to.match(new RegExp(errorMessageRegexp))
+        if (typeof errorMessageRegexp === "string") {
+            errorMessageRegexp = new RegExp(errorMessageRegexp.replaceAll("*", ".*"))
         }
+
+        expect(error!.message).to.match(new RegExp(errorMessageRegexp))
     }
 
     public static async clearAccounts(dbConnection: IDatabaseConnection): Promise<void> {
@@ -128,7 +168,10 @@ export class TestUtil {
         }
     }
 
-    public static async provideAccounts(transport: Transport, count: number): Promise<AccountController[]> {
+    public static async provideAccounts(
+        transport: Transport,
+        count: number
+    ): Promise<{ accountController: AccountController; consumptionController: ConsumptionController }[]> {
         const accounts = []
 
         for (let i = 0; i < count; i++) {
@@ -138,14 +181,18 @@ export class TestUtil {
         return accounts
     }
 
-    private static async createAccount(transport: Transport): Promise<AccountController> {
+    private static async createAccount(
+        transport: Transport
+    ): Promise<{ accountController: AccountController; consumptionController: ConsumptionController }> {
         const randomId = Math.random().toString(36).substring(7)
         const db: IDatabaseCollectionProvider = await transport.createDatabase(`acc-${randomId}`)
 
         const accountController: AccountController = new AccountController(transport, db, transport.config)
         await accountController.init()
 
-        return accountController
+        const consumptionController = await new ConsumptionController(transport, accountController).init()
+
+        return { accountController, consumptionController }
     }
 
     public static async addRelationship(
@@ -155,11 +202,11 @@ export class TestUtil {
         requestBody?: any
     ): Promise<Relationship[]> {
         if (!templateBody) {
-            templateBody = await RelationshipTemplateBody.from({
+            templateBody = {
                 metadata: {
                     mycontent: "template"
                 }
-            })
+            }
         }
 
         const templateFrom = await from.relationshipTemplates.sendRelationshipTemplate({
@@ -193,11 +240,11 @@ export class TestUtil {
         )
 
         if (!requestBody) {
-            requestBody = await RelationshipCreationChangeRequestBody.from({
+            requestBody = {
                 metadata: {
                     mycontent: "request"
                 }
-            })
+            }
         }
 
         const relRequest = await to.relationships.sendRelationship({

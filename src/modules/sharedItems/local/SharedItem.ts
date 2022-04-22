@@ -27,7 +27,7 @@ export interface ISharedItem extends ICoreSynchronizable {
 
 @type("SharedItem")
 export class SharedItem extends CoreSynchronizable implements ISharedItem {
-    public readonly technicalProperties = [
+    public override readonly technicalProperties = [
         "@type",
         "@context",
         nameof<SharedItem>((r) => r.tags),
@@ -41,7 +41,7 @@ export class SharedItem extends CoreSynchronizable implements ISharedItem {
         nameof<SharedItem>((r) => r.expiresAt)
     ]
 
-    public readonly metadataProperties = [
+    public override readonly metadataProperties = [
         nameof<SharedItem>((r) => r.metadata),
         nameof<SharedItem>((r) => r.metadataModifiedAt)
     ]
@@ -90,7 +90,7 @@ export class SharedItem extends CoreSynchronizable implements ISharedItem {
     @serialize()
     public metadataModifiedAt?: CoreDate
 
-    public static async from(value: ISharedItem): Promise<SharedItem> {
+    public static override async from(value: ISharedItem): Promise<SharedItem> {
         return await super.fromT(value, SharedItem)
     }
 }

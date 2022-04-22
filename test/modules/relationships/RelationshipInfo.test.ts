@@ -1,10 +1,10 @@
 import { ConsumptionController } from "@nmshd/consumption"
 import { AccountController, Transport } from "@nmshd/transport"
 import { expect } from "chai"
-import { AbstractTest } from "../../core/AbstractTest"
+import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
 
-export class RelationshipInfoTest extends AbstractTest {
+export class RelationshipInfoTest extends IntegrationTest {
     public run(): void {
         const that = this
 
@@ -21,12 +21,10 @@ export class RelationshipInfoTest extends AbstractTest {
 
                 await transport.init()
 
-                const accounts: AccountController[] = await TestUtil.provideAccounts(transport, 2)
+                const accounts = await TestUtil.provideAccounts(transport, 2)
 
-                sender = accounts[0]
-                recipient = accounts[1]
-
-                senderConsumption = await new ConsumptionController(transport, sender).init()
+                ;({ accountController: sender, consumptionController: senderConsumption } = accounts[0])
+                ;({ accountController: recipient } = accounts[1])
 
                 await TestUtil.addRelationship(recipient, sender)
             })

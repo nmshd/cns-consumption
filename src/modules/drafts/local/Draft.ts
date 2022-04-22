@@ -13,7 +13,7 @@ export interface IDraft extends ICoreSynchronizable {
 
 @type("Draft")
 export class Draft extends CoreSynchronizable implements IDraft {
-    public readonly technicalProperties = [
+    public override readonly technicalProperties = [
         "@type",
         "@context",
         nameof<Draft>((r) => r.type),
@@ -21,9 +21,12 @@ export class Draft extends CoreSynchronizable implements IDraft {
         nameof<Draft>((r) => r.lastModifiedAt)
     ]
 
-    public readonly userdataProperties = [nameof<Draft>((r) => r.content)]
+    public override readonly userdataProperties = [nameof<Draft>((r) => r.content)]
 
-    public readonly metadataProperties = [nameof<Draft>((r) => r.metadata), nameof<Draft>((r) => r.metadataModifiedAt)]
+    public override readonly metadataProperties = [
+        nameof<Draft>((r) => r.metadata),
+        nameof<Draft>((r) => r.metadataModifiedAt)
+    ]
 
     @validate()
     @serialize()
@@ -49,7 +52,7 @@ export class Draft extends CoreSynchronizable implements IDraft {
     @serialize()
     public metadataModifiedAt?: CoreDate
 
-    public static async from(value: IDraft | Draft): Promise<Draft> {
+    public static override async from(value: IDraft | Draft): Promise<Draft> {
         return (await super.from(value, Draft)) as Draft
     }
 }

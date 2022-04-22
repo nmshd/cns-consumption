@@ -13,11 +13,15 @@ export interface IConsumptionAttribute extends ICoreSynchronizable {
 
 @type("ConsumptionAttribute")
 export class ConsumptionAttribute extends CoreSynchronizable implements IConsumptionAttribute {
-    public readonly technicalProperties = ["@type", "@context", nameof<ConsumptionAttribute>((r) => r.createdAt)]
+    public override readonly technicalProperties = [
+        "@type",
+        "@context",
+        nameof<ConsumptionAttribute>((r) => r.createdAt)
+    ]
 
-    public readonly userdataProperties = [nameof<ConsumptionAttribute>((r) => r.content)]
+    public override readonly userdataProperties = [nameof<ConsumptionAttribute>((r) => r.content)]
 
-    public readonly metadataProperties = [
+    public override readonly metadataProperties = [
         nameof<ConsumptionAttribute>((r) => r.metadata),
         nameof<ConsumptionAttribute>((r) => r.metadataModifiedAt)
     ]
@@ -38,7 +42,7 @@ export class ConsumptionAttribute extends CoreSynchronizable implements IConsump
     @serialize()
     public metadataModifiedAt?: CoreDate
 
-    public static async from(value: IConsumptionAttribute): Promise<ConsumptionAttribute> {
+    public static override async from(value: IConsumptionAttribute): Promise<ConsumptionAttribute> {
         return (await super.from(value, ConsumptionAttribute)) as ConsumptionAttribute
     }
 

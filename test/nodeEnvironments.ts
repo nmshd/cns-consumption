@@ -1,6 +1,7 @@
 import { LokiJsConnection } from "@js-soft/docdb-access-loki"
 import { MongoDbConnection } from "@js-soft/docdb-access-mongo"
 import { NodeLoggerFactory } from "@js-soft/node-logger"
+import Loki from "lokijs"
 import path from "path"
 import { Test } from "./Test"
 
@@ -58,8 +59,18 @@ export function runOnMongoDb(): void {
     })
 
     Test.runIntegrationTests(Test.config, mongoDbConnection, loggerFactory)
+    Test.runUnitTests(loggerFactory)
 }
 
 export function runOnLokiJs(): void {
-    Test.runIntegrationTests(Test.config, new LokiJsConnection("./db"), loggerFactory)
+    Test.runIntegrationTests(
+        Test.config,
+        new LokiJsConnection("./db", {
+            create: (filename, options) => {
+                return new Loki(filename, { ...options, persistenceMethod: "memory" })
+            }
+        }),
+        loggerFactory
+    )
+    Test.runUnitTests(loggerFactory)
 }

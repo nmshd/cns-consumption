@@ -11,7 +11,7 @@ export class RelationshipInfoController extends ConsumptionBaseController {
         super(ConsumptionControllerName.RelationshipInfoController, parent)
     }
 
-    public async init(): Promise<RelationshipInfoController> {
+    public override async init(): Promise<RelationshipInfoController> {
         await super.init()
 
         this.relationshipInfo = await this.parent.accountController.getSynchronizedCollection("RelationshipInfo")

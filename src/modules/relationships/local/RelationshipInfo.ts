@@ -18,7 +18,7 @@ export interface IRelationshipInfo extends ICoreSynchronizable {
 
 @type("RelationshipInfo")
 export class RelationshipInfo extends CoreSynchronizable implements IRelationshipInfo {
-    public readonly technicalProperties = [
+    public override readonly technicalProperties = [
         "@type",
         "@context",
         nameof<RelationshipInfo>((r) => r.relationshipId),
@@ -27,7 +27,7 @@ export class RelationshipInfo extends CoreSynchronizable implements IRelationshi
         nameof<RelationshipInfo>((r) => r.theme)
     ]
 
-    public readonly userdataProperties = [
+    public override readonly userdataProperties = [
         nameof<RelationshipInfo>((r) => r.isPinned),
         nameof<RelationshipInfo>((r) => r.userTitle),
         nameof<RelationshipInfo>((r) => r.userDescription)
@@ -78,7 +78,7 @@ export class RelationshipInfo extends CoreSynchronizable implements IRelationshi
         return await RelationshipInfo.from(relationship.metadata)
     }
 
-    public static async from(value: IRelationshipInfo): Promise<RelationshipInfo> {
+    public static override async from(value: IRelationshipInfo): Promise<RelationshipInfo> {
         return await super.fromT(value, RelationshipInfo)
     }
 }

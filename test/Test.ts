@@ -6,6 +6,13 @@ import { RelationshipInfoTest } from "./modules/relationships/RelationshipInfo.t
 import { RelationshipInfoNoTemplateTest } from "./modules/relationships/RelationshipInfoNoTemplate.test"
 import { RelationshipInfoOldTemplateTest } from "./modules/relationships/RelationshipInfoOldTemplate.test"
 import { RelationshipRequestorTest } from "./modules/relationships/RelationshipRequestor.test"
+import { DecideRequestParametersValidatorTests } from "./modules/requests/DecideRequestParamsValidator.test"
+import { GenericRequestItemProcessorTests } from "./modules/requests/GenericRequestItemProcessor.test"
+import { IncomingRequestControllerTests } from "./modules/requests/IncomingRequestsController.test"
+import { ConsumptionRequestTest } from "./modules/requests/local/ConsumptionRequest.test"
+import { OutgoingRequestControllerTests } from "./modules/requests/OutgoingRequestsController.test"
+import { RequestEnd2EndTests } from "./modules/requests/RequestEnd2End.test"
+import { RequestItemProcessorRegistryTests } from "./modules/requests/RequestItemProcessorRegistry.test"
 
 export enum BackboneEnvironment {
     Local = "http://enmeshed.local",
@@ -33,5 +40,15 @@ export class Test {
         new AttributeTest(config, databaseConnection, logger).run()
         new RelationshipInfoTest(config, databaseConnection, logger).run()
         new RelationshipRequestorTest(config, databaseConnection, logger).run()
+        new RequestEnd2EndTests(config, databaseConnection, logger).run()
+        new OutgoingRequestControllerTests(config, databaseConnection, logger).run()
+        new IncomingRequestControllerTests(config, databaseConnection, logger).run()
+        new RequestItemProcessorRegistryTests(config, databaseConnection, logger).run()
+        new GenericRequestItemProcessorTests(config, databaseConnection, logger).run()
+    }
+
+    public static runUnitTests(logger: ILoggerFactory): void {
+        new ConsumptionRequestTest(logger).run()
+        new DecideRequestParametersValidatorTests(logger).run()
     }
 }

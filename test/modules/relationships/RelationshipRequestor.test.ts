@@ -2,10 +2,10 @@ import { ConsumptionController, RelationshipInfo, SharedItem } from "@nmshd/cons
 import { Attribute, RelationshipCreationChangeRequestBody, RelationshipTemplateBody } from "@nmshd/content"
 import { AccountController, Relationship, RelationshipTemplate, Transport } from "@nmshd/transport"
 import { expect } from "chai"
-import { AbstractTest } from "../../core/AbstractTest"
+import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
 
-export class RelationshipRequestorTest extends AbstractTest {
+export class RelationshipRequestorTest extends IntegrationTest {
     public run(): void {
         const that = this
 
@@ -28,12 +28,10 @@ export class RelationshipRequestorTest extends AbstractTest {
 
                 await transport.init()
 
-                const accounts: AccountController[] = await TestUtil.provideAccounts(transport, 2)
+                const accounts = await TestUtil.provideAccounts(transport, 2)
 
-                templator = accounts[0]
-                requestor = accounts[1]
-
-                requestorConsumption = await new ConsumptionController(transport, requestor).init()
+                ;({ accountController: requestor, consumptionController: requestorConsumption } = accounts[0])
+                ;({ accountController: templator } = accounts[1])
             })
 
             it("should create a valid RelationshipTemplate with body", async function () {
