@@ -7,6 +7,15 @@ import { DecideRequestParameters } from "./decide/DecideRequestParameters"
 
 export class DecideRequestParametersValidator {
     public validate(params: DecideRequestParameters, request: ConsumptionRequest): Result<void> {
+        if (!request.id.equals(params.requestId)) {
+            return Result.fail(
+                new ApplicationError(
+                    "error.requests.decide.validation.invalidRequestId",
+                    "The id of the request does not match the id of the response"
+                )
+            )
+        }
+
         if (params.items.length !== request.content.items.length) {
             return Result.fail(this.invalidNumberOfItemsError("Number of items in Request and Response do not match"))
         }
@@ -35,7 +44,9 @@ export class DecideRequestParametersValidator {
             return Result.fail(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    `The RequestItem '${requestItem.toJSON()}' was answered as a RequestItemGroup. Please use DecideRequestItemParameters instead.`
+                    `The RequestItem '${JSON.stringify(
+                        requestItem.toJSON()
+                    )}' was answered as a RequestItemGroup. Please use DecideRequestItemParameters instead.`
                 )
             )
         }
@@ -51,7 +62,9 @@ export class DecideRequestParametersValidator {
             return Result.fail(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    `The RequestItemGroup '${requestItem.toJSON()}' was answered as a RequestItem. Please use DecideRequestItemGroupParameters instead.`
+                    `The RequestItemGroup '${JSON.stringify(
+                        requestItem.toJSON()
+                    )}' was answered as a RequestItem. Please use DecideRequestItemGroupParameters instead.`
                 )
             )
         }
