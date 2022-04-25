@@ -3,7 +3,9 @@ import {
     ConsumptionAttributesController,
     DraftsController,
     OutgoingRequestsController,
+    ProcessorConstructor,
     RelationshipInfoController,
+    RequestItemConstructor,
     RequestItemProcessorRegistry,
     SettingsController,
     SharedItemsController
@@ -48,10 +50,15 @@ export class ConsumptionController {
         return this._relationshipInfo
     }
 
-    public async init(): Promise<ConsumptionController> {
+    public async init(
+        requestItemProcessors: {
+            processorConstructor: ProcessorConstructor
+            itemConstructor: RequestItemConstructor
+        }[] = []
+    ): Promise<ConsumptionController> {
         this._attributes = await new ConsumptionAttributesController(this).init()
         this._drafts = await new DraftsController(this).init()
-        const processorRegistry = new RequestItemProcessorRegistry()
+        const processorRegistry = new RequestItemProcessorRegistry(requestItemProcessors)
         this._outgoingRequests = await new OutgoingRequestsController(this, processorRegistry).init()
         this._incomingRequests = await new IncomingRequestsController(this, processorRegistry).init()
         this._settings = await new SettingsController(this).init()
