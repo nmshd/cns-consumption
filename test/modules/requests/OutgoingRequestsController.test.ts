@@ -60,12 +60,14 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
 
                 await TestUtil.clearAccounts(that.connection)
                 await transport.init()
-                ;({ accountController, consumptionController } = (await TestUtil.provideAccounts(transport, 1))[0])
 
-                consumptionController.incomingRequests.processorRegistry.registerProcessor(
-                    TestRequestItemProcessor,
-                    TestRequestItem
-                )
+                const accounts = await TestUtil.provideAccounts(transport, 1, [
+                    {
+                        processorConstructor: TestRequestItemProcessor,
+                        itemConstructor: TestRequestItem
+                    }
+                ])
+                ;({ accountController, consumptionController } = accounts[0])
 
                 context = new RequestsTestsContext(accountController, consumptionController)
                 that.init(context)

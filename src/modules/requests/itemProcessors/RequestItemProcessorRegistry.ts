@@ -1,11 +1,19 @@
 import { RequestItem } from "@nmshd/content"
 import { IRequestItemProcessor } from "./IRequestItemProcessor"
 
-type ProcessorConstructor = new () => IRequestItemProcessor
-type RequestItemConstructor = new () => RequestItem
+export type ProcessorConstructor = new () => IRequestItemProcessor
+export type RequestItemConstructor = new () => RequestItem
 
 export class RequestItemProcessorRegistry {
     private readonly registry: Record<string, ProcessorConstructor | undefined> = {}
+
+    public constructor(
+        processors: { processorConstructor: ProcessorConstructor; itemConstructor: RequestItemConstructor }[] = []
+    ) {
+        for (const { itemConstructor, processorConstructor } of processors) {
+            this.registerProcessor(processorConstructor, itemConstructor)
+        }
+    }
 
     public registerProcessor(
         processorConstructor: ProcessorConstructor,
