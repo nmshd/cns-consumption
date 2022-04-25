@@ -3,6 +3,7 @@ import {
     IRequest,
     IResponse,
     Request,
+    RequestItemGroup,
     ResponseItemResult,
     ResponseJSON,
     ResponseResult
@@ -40,6 +41,32 @@ export class TestObjectFactory {
     public static createRequestWithOneItem(properties: Partial<Request> = {}): Request {
         return Request.from({
             items: [
+                TestRequestItem.from({
+                    mustBeAccepted: false
+                })
+            ],
+            ...properties
+        })
+    }
+
+    public static createRequestWithOneItemGroup(properties: Partial<Request> = {}): Request {
+        return Request.from({
+            items: [
+                RequestItemGroup.from({
+                    items: [TestRequestItem.from({ mustBeAccepted: false })],
+                    mustBeAccepted: false
+                })
+            ],
+            ...properties
+        })
+    }
+
+    public static createRequestWithTwoItems(properties: Partial<Request> = {}): Request {
+        return Request.from({
+            items: [
+                TestRequestItem.from({
+                    mustBeAccepted: false
+                }),
                 TestRequestItem.from({
                     mustBeAccepted: false
                 })
