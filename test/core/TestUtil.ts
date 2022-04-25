@@ -3,7 +3,7 @@ import { LokiJsConnection } from "@js-soft/docdb-access-loki"
 import { MongoDbConnection } from "@js-soft/docdb-access-mongo"
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import { SimpleLoggerFactory } from "@js-soft/simple-logger"
-import { ISerializableAsync, SerializableAsync } from "@js-soft/ts-serval"
+import { ISerializable, Serializable } from "@js-soft/ts-serval"
 import { sleep } from "@js-soft/ts-utils"
 import { ConsumptionController } from "@nmshd/consumption"
 import { CoreBuffer } from "@nmshd/crypto"
@@ -215,7 +215,7 @@ export class TestUtil {
             maxNumberOfRelationships: 1
         })
 
-        const templateToken = await TokenContentRelationshipTemplate.from({
+        const templateToken = TokenContentRelationshipTemplate.from({
             templateId: templateFrom.id,
             secretKey: templateFrom.secretKey
         })
@@ -226,7 +226,7 @@ export class TestUtil {
             ephemeral: false
         })
 
-        const tokenRef = await token.truncate()
+        const tokenRef = token.truncate()
 
         const receivedToken = await to.tokens.loadPeerTokenByTruncated(tokenRef, false)
 
@@ -343,7 +343,7 @@ export class TestUtil {
 
     public static async sendRelationshipTemplate(
         from: AccountController,
-        body?: ISerializableAsync
+        body?: ISerializable
     ): Promise<RelationshipTemplate> {
         if (!body) {
             body = {
@@ -359,7 +359,7 @@ export class TestUtil {
 
     public static async sendRelationshipTemplateAndToken(
         account: AccountController,
-        body?: ISerializableAsync
+        body?: ISerializable
     ): Promise<string> {
         if (!body) {
             body = {
@@ -371,7 +371,7 @@ export class TestUtil {
             expiresAt: CoreDate.utc().add({ minutes: 5 }),
             maxNumberOfRelationships: 1
         })
-        const templateToken = await TokenContentRelationshipTemplate.from({
+        const templateToken = TokenContentRelationshipTemplate.from({
             templateId: template.id,
             secretKey: template.secretKey
         })
@@ -382,14 +382,14 @@ export class TestUtil {
             ephemeral: false
         })
 
-        const tokenRef = await token.truncate()
+        const tokenRef = token.truncate()
         return tokenRef
     }
 
     public static async sendRelationship(
         account: AccountController,
         template: RelationshipTemplate,
-        body?: ISerializableAsync
+        body?: ISerializable
     ): Promise<Relationship> {
         if (!body) {
             body = {
@@ -422,7 +422,7 @@ export class TestUtil {
     public static async sendMessage(
         from: AccountController,
         to: AccountController,
-        content?: SerializableAsync
+        content?: Serializable
     ): Promise<Message> {
         return await this.sendMessagesWithFiles(from, [to], [], content)
     }
@@ -431,7 +431,7 @@ export class TestUtil {
         from: AccountController,
         to: AccountController,
         file: File,
-        content?: SerializableAsync
+        content?: Serializable
     ): Promise<Message> {
         return await this.sendMessagesWithFiles(from, [to], [file], content)
     }
@@ -440,7 +440,7 @@ export class TestUtil {
         from: AccountController,
         recipients: AccountController[],
         file: File,
-        content?: SerializableAsync
+        content?: Serializable
     ): Promise<Message> {
         return await this.sendMessagesWithFiles(from, recipients, [file], content)
     }
@@ -449,14 +449,14 @@ export class TestUtil {
         from: AccountController,
         recipients: AccountController[],
         files: File[],
-        content?: SerializableAsync
+        content?: Serializable
     ): Promise<Message> {
         const addresses: CoreAddress[] = []
         for (const controller of recipients) {
             addresses.push(controller.identity.address)
         }
         if (!content) {
-            content = await SerializableAsync.from({ content: "TestContent" }, SerializableAsync)
+            content = Serializable.fromUnknown({ content: "TestContent" })
         }
         return await from.messages.sendMessage({
             recipients: addresses,

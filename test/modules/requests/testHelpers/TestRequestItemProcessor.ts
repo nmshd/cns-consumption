@@ -66,23 +66,17 @@ export class TestRequestItemProcessor extends GenericRequestItemProcessor<
         return true
     }
 
-    public override async accept(
-        requestItem: TestRequestItem,
-        params: AcceptRequestItemParameters
-    ): Promise<AcceptResponseItem> {
+    public override accept(requestItem: TestRequestItem, params: AcceptRequestItemParameters): AcceptResponseItem {
         if (requestItem.shouldThrowOnAccept) {
             throw new Error("Accept failed for testing purposes.")
         }
-        return await super.accept(requestItem, params)
+        return super.accept(requestItem, params)
     }
 
-    public override async reject(
-        requestItem: TestRequestItem,
-        params: RejectRequestItemParameters
-    ): Promise<RejectResponseItem> {
+    public override reject(requestItem: TestRequestItem, params: RejectRequestItemParameters): RejectResponseItem {
         if (requestItem.shouldThrowOnReject) {
             throw new Error("Reject failed for testing purposes.")
         }
-        return await super.reject(requestItem, params)
+        return super.reject(requestItem, params)
     }
 }

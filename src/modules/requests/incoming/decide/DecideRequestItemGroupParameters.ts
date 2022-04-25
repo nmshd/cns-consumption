@@ -1,19 +1,17 @@
-import { ISerializableAsync, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval"
+import { ISerializable, Serializable, serialize, type, validate } from "@js-soft/ts-serval"
 import { DecideRequestItemParameters, IDecideRequestItemParameters } from "./DecideRequestItemParameters"
 
-export interface IDecideRequestItemGroupParameters extends ISerializableAsync {
+export interface IDecideRequestItemGroupParameters extends ISerializable {
     items: IDecideRequestItemParameters[]
 }
 
 @type("DecideRequestItemGroupParameters")
-export class DecideRequestItemGroupParameters extends SerializableAsync implements IDecideRequestItemGroupParameters {
+export class DecideRequestItemGroupParameters extends Serializable implements IDecideRequestItemGroupParameters {
     @serialize()
     @validate()
     public items: DecideRequestItemParameters[]
 
-    public static override async from(
-        params: IDecideRequestItemGroupParameters
-    ): Promise<DecideRequestItemGroupParameters> {
-        return await super.fromT(params, DecideRequestItemGroupParameters)
+    public static from(value: IDecideRequestItemGroupParameters): DecideRequestItemGroupParameters {
+        return this.fromAny(value)
     }
 }

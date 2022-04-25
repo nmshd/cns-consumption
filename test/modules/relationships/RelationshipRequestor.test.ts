@@ -35,7 +35,7 @@ export class RelationshipRequestorTest extends IntegrationTest {
             })
 
             it("should create a valid RelationshipTemplate with body", async function () {
-                const body = await RelationshipTemplateBody.from({
+                const body = RelationshipTemplateBody.from({
                     sharedAttributes: [
                         { name: "Person.givenName", value: "Hugo" },
                         { name: "Person.familyName", value: "Becker" }
@@ -67,7 +67,7 @@ export class RelationshipRequestorTest extends IntegrationTest {
             })
 
             it("should create a valid Creation Request with body", async function () {
-                requestBody = await RelationshipCreationChangeRequestBody.from({
+                requestBody = RelationshipCreationChangeRequestBody.from({
                     sharedAttributes: [
                         { name: "Person.givenName", value: "Martha" },
                         { name: "Person.familyName", value: "Huber" }

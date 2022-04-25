@@ -32,7 +32,7 @@ export class ConsumptionRequestStatusLogEntry extends CoreSerializable implement
     @validate({ nullable: true })
     public code?: string
 
-    public static override from(value: IConsumptionRequestStatusLogEntry): ConsumptionRequestStatusLogEntry {
-        return super.fromT<ConsumptionRequestStatusLogEntry>(value, ConsumptionRequestStatusLogEntry)
+    public static from(value: IConsumptionRequestStatusLogEntry): ConsumptionRequestStatusLogEntry {
+        return this.fromAny(value)
     }
 }

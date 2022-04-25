@@ -11,8 +11,8 @@ export interface IRequestItemProcessor<
     checkPrerequisitesOfIncomingRequestItem(requestItem: TRequestItem): Promise<boolean> | boolean
     canAccept(requestItem: TRequestItem, params: TAcceptParams): Promise<ValidationResult> | ValidationResult
     canReject(requestItem: TRequestItem, params: TRejectParams): Promise<ValidationResult> | ValidationResult
-    accept(requestItem: TRequestItem, params: TAcceptParams): Promise<AcceptResponseItem>
-    reject(requestItem: TRequestItem, params: TRejectParams): Promise<RejectResponseItem>
+    accept(requestItem: TRequestItem, params: TAcceptParams): Promise<AcceptResponseItem> | AcceptResponseItem
+    reject(requestItem: TRequestItem, params: TRejectParams): Promise<RejectResponseItem> | RejectResponseItem
 
     canCreateOutgoingRequestItem(requestItem: TRequestItem): Promise<ValidationResult> | ValidationResult
     canApplyIncomingResponseItem(

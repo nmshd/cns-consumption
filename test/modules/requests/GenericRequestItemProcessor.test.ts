@@ -48,24 +48,24 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
             })
 
             describe("Accept", function () {
-                it("returns an AcceptResponseItem", async function () {
+                it("returns an AcceptResponseItem", function () {
                     const processor = new GenericRequestItemProcessor()
 
                     const requestItem = new TestRequestItem()
                     const params = new AcceptRequestItemParameters()
-                    const result = await processor.accept(requestItem, params)
+                    const result = processor.accept(requestItem, params)
 
                     expect(result).to.be.instanceOf(AcceptResponseItem)
                 })
             })
 
             describe("Reject", function () {
-                it("returns a RejectResponseItem", async function () {
+                it("returns a RejectResponseItem", function () {
                     const processor = new GenericRequestItemProcessor()
 
                     const requestItem = new TestRequestItem()
                     const params = new AcceptRequestItemParameters()
-                    const result = await processor.reject(requestItem, params)
+                    const result = processor.reject(requestItem, params)
 
                     expect(result).to.be.instanceOf(RejectResponseItem)
                 })

@@ -1,5 +1,5 @@
 import { ILogger } from "@js-soft/logging-abstractions"
-import { JSONWrapper, JSONWrapperAsync } from "@js-soft/ts-serval"
+import { JSONWrapper } from "@js-soft/ts-serval"
 import { Attribute, RelationshipCreationChangeRequestBody, RelationshipTemplateBody } from "@nmshd/content"
 import { CoreId, Relationship, RelationshipTemplate, TransportErrors, TransportLoggerFactory } from "@nmshd/transport"
 import { ConsumptionIds } from "../../consumption"
@@ -60,7 +60,7 @@ export class RelationshipInfoUtil {
     private async createRelationshipInfo(relationship: Relationship): Promise<RelationshipInfo> {
         const peerAddress = relationship.peer.address
         const truncatedAddress = peerAddress.address.substring(3, 9)
-        const info = await RelationshipInfo.from({
+        const info = RelationshipInfo.from({
             attributes: [],
             id: await ConsumptionIds.relationshipInfo.generate(),
             isPinned: false,
@@ -76,7 +76,7 @@ export class RelationshipInfoUtil {
         const attributeMap = new Map<string, RelationshipAttribute>()
         for (const item of items) {
             if (item.content instanceof Attribute) {
-                const relAttr = await RelationshipAttribute.from({
+                const relAttr = RelationshipAttribute.from({
                     name: item.content.name,
                     sharedItem: item.id,
                     content: item.content
@@ -129,7 +129,7 @@ export class RelationshipInfoUtil {
         } else {
             // Try to parse the old template format (without types)
             let oldTemplateBody: any = body
-            if (body instanceof JSONWrapper || body instanceof JSONWrapperAsync) {
+            if (body instanceof JSONWrapper) {
                 oldTemplateBody = oldTemplateBody.value
             }
             if (oldTemplateBody?.attributes && Array.isArray(oldTemplateBody.attributes)) {
@@ -154,7 +154,7 @@ export class RelationshipInfoUtil {
         }
 
         for (const attribute of missingItems) {
-            const sharedItem = await SharedItem.from({
+            const sharedItem = SharedItem.from({
                 id: await ConsumptionIds.sharedItem.generate(),
                 content: attribute,
                 sharedAt: sharedAt,
@@ -199,7 +199,7 @@ export class RelationshipInfoUtil {
         } else {
             // Try to parse the old request format (without types)
             let oldRequestBody: any = body
-            if (body instanceof JSONWrapper || body instanceof JSONWrapperAsync) {
+            if (body instanceof JSONWrapper) {
                 oldRequestBody = oldRequestBody.value
             }
 
@@ -227,7 +227,7 @@ export class RelationshipInfoUtil {
         }
 
         for (const attribute of missingItems) {
-            const sharedItem = await SharedItem.from({
+            const sharedItem = SharedItem.from({
                 id: await ConsumptionIds.sharedItem.generate(),
                 content: attribute,
                 sharedAt: sharedAt,

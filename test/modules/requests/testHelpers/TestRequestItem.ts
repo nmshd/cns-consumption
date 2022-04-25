@@ -40,7 +40,7 @@ export class TestRequestItem extends RequestItem implements ITestRequestItem {
     @validate({ nullable: true })
     public shouldThrowOnReject?: true
 
-    public static override async from(item: ITestRequestItem): Promise<TestRequestItem> {
-        return await super.fromT(item, TestRequestItem)
+    public static from(value: ITestRequestItem): TestRequestItem {
+        return this.fromAny(value)
     }
 }

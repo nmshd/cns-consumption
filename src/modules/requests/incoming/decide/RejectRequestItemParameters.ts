@@ -1,7 +1,7 @@
-import { ISerializableAsync, serialize, type, validate } from "@js-soft/ts-serval"
+import { ISerializable, serialize, type, validate } from "@js-soft/ts-serval"
 import { DecideRequestItemParameters } from "./DecideRequestItemParameters"
 
-export interface IRejectRequestItemParameters extends ISerializableAsync {
+export interface IRejectRequestItemParameters extends ISerializable {
     code?: string
     message?: string
 }
@@ -16,7 +16,7 @@ export class RejectRequestItemParameters extends DecideRequestItemParameters imp
     @validate({ nullable: true })
     public message?: string
 
-    public static override async from(params: IRejectRequestItemParameters): Promise<RejectRequestItemParameters> {
-        return await super.fromT(params, RejectRequestItemParameters)
+    public static from(value: IRejectRequestItemParameters): RejectRequestItemParameters {
+        return this.fromAny(value)
     }
 }

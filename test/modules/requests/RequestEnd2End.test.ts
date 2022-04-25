@@ -57,8 +57,8 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
             })
 
             it("sender: create a Relationship Template with the Request", async function () {
-                const request = await Request.from({
-                    items: [await TestRequestItem.from({ mustBeAccepted: false })]
+                const request = Request.from({
+                    items: [TestRequestItem.from({ mustBeAccepted: false })]
                 })
                 sTemplate = await sAccountController.relationshipTemplates.sendRelationshipTemplate({
                     content: request,
@@ -96,7 +96,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
             it("recipient: accept Consumption Request", async function () {
                 rConsumptionRequest = await rConsumptionController.incomingRequests.accept({
                     requestId: rConsumptionRequest.id,
-                    items: [await AcceptRequestItemParameters.from({})]
+                    items: [AcceptRequestItemParameters.from({})]
                 })
             })
 
@@ -185,8 +185,8 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
 
             it("sender: create Consumption Request", async function () {
                 sConsumptionRequest = await sConsumptionController.outgoingRequests.create({
-                    content: await Request.from({
-                        items: [await TestRequestItem.from({ mustBeAccepted: false })]
+                    content: Request.from({
+                        items: [TestRequestItem.from({ mustBeAccepted: false })]
                     }),
                     peer: rAccountController.identity.address
                 })
@@ -233,7 +233,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
             it("recipient: accept Consumption Request", async function () {
                 rConsumptionRequest = await rConsumptionController.incomingRequests.accept({
                     requestId: rConsumptionRequest.id,
-                    items: [await AcceptRequestItemParameters.from({})]
+                    items: [AcceptRequestItemParameters.from({})]
                 })
             })
 

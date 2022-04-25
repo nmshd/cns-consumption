@@ -1,14 +1,14 @@
-import { ISerializableAsync, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval"
+import { ISerializable, Serializable, serialize, type, validate } from "@js-soft/ts-serval"
 import { IRelationshipChange, IRelationshipTemplate, RelationshipChange, RelationshipTemplate } from "@nmshd/transport"
 
-export interface ICreateOutgoingRequestFromRelationshipCreationChangeParameters extends ISerializableAsync {
+export interface ICreateOutgoingRequestFromRelationshipCreationChangeParameters extends ISerializable {
     template: IRelationshipTemplate
     creationChange: IRelationshipChange
 }
 
 @type("CreateOutgoingRequestFromRelationshipCreationChangeParameters")
 export class CreateOutgoingRequestFromRelationshipCreationChangeParameters
-    extends SerializableAsync
+    extends Serializable
     implements ICreateOutgoingRequestFromRelationshipCreationChangeParameters
 {
     @serialize()
@@ -19,9 +19,9 @@ export class CreateOutgoingRequestFromRelationshipCreationChangeParameters
     @validate()
     public creationChange: RelationshipChange
 
-    public static override async from(
+    public static from(
         value: ICreateOutgoingRequestFromRelationshipCreationChangeParameters
-    ): Promise<CreateOutgoingRequestFromRelationshipCreationChangeParameters> {
-        return await super.fromT(value, CreateOutgoingRequestFromRelationshipCreationChangeParameters)
+    ): CreateOutgoingRequestFromRelationshipCreationChangeParameters {
+        return this.fromAny(value)
     }
 }

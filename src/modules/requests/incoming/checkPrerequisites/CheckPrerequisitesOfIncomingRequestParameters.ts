@@ -1,22 +1,22 @@
-import { ISerializableAsync, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval"
+import { ISerializable, Serializable, serialize, type, validate } from "@js-soft/ts-serval"
 import { CoreId, ICoreId } from "@nmshd/transport"
 
-export interface ICheckPrerequisitesOfIncomingRequestParameters extends ISerializableAsync {
+export interface ICheckPrerequisitesOfIncomingRequestParameters extends ISerializable {
     requestId: ICoreId
 }
 
 @type("CheckPrerequisitesOfIncomingRequestParameters")
 export class CheckPrerequisitesOfIncomingRequestParameters
-    extends SerializableAsync
+    extends Serializable
     implements ICheckPrerequisitesOfIncomingRequestParameters
 {
     @serialize()
     @validate()
     public requestId: CoreId
 
-    public static override async from(
+    public static from(
         value: ICheckPrerequisitesOfIncomingRequestParameters
-    ): Promise<CheckPrerequisitesOfIncomingRequestParameters> {
-        return await super.fromT(value, CheckPrerequisitesOfIncomingRequestParameters)
+    ): CheckPrerequisitesOfIncomingRequestParameters {
+        return this.fromAny(value)
     }
 }

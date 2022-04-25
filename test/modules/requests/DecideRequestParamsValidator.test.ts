@@ -19,9 +19,9 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
 
         describe("DecideRequestParametersValidator", function () {
             it("fails when number of items is too low", async function () {
-                const consumptionRequest = await ConsumptionRequest.from({
+                const consumptionRequest = ConsumptionRequest.from({
                     id: await CoreId.generate(),
-                    content: await TestObjectFactory.createRequestWithOneItem(),
+                    content: TestObjectFactory.createRequestWithOneItem(),
                     createdAt: CoreDate.utc(),
                     isOwn: true,
                     peer: CoreAddress.from("id1"),
@@ -38,9 +38,9 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                 expect(validationResult.error.message).to.equal("Number of items in Request and Response do not match")
             })
             it("fails when number of items is too high", async function () {
-                const consumptionRequest = await ConsumptionRequest.from({
+                const consumptionRequest = ConsumptionRequest.from({
                     id: await CoreId.generate(),
-                    content: await TestObjectFactory.createRequestWithOneItem(),
+                    content: TestObjectFactory.createRequestWithOneItem(),
                     createdAt: CoreDate.utc(),
                     isOwn: true,
                     peer: CoreAddress.from("id1"),
@@ -51,7 +51,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
 
                 const validationResult = validator.validate(
                     {
-                        items: [await AcceptRequestItemParameters.from({}), await AcceptRequestItemParameters.from({})],
+                        items: [AcceptRequestItemParameters.from({}), AcceptRequestItemParameters.from({})],
                         requestId: consumptionRequest.id
                     },
                     consumptionRequest

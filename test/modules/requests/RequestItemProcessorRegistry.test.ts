@@ -6,21 +6,21 @@ import { TestUtil } from "../../core/TestUtil"
 import { TestRequestItem } from "./testHelpers/TestRequestItem"
 
 class TestRequestItemProcessor extends GenericRequestItemProcessor<TestRequestItem> {
-    public override accept(): Promise<AcceptResponseItem> {
+    public override accept(): AcceptResponseItem {
         throw new Error("Method not implemented.")
     }
 
-    public override reject(): Promise<RejectResponseItem> {
+    public override reject(): RejectResponseItem {
         throw new Error("Method not implemented.")
     }
 }
 
 class TestRequestItemProcessor2 extends GenericRequestItemProcessor<TestRequestItem> {
-    public override accept(): Promise<AcceptResponseItem> {
+    public override accept(): AcceptResponseItem {
         throw new Error("Method not implemented.")
     }
 
-    public override reject(): Promise<RejectResponseItem> {
+    public override reject(): RejectResponseItem {
         throw new Error("Method not implemented.")
     }
 }
@@ -28,8 +28,8 @@ class TestRequestItemProcessor2 extends GenericRequestItemProcessor<TestRequestI
 interface ITestRequestItemWithNoProcessor extends IRequestItem {}
 
 class TestRequestItemWithNoProcessor extends RequestItem {
-    public static override async from(item: ITestRequestItemWithNoProcessor): Promise<TestRequestItemWithNoProcessor> {
-        return await super.fromT(item, TestRequestItemWithNoProcessor)
+    public static from(value: ITestRequestItemWithNoProcessor): TestRequestItemWithNoProcessor {
+        return this.fromAny(value)
     }
 }
 
@@ -65,10 +65,10 @@ export class RequestItemProcessorRegistryTests extends IntegrationTest {
                 expect(processor).to.be.instanceOf(TestRequestItemProcessor2)
             })
 
-            it("getProcessorForItem returns an instance of the registered processor", async function () {
+            it("getProcessorForItem returns an instance of the registered processor", function () {
                 registry.registerProcessor(TestRequestItemProcessor, TestRequestItem)
 
-                const item = await TestRequestItem.from({
+                const item = TestRequestItem.from({
                     mustBeAccepted: true
                 })
 
@@ -78,10 +78,10 @@ export class RequestItemProcessorRegistryTests extends IntegrationTest {
                 expect(processor).to.be.instanceOf(TestRequestItemProcessor)
             })
 
-            it("getProcessorForItem returns a new instance each time", async function () {
+            it("getProcessorForItem returns a new instance each time", function () {
                 registry.registerProcessor(TestRequestItemProcessor, TestRequestItem)
 
-                const item = await TestRequestItem.from({
+                const item = TestRequestItem.from({
                     mustBeAccepted: true
                 })
 
@@ -91,10 +91,10 @@ export class RequestItemProcessorRegistryTests extends IntegrationTest {
                 expect(processor1).to.not.equal(processor2)
             })
 
-            it("getProcessorForItem throws if no Processor was registered for the given Request Item", async function () {
+            it("getProcessorForItem throws if no Processor was registered for the given Request Item", function () {
                 registry.registerProcessor(TestRequestItemProcessor, TestRequestItem)
 
-                const item = await TestRequestItemWithNoProcessor.from({
+                const item = TestRequestItemWithNoProcessor.from({
                     mustBeAccepted: true
                 })
 

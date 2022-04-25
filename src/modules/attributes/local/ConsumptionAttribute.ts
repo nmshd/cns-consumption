@@ -42,12 +42,12 @@ export class ConsumptionAttribute extends CoreSynchronizable implements IConsump
     @serialize()
     public metadataModifiedAt?: CoreDate
 
-    public static override async from(value: IConsumptionAttribute): Promise<ConsumptionAttribute> {
-        return (await super.from(value, ConsumptionAttribute)) as ConsumptionAttribute
+    public static from(value: IConsumptionAttribute): ConsumptionAttribute {
+        return this.fromAny(value)
     }
 
     public static async fromAttribute(attribute: IAttribute): Promise<ConsumptionAttribute> {
-        return await this.from({
+        return this.from({
             content: Attribute.from(attribute),
             id: await ConsumptionIds.attribute.generate(),
             createdAt: CoreDate.utc()
