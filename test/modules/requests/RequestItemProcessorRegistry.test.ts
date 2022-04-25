@@ -42,6 +42,18 @@ export class RequestItemProcessorRegistryTests extends IntegrationTest {
         })
 
         describe("RequestItemProcessorRegistry", function () {
+            it("can be created with a map of processors", function () {
+                const registry = new RequestItemProcessorRegistry([
+                    {
+                        itemConstructor: TestRequestItem,
+                        processorConstructor: TestRequestItemProcessor
+                    }
+                ])
+
+                const processor = registry.getProcessorForItem(TestRequestItem.from({ mustBeAccepted: false }))
+                expect(processor).to.exist
+            })
+
             // The following test is considered as passed when no exception occurs
             // eslint-disable-next-line jest/expect-expect
             it("registerProcessorForType can register processors", function () {

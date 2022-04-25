@@ -5,7 +5,7 @@ import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import { SimpleLoggerFactory } from "@js-soft/simple-logger"
 import { ISerializable, Serializable } from "@js-soft/ts-serval"
 import { sleep } from "@js-soft/ts-utils"
-import { ConsumptionController } from "@nmshd/consumption"
+import { ConsumptionController, ProcessorConstructor, RequestItemConstructor } from "@nmshd/consumption"
 import { CoreBuffer } from "@nmshd/crypto"
 import {
     AccountController,
@@ -170,19 +170,27 @@ export class TestUtil {
 
     public static async provideAccounts(
         transport: Transport,
-        count: number
+        count: number,
+        requestItemProcessors: {
+            processorConstructor: ProcessorConstructor
+            itemConstructor: RequestItemConstructor
+        }[] = []
     ): Promise<{ accountController: AccountController; consumptionController: ConsumptionController }[]> {
         const accounts = []
 
         for (let i = 0; i < count; i++) {
-            accounts.push(await this.createAccount(transport))
+            accounts.push(await this.createAccount(transport, requestItemProcessors))
         }
 
         return accounts
     }
 
     private static async createAccount(
-        transport: Transport
+        transport: Transport,
+        requestItemProcessors: {
+            processorConstructor: ProcessorConstructor
+            itemConstructor: RequestItemConstructor
+        }[]
     ): Promise<{ accountController: AccountController; consumptionController: ConsumptionController }> {
         const randomId = Math.random().toString(36).substring(7)
         const db: IDatabaseCollectionProvider = await transport.createDatabase(`acc-${randomId}`)
@@ -190,7 +198,9 @@ export class TestUtil {
         const accountController: AccountController = new AccountController(transport, db, transport.config)
         await accountController.init()
 
-        const consumptionController = await new ConsumptionController(transport, accountController).init()
+        const consumptionController = await new ConsumptionController(transport, accountController).init(
+            requestItemProcessors
+        )
 
         return { accountController, consumptionController }
     }
