@@ -34,10 +34,7 @@ import {
 } from "./complete/CompleteIncomingRequestParameters"
 import { AcceptRequestItemParameters } from "./decide/AcceptRequestItemParameters"
 import { AcceptRequestParameters, IAcceptRequestParameters } from "./decide/AcceptRequestParameters"
-import {
-    DecideRequestItemGroupParameters,
-    IDecideRequestItemGroupParameters
-} from "./decide/DecideRequestItemGroupParameters"
+import { DecideRequestItemGroupParameters } from "./decide/DecideRequestItemGroupParameters"
 import { DecideRequestItemParameters, IDecideRequestItemParameters } from "./decide/DecideRequestItemParameters"
 import { DecideRequestParameters } from "./decide/DecideRequestParameters"
 import { RejectRequestItemParameters } from "./decide/RejectRequestItemParameters"
@@ -312,17 +309,16 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     }
 
     private async decideItems(
-        params: (IDecideRequestItemParameters | IDecideRequestItemGroupParameters)[],
+        params: (DecideRequestItemParameters | DecideRequestItemGroupParameters)[],
         requestItems: (RequestItemGroup | RequestItem)[]
     ) {
         const responseItems: (ResponseItem | ResponseItemGroup)[] = []
 
         for (let i = 0; i < params.length; i++) {
             const itemParam = params[i]
-
             if (itemParam instanceof DecideRequestItemParameters) {
                 responseItems.push(await this.decideItem(itemParam, requestItems[i] as RequestItem))
-            } else if (itemParam instanceof DecideRequestItemGroupParameters) {
+            } else {
                 responseItems.push(await this.decideGroup(itemParam, requestItems[i] as RequestItemGroup))
             }
         }
