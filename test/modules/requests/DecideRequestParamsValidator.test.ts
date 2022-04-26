@@ -6,9 +6,9 @@ import {
     DecideRequestItemGroupParameters,
     DecideRequestParametersValidator
 } from "@nmshd/consumption"
-import { IRequest } from "@nmshd/content"
 import { CoreAddress, CoreDate, CoreId } from "@nmshd/transport"
 import { expect } from "chai"
+import itParam from "mocha-param"
 import { UnitTest } from "../../core/UnitTest"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
 
@@ -21,129 +21,164 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
         })
 
         describe("DecideRequestParametersValidator", function () {
-            it("fails when this id is incorrect", async function () {
-                const consumptionRequest = await createConsumptionRequest(TestObjectFactory.createRequestWithOneItem())
+            const requestId = CoreId.from("requestId")
 
-                const validationResult = validator.validate(
-                    AcceptRequestParameters.fromAny({
-                        items: [AcceptRequestItemParameters.from({})],
-                        requestId: CoreId.from("invalid")
-                    }),
-                    consumptionRequest
-                )
-                expect(validationResult.isError).to.be.true
-                expect(validationResult.error.code).to.equal("error.requests.decide.validation.invalidRequestId")
-                expect(validationResult.error.message).to.equal(
-                    "The id of the request does not match the id of the response"
-                )
-            })
+            const params = [
+                {
+                    input: {
+                        request: TestObjectFactory.createRequestWithOneItem(),
+                        response: AcceptRequestParameters.fromAny({
+                            items: [AcceptRequestItemParameters.from({})],
+                            requestId
+                        })
+                    },
+                    expect: { valid: true }
+                },
+                {
+                    input: {
+                        request: TestObjectFactory.createRequestWithOneItemGroup(),
+                        response: AcceptRequestParameters.fromAny({
+                            items: [
+                                DecideRequestItemGroupParameters.from({ items: [AcceptRequestItemParameters.from({})] })
+                            ],
+                            requestId
+                        })
+                    },
+                    expect: { valid: true }
+                },
+                {
+                    input: {
+                        request: TestObjectFactory.createRequestWithOneItem(),
+                        response: AcceptRequestParameters.fromAny({
+                            items: [AcceptRequestItemParameters.from({})],
+                            requestId: CoreId.from("invalid")
+                        })
+                    },
+                    expect: {
+                        valid: false,
+                        error: {
+                            code: "error.requests.decide.validation.invalidRequestId",
+                            message: "The id of the request does not match the id of the response"
+                        }
+                    }
+                },
+                {
+                    input: {
+                        request: TestObjectFactory.createRequestWithTwoItems(),
+                        response: AcceptRequestParameters.fromAny({
+                            items: [{}],
+                            requestId
+                        })
+                    },
+                    expect: {
+                        valid: false,
+                        error: {
+                            code: "error.requests.decide.validation.invalidNumberOfItems",
+                            message: "Number of items in Request and Response do not match"
+                        }
+                    }
+                },
+                {
+                    input: {
+                        request: TestObjectFactory.createRequestWithOneItem(),
+                        response: AcceptRequestParameters.fromAny({
+                            items: [AcceptRequestItemParameters.from({}), AcceptRequestItemParameters.from({})],
+                            requestId
+                        })
+                    },
+                    expect: {
+                        valid: false,
+                        error: {
+                            code: "error.requests.decide.validation.invalidNumberOfItems",
+                            message: "Number of items in Request and Response do not match"
+                        }
+                    }
+                },
+                {
+                    input: {
+                        request: TestObjectFactory.createRequestWithOneItemGroup(),
+                        response: AcceptRequestParameters.fromAny({
+                            items: [AcceptRequestItemParameters.from({})],
+                            requestId
+                        })
+                    },
+                    expect: {
+                        valid: false,
+                        error: {
+                            code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
+                            message:
+                                /The RequestItemGroup with index '.*' was answered as a RequestItem. Please use DecideRequestItemGroupParameters instead./
+                        }
+                    }
+                },
+                {
+                    input: {
+                        request: TestObjectFactory.createRequestWithOneItem(),
+                        response: AcceptRequestParameters.fromAny({
+                            items: [
+                                DecideRequestItemGroupParameters.from({ items: [AcceptRequestItemParameters.from({})] })
+                            ],
+                            requestId
+                        })
+                    },
+                    expect: {
+                        valid: false,
+                        error: {
+                            code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
+                            message:
+                                /The RequestItem with index '.*' was answered as a RequestItemGroup. Please use DecideRequestItemParameters instead./
+                        }
+                    }
+                },
+                {
+                    input: {
+                        request: TestObjectFactory.createRequestWithOneItemGroup(),
+                        response: AcceptRequestParameters.fromAny({
+                            items: [
+                                DecideRequestItemGroupParameters.from({
+                                    items: [AcceptRequestItemParameters.from({}), AcceptRequestItemParameters.from({})]
+                                })
+                            ],
+                            requestId
+                        })
+                    },
+                    expect: {
+                        valid: false,
+                        error: {
+                            code: "error.requests.decide.validation.invalidNumberOfItems",
+                            message: "Number of items in RequestItemGroup and ResponseItemGroup do not match"
+                        }
+                    }
+                }
+            ]
 
-            it("fails when number of items in the response is lower than the items in the request", async function () {
-                const consumptionRequest = await createConsumptionRequest(TestObjectFactory.createRequestWithTwoItems())
+            itParam("should validate request parameters", params, async function (data) {
+                const consumptionRequest = ConsumptionRequest.from({
+                    id: requestId,
+                    content: data.input.request,
+                    createdAt: CoreDate.utc(),
+                    isOwn: true,
+                    peer: CoreAddress.from("id1"),
+                    source: { reference: await CoreId.generate(), type: "Message" },
+                    status: ConsumptionRequestStatus.Open,
+                    statusLog: []
+                })
 
-                const validationResult = validator.validate(
-                    AcceptRequestParameters.fromAny({ items: [{}], requestId: consumptionRequest.id }),
-                    consumptionRequest
-                )
-                expect(validationResult.isError).to.be.true
-                expect(validationResult.error.code).to.equal("error.requests.decide.validation.invalidNumberOfItems")
-                expect(validationResult.error.message).to.equal("Number of items in Request and Response do not match")
-            })
+                const validationResult = validator.validate(data.input.response, consumptionRequest)
 
-            it("fails when number of items in the response is higher than the items in the request", async function () {
-                const consumptionRequest = await createConsumptionRequest(TestObjectFactory.createRequestWithOneItem())
+                expect(validationResult.isSuccess).to.equal(data.expect.valid)
 
-                const validationResult = validator.validate(
-                    AcceptRequestParameters.fromAny({
-                        items: [AcceptRequestItemParameters.from({}), AcceptRequestItemParameters.from({})],
-                        requestId: consumptionRequest.id
-                    }),
-                    consumptionRequest
-                )
-                expect(validationResult.isError).to.be.true
-                expect(validationResult.error.code).to.equal("error.requests.decide.validation.invalidNumberOfItems")
-                expect(validationResult.error.message).to.equal("Number of items in Request and Response do not match")
-            })
+                if (!data.expect.error) return
 
-            it("fails when a RequestItemGroup is answered with parameters for a RequestItem", async function () {
-                const consumptionRequest = await createConsumptionRequest(
-                    TestObjectFactory.createRequestWithOneItemGroup()
-                )
+                expect(validationResult.error.code).to.equal(data.expect.error.code)
 
-                const validationResult = validator.validate(
-                    AcceptRequestParameters.fromAny({
-                        items: [AcceptRequestItemParameters.from({})],
-                        requestId: consumptionRequest.id
-                    }),
-                    consumptionRequest
-                )
-                expect(validationResult.isError).to.be.true
-                expect(validationResult.error.code).to.equal(
-                    "error.requests.decide.validation.invalidResponseItemForRequestItem"
-                )
-                expect(validationResult.error.message).to.match(
-                    /The RequestItemGroup '.*' was answered as a RequestItem. Please use DecideRequestItemGroupParameters instead./
-                )
-            })
-
-            it("fails when a RequestItem is answered with parameters for a RequestItemGroup", async function () {
-                const consumptionRequest = await createConsumptionRequest(TestObjectFactory.createRequestWithOneItem())
-
-                const validationResult = validator.validate(
-                    AcceptRequestParameters.fromAny({
-                        items: [
-                            DecideRequestItemGroupParameters.from({ items: [AcceptRequestItemParameters.from({})] })
-                        ],
-                        requestId: consumptionRequest.id
-                    }),
-                    consumptionRequest
-                )
-                expect(validationResult.isError).to.be.true
-                expect(validationResult.error.code).to.equal(
-                    "error.requests.decide.validation.invalidResponseItemForRequestItem"
-                )
-                expect(validationResult.error.message).to.match(
-                    /The RequestItem '.*' was answered as a RequestItemGroup. Please use DecideRequestItemParameters instead./
-                )
-            })
-
-            it("fails when a RequestItemGroup is responded with a parameters for a RequestItemGroup with the wrong number of items", async function () {
-                const consumptionRequest = await createConsumptionRequest(
-                    TestObjectFactory.createRequestWithOneItemGroup()
-                )
-
-                const validationResult = validator.validate(
-                    AcceptRequestParameters.fromAny({
-                        items: [
-                            DecideRequestItemGroupParameters.from({
-                                items: [AcceptRequestItemParameters.from({}), AcceptRequestItemParameters.from({})]
-                            })
-                        ],
-                        requestId: consumptionRequest.id
-                    }),
-                    consumptionRequest
-                )
-                expect(validationResult.isError).to.be.true
-                expect(validationResult.error.code).to.equal("error.requests.decide.validation.invalidNumberOfItems")
-                expect(validationResult.error.message).to.equal(
-                    "Number of items in RequestItemGroup and ResponseItemGroup do not match"
-                )
+                const message = data.expect.error.message
+                if (message instanceof RegExp) {
+                    expect(validationResult.error.message).to.match(data.expect.error.message as RegExp)
+                } else {
+                    expect(validationResult.error.message).to.equal(data.expect.error.message)
+                }
             })
         })
     }
-}
-
-async function createConsumptionRequest(content: IRequest): Promise<ConsumptionRequest> {
-    const consumptionRequest = ConsumptionRequest.from({
-        id: await CoreId.generate(),
-        content: content,
-        createdAt: CoreDate.utc(),
-        isOwn: true,
-        peer: CoreAddress.from("id1"),
-        source: { reference: await CoreId.generate(), type: "Message" },
-        status: ConsumptionRequestStatus.Open,
-        statusLog: []
-    })
-
-    return consumptionRequest
 }

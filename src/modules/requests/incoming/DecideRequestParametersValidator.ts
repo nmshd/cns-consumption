@@ -25,10 +25,10 @@ export class DecideRequestParametersValidator {
             const responseItem = params.items[i]
 
             if (requestItem instanceof RequestItem) {
-                const valid = this.checkResponseForRequestItem(requestItem, responseItem)
+                const valid = this.checkResponseForRequestItem(requestItem, responseItem, i)
                 if (valid.isError) return valid
             } else if (requestItem instanceof RequestItemGroup) {
-                const valid = this.checkResponseForRequestItemGroup(requestItem, responseItem)
+                const valid = this.checkResponseForRequestItemGroup(requestItem, responseItem, i)
                 if (valid.isError) return valid
             }
         }
@@ -38,15 +38,14 @@ export class DecideRequestParametersValidator {
 
     private checkResponseForRequestItem(
         requestItem: RequestItem,
-        response: DecideRequestItemParameters | DecideRequestItemGroupParameters
+        response: DecideRequestItemParameters | DecideRequestItemGroupParameters,
+        index: number
     ): Result<void> {
         if (response instanceof DecideRequestItemGroupParameters) {
             return Result.fail(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    `The RequestItem '${JSON.stringify(
-                        requestItem.toJSON()
-                    )}' was answered as a RequestItemGroup. Please use DecideRequestItemParameters instead.`
+                    `The RequestItem with index '${index}' was answered as a RequestItemGroup. Please use DecideRequestItemParameters instead.`
                 )
             )
         }
@@ -56,15 +55,14 @@ export class DecideRequestParametersValidator {
 
     private checkResponseForRequestItemGroup(
         requestItem: RequestItemGroup,
-        response: DecideRequestItemParameters | DecideRequestItemGroupParameters
+        response: DecideRequestItemParameters | DecideRequestItemGroupParameters,
+        index: number
     ): Result<void> {
         if (response instanceof DecideRequestItemParameters) {
             return Result.fail(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    `The RequestItemGroup '${JSON.stringify(
-                        requestItem.toJSON()
-                    )}' was answered as a RequestItem. Please use DecideRequestItemGroupParameters instead.`
+                    `The RequestItemGroup with index '${index}' was answered as a RequestItem. Please use DecideRequestItemGroupParameters instead.`
                 )
             )
         }
