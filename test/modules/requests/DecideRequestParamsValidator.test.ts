@@ -1,9 +1,9 @@
 import {
     AcceptRequestItemParameters,
+    AcceptRequestParameters,
     ConsumptionRequest,
     ConsumptionRequestStatus,
     DecideRequestItemGroupParameters,
-    DecideRequestParameters,
     DecideRequestParametersValidator
 } from "@nmshd/consumption"
 import { IRequest } from "@nmshd/content"
@@ -12,11 +12,8 @@ import { expect } from "chai"
 import { UnitTest } from "../../core/UnitTest"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
 
-class TestDecideRequestParameters extends DecideRequestParameters {}
-
 export class DecideRequestParametersValidatorTests extends UnitTest {
     public run(): void {
-        const that = this
         let validator: DecideRequestParametersValidator
 
         beforeEach(function () {
@@ -25,12 +22,10 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
 
         describe("DecideRequestParametersValidator", function () {
             it("fails when this id is incorrect", async function () {
-                const consumptionRequest = await that.createConsumptionRequest(
-                    TestObjectFactory.createRequestWithOneItem()
-                )
+                const consumptionRequest = await createConsumptionRequest(TestObjectFactory.createRequestWithOneItem())
 
                 const validationResult = validator.validate(
-                    TestDecideRequestParameters.fromAny({
+                    AcceptRequestParameters.fromAny({
                         items: [AcceptRequestItemParameters.from({})],
                         requestId: CoreId.from("invalid")
                     }),
@@ -42,26 +37,22 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                 )
             })
 
-            it("fails when number of items is too low", async function () {
-                const consumptionRequest = await that.createConsumptionRequest(
-                    TestObjectFactory.createRequestWithTwoItems()
-                )
+            it("fails when number of items in the response is lower than the items in the request", async function () {
+                const consumptionRequest = await createConsumptionRequest(TestObjectFactory.createRequestWithTwoItems())
 
                 const validationResult = validator.validate(
-                    TestDecideRequestParameters.fromAny({ items: [{}], requestId: consumptionRequest.id }),
+                    AcceptRequestParameters.fromAny({ items: [{}], requestId: consumptionRequest.id }),
                     consumptionRequest
                 )
                 expect(validationResult.isError).to.be.true
                 expect(validationResult.error.message).to.equal("Number of items in Request and Response do not match")
             })
 
-            it("fails when number of items is too high", async function () {
-                const consumptionRequest = await that.createConsumptionRequest(
-                    TestObjectFactory.createRequestWithOneItem()
-                )
+            it("fails when number of items in the response is higher than the items in the request", async function () {
+                const consumptionRequest = await createConsumptionRequest(TestObjectFactory.createRequestWithOneItem())
 
                 const validationResult = validator.validate(
-                    TestDecideRequestParameters.fromAny({
+                    AcceptRequestParameters.fromAny({
                         items: [AcceptRequestItemParameters.from({}), AcceptRequestItemParameters.from({})],
                         requestId: consumptionRequest.id
                     }),
@@ -71,13 +62,13 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                 expect(validationResult.error.message).to.equal("Number of items in Request and Response do not match")
             })
 
-            it("fails when a GroupRequest is responded with a single response", async function () {
-                const consumptionRequest = await that.createConsumptionRequest(
+            it("fails when a RequestItemGroup is answered with parameters for a RequestItem", async function () {
+                const consumptionRequest = await createConsumptionRequest(
                     TestObjectFactory.createRequestWithOneItemGroup()
                 )
 
                 const validationResult = validator.validate(
-                    TestDecideRequestParameters.fromAny({
+                    AcceptRequestParameters.fromAny({
                         items: [AcceptRequestItemParameters.from({})],
                         requestId: consumptionRequest.id
                     }),
@@ -89,13 +80,11 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                 )
             })
 
-            it("fails when a Request is responded with a group response", async function () {
-                const consumptionRequest = await that.createConsumptionRequest(
-                    TestObjectFactory.createRequestWithOneItem()
-                )
+            it("fails when a RequestItem is answered with parameters for a RequestItemGroup", async function () {
+                const consumptionRequest = await createConsumptionRequest(TestObjectFactory.createRequestWithOneItem())
 
                 const validationResult = validator.validate(
-                    TestDecideRequestParameters.fromAny({
+                    AcceptRequestParameters.fromAny({
                         items: [
                             DecideRequestItemGroupParameters.from({ items: [AcceptRequestItemParameters.from({})] })
                         ],
@@ -109,13 +98,13 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                 )
             })
 
-            it("fails when a GroupRequest is responded with a group response with the wrong number of items", async function () {
-                const consumptionRequest = await that.createConsumptionRequest(
+            it("fails when a RequestItemGroup is responded with a parameters for a RequestItemGroup with the wrong number of items", async function () {
+                const consumptionRequest = await createConsumptionRequest(
                     TestObjectFactory.createRequestWithOneItemGroup()
                 )
 
                 const validationResult = validator.validate(
-                    TestDecideRequestParameters.fromAny({
+                    AcceptRequestParameters.fromAny({
                         items: [
                             DecideRequestItemGroupParameters.from({
                                 items: [AcceptRequestItemParameters.from({}), AcceptRequestItemParameters.from({})]
@@ -132,19 +121,19 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
             })
         })
     }
+}
 
-    private async createConsumptionRequest(content: IRequest): Promise<ConsumptionRequest> {
-        const consumptionRequest = ConsumptionRequest.from({
-            id: await CoreId.generate(),
-            content: content,
-            createdAt: CoreDate.utc(),
-            isOwn: true,
-            peer: CoreAddress.from("id1"),
-            source: { reference: await CoreId.generate(), type: "Message" },
-            status: ConsumptionRequestStatus.Open,
-            statusLog: []
-        })
+async function createConsumptionRequest(content: IRequest): Promise<ConsumptionRequest> {
+    const consumptionRequest = ConsumptionRequest.from({
+        id: await CoreId.generate(),
+        content: content,
+        createdAt: CoreDate.utc(),
+        isOwn: true,
+        peer: CoreAddress.from("id1"),
+        source: { reference: await CoreId.generate(), type: "Message" },
+        status: ConsumptionRequestStatus.Open,
+        statusLog: []
+    })
 
-        return consumptionRequest
-    }
+    return consumptionRequest
 }
