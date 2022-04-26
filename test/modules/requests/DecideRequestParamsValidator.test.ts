@@ -32,6 +32,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     consumptionRequest
                 )
                 expect(validationResult.isError).to.be.true
+                expect(validationResult.error.code).to.equal("error.requests.decide.validation.invalidRequestId")
                 expect(validationResult.error.message).to.equal(
                     "The id of the request does not match the id of the response"
                 )
@@ -45,6 +46,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     consumptionRequest
                 )
                 expect(validationResult.isError).to.be.true
+                expect(validationResult.error.code).to.equal("error.requests.decide.validation.invalidNumberOfItems")
                 expect(validationResult.error.message).to.equal("Number of items in Request and Response do not match")
             })
 
@@ -59,6 +61,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     consumptionRequest
                 )
                 expect(validationResult.isError).to.be.true
+                expect(validationResult.error.code).to.equal("error.requests.decide.validation.invalidNumberOfItems")
                 expect(validationResult.error.message).to.equal("Number of items in Request and Response do not match")
             })
 
@@ -75,6 +78,9 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     consumptionRequest
                 )
                 expect(validationResult.isError).to.be.true
+                expect(validationResult.error.code).to.equal(
+                    "error.requests.decide.validation.invalidResponseItemForRequestItem"
+                )
                 expect(validationResult.error.message).to.match(
                     /The RequestItemGroup '.*' was answered as a RequestItem. Please use DecideRequestItemGroupParameters instead./
                 )
@@ -93,6 +99,9 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     consumptionRequest
                 )
                 expect(validationResult.isError).to.be.true
+                expect(validationResult.error.code).to.equal(
+                    "error.requests.decide.validation.invalidResponseItemForRequestItem"
+                )
                 expect(validationResult.error.message).to.match(
                     /The RequestItem '.*' was answered as a RequestItemGroup. Please use DecideRequestItemParameters instead./
                 )
@@ -115,6 +124,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     consumptionRequest
                 )
                 expect(validationResult.isError).to.be.true
+                expect(validationResult.error.code).to.equal("error.requests.decide.validation.invalidNumberOfItems")
                 expect(validationResult.error.message).to.equal(
                     "Number of items in RequestItemGroup and ResponseItemGroup do not match"
                 )
