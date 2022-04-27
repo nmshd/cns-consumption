@@ -38,23 +38,23 @@ export class TestObjectFactory {
         return this.createRequestWithOneItem()
     }
 
-    public static createRequestWithOneItem(properties: Partial<Request> = {}): Request {
+    public static createRequestWithOneItem(properties: Partial<Request> = {}, mustBeAccepted = false): Request {
         return Request.from({
             items: [
                 TestRequestItem.from({
-                    mustBeAccepted: false
+                    mustBeAccepted: mustBeAccepted
                 })
             ],
             ...properties
         })
     }
 
-    public static createRequestWithOneItemGroup(properties: Partial<Request> = {}): Request {
+    public static createRequestWithOneItemGroup(properties: Partial<Request> = {}, mustBeAccepted = false): Request {
         return Request.from({
             items: [
                 RequestItemGroup.from({
-                    items: [TestRequestItem.from({ mustBeAccepted: false })],
-                    mustBeAccepted: false
+                    items: [TestRequestItem.from({ mustBeAccepted: mustBeAccepted })],
+                    mustBeAccepted: mustBeAccepted
                 })
             ],
             ...properties
