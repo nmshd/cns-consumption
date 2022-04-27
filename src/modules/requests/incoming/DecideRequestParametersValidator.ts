@@ -1,6 +1,8 @@
 import { ApplicationError, Result } from "@js-soft/ts-utils"
 import { RequestItem, RequestItemGroup } from "@nmshd/content"
 import { ConsumptionRequest } from "../local/ConsumptionRequest"
+import { AcceptRequestItemParameters } from "./decide/AcceptRequestItemParameters"
+import { AcceptRequestParameters } from "./decide/AcceptRequestParameters"
 import { DecideRequestItemGroupParameters } from "./decide/DecideRequestItemGroupParameters"
 import { DecideRequestItemParameters } from "./decide/DecideRequestItemParameters"
 import { DecideRequestParameters } from "./decide/DecideRequestParameters"
@@ -20,26 +22,39 @@ export class DecideRequestParametersValidator {
             return Result.fail(this.invalidNumberOfItemsError("Number of items in Request and Response do not match"))
         }
 
-        for (let i = 0; i < params.items.length; i++) {
-            const requestItem = request.content.items[i]
-            const responseItem = params.items[i]
+        const isRequestAccepted = params instanceof AcceptRequestParameters
 
-            if (requestItem instanceof RequestItem) {
-                const valid = this.checkResponseForRequestItem(requestItem, responseItem, i)
-                if (valid.isError) return valid
-            } else if (requestItem instanceof RequestItemGroup) {
-                const valid = this.checkResponseForRequestItemGroup(requestItem, responseItem, i)
-                if (valid.isError) return valid
-            }
+        for (let i = 0; i < params.items.length; i++) {
+            const validationResult = this.checkItemOrGroup(
+                request.content.items[i],
+                params.items[i],
+                i.toString(),
+                isRequestAccepted
+            )
+            if (validationResult.isError) return validationResult
         }
 
         return Result.ok(undefined)
     }
 
-    private checkResponseForRequestItem(
+    private checkItemOrGroup(
+        requestItem: RequestItem | RequestItemGroup,
+        responseItem: DecideRequestItemParameters | DecideRequestItemGroupParameters,
+        index: string,
+        parentAccepted: boolean
+    ): Result<void> {
+        if (requestItem instanceof RequestItem) {
+            return this.checkItem(requestItem, responseItem, index, parentAccepted)
+        }
+
+        return this.checkItemGroup(requestItem, responseItem, index, parentAccepted)
+    }
+
+    private checkItem(
         requestItem: RequestItem,
         response: DecideRequestItemParameters | DecideRequestItemGroupParameters,
-        index: number
+        index: string,
+        parentAccepted: boolean
     ): Result<void> {
         if (response instanceof DecideRequestItemGroupParameters) {
             return Result.fail(
@@ -50,15 +65,25 @@ export class DecideRequestParametersValidator {
             )
         }
 
+        if (parentAccepted && requestItem.mustBeAccepted && !(response instanceof AcceptRequestItemParameters)) {
+            return Result.fail(
+                new ApplicationError(
+                    "error.requests.decide.validation.invalidResponseItemForRequestItem",
+                    `The RequestItem with index '${index}' that is flagged as required was not accepted. Please use AcceptRequestItemParameters instead.`
+                )
+            )
+        }
+
         return Result.ok(undefined)
     }
 
-    private checkResponseForRequestItemGroup(
-        requestItem: RequestItemGroup,
-        response: DecideRequestItemParameters | DecideRequestItemGroupParameters,
-        index: number
+    private checkItemGroup(
+        requestItemGroup: RequestItemGroup,
+        responseItemGroup: DecideRequestItemParameters | DecideRequestItemGroupParameters,
+        index: string,
+        parentAccepted: boolean
     ): Result<void> {
-        if (response instanceof DecideRequestItemParameters) {
+        if (responseItemGroup instanceof DecideRequestItemParameters) {
             return Result.fail(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
@@ -67,10 +92,20 @@ export class DecideRequestParametersValidator {
             )
         }
 
-        if (response.items.length !== requestItem.items.length) {
+        if (responseItemGroup.items.length !== requestItemGroup.items.length) {
             return Result.fail(
                 this.invalidNumberOfItemsError("Number of items in RequestItemGroup and ResponseItemGroup do not match")
             )
+        }
+
+        for (let i = 0; i < responseItemGroup.items.length; i++) {
+            const validationResult = this.checkItem(
+                requestItemGroup.items[i],
+                responseItemGroup.items[i],
+                `${index}.${i}`,
+                parentAccepted && requestItemGroup.mustBeAccepted
+            )
+            if (validationResult.isError) return validationResult
         }
 
         return Result.ok(undefined)
