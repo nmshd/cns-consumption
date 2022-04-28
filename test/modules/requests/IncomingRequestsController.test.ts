@@ -311,7 +311,6 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                             acceptParams: {
                                 items: [
                                     {
-                                        decision: RequestItemDecision.Accept,
                                         items: [
                                             {
                                                 decision: RequestItemDecision.Accept
@@ -820,13 +819,12 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await When.iRejectTheRequest({
                         items: [
                             {
-                                decision: RequestItemDecision.Accept
+                                decision: RequestItemDecision.Reject
                             },
                             {
-                                decision: RequestItemDecision.Reject,
                                 items: [
                                     {
-                                        decision: RequestItemDecision.Accept
+                                        decision: RequestItemDecision.Reject
                                     }
                                 ]
                             } as DecideRequestItemGroupParametersJSON
