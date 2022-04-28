@@ -113,12 +113,32 @@ export class DecideRequestParametersValidator {
             )
         }
 
+        const isGroupAccepted = responseItemGroup.items.some((value) => value.decision === RequestItemDecision.Accept)
+
+        if (!parentAccepted && isGroupAccepted) {
+            return Result.fail(
+                new ApplicationError(
+                    "error.requests.decide.validation.invalidResponseItemForRequestItem",
+                    `The RequestItemGroup with index '${index}' was accepted, but the parent was not accepted.`
+                )
+            )
+        }
+
+        if (parentAccepted && requestItemGroup.mustBeAccepted && !isGroupAccepted) {
+            return Result.fail(
+                new ApplicationError(
+                    "error.requests.decide.validation.invalidResponseItemForRequestItem",
+                    `The RequestItemGroup with index '${index}' that is flagged as required was not accepted. Please accept all required items in this group.`
+                )
+            )
+        }
+
         for (let i = 0; i < responseItemGroup.items.length; i++) {
             const validationResult = this.checkItem(
                 requestItemGroup.items[i],
                 responseItemGroup.items[i],
                 `${index}.${i}`,
-                parentAccepted
+                isGroupAccepted
             )
             if (validationResult.isError) return validationResult
         }

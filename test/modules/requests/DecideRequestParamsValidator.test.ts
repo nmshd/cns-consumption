@@ -6,12 +6,13 @@ import {
     RequestDecision,
     RequestItemDecision
 } from "@nmshd/consumption"
-import { Request } from "@nmshd/content"
+import { Request, RequestItemGroup } from "@nmshd/content"
 import { CoreAddress, CoreDate, CoreId } from "@nmshd/transport"
 import { expect } from "chai"
 import itParam from "mocha-param"
 import { UnitTest } from "../../core/UnitTest"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
+import { TestRequestItem } from "./testHelpers/TestRequestItem"
 
 interface TestParam {
     description: string
@@ -209,7 +210,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     expectedError: {
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message:
-                            "The RequestItem with index '0.0' that is flagged as required was not accepted. Please use AcceptRequestItemParameters instead."
+                            "The RequestItemGroup with index '0' that is flagged as required was not accepted. Please accept all required items in this group."
                     }
                 },
                 {
@@ -240,14 +241,70 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     },
                     expectedError: {
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
+                        message: "The RequestItemGroup with index '0' was accepted, but the parent was not accepted."
+                    }
+                },
+                {
+                    description: "(15) error: accepting a group but not accepting all required items in the group",
+                    input: {
+                        request: Request.from({
+                            items: [
+                                RequestItemGroup.from({
+                                    items: [
+                                        TestRequestItem.from({ mustBeAccepted: true }),
+                                        TestRequestItem.from({ mustBeAccepted: true })
+                                    ],
+                                    mustBeAccepted: false
+                                })
+                            ]
+                        }),
+                        response: {
+                            items: [
+                                {
+                                    items: [
+                                        { decision: RequestItemDecision.Accept },
+                                        { decision: RequestItemDecision.Reject }
+                                    ]
+                                }
+                            ],
+                            requestId,
+                            decision: RequestDecision.Accept
+                        }
+                    },
+                    expectedError: {
+                        code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message:
-                            "The RequestItem with index '0.0' was answered as an AcceptRequestItemParameters, but the parent was not accepted."
+                            "The RequestItem with index '0.1' that is flagged as required was not accepted. Please use AcceptRequestItemParameters instead."
+                    }
+                },
+                {
+                    description: "(15) success: items that must not be accepted in a group are rejected",
+                    input: {
+                        request: Request.from({
+                            items: [
+                                RequestItemGroup.from({
+                                    items: [
+                                        TestRequestItem.from({ mustBeAccepted: false }),
+                                        TestRequestItem.from({ mustBeAccepted: true })
+                                    ],
+                                    mustBeAccepted: false
+                                })
+                            ]
+                        }),
+                        response: {
+                            items: [
+                                {
+                                    items: [
+                                        { decision: RequestItemDecision.Reject },
+                                        { decision: RequestItemDecision.Accept }
+                                    ]
+                                }
+                            ],
+                            requestId,
+                            decision: RequestDecision.Accept
+                        }
                     }
                 }
-                // TODO: wenn mind. 1 Item in einer Gruppe akzeptiert ist, und die Gruppe mustBeAccepted ist, müssen alle Items in der Gruppe, die mustBeAccepted sind, akzeptiert werden
-                // {
-                //     description: "(15) success: rejecting"
-                // }
             ]
 
             itParam("${value.description}", params, async function (data) {
