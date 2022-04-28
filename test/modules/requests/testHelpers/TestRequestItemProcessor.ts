@@ -1,22 +1,18 @@
 import {
-    AcceptRequestItemParameters,
+    AcceptRequestItemParametersJSON,
     GenericRequestItemProcessor,
-    RejectRequestItemParameters,
+    RejectRequestItemParametersJSON,
     ValidationResult
 } from "@nmshd/consumption"
 import { AcceptResponseItem, RejectResponseItem, ResponseItem } from "@nmshd/content"
 import { TestRequestItem } from "./TestRequestItem"
 
-export class TestRequestItemProcessor extends GenericRequestItemProcessor<
-    TestRequestItem,
-    AcceptRequestItemParameters,
-    RejectRequestItemParameters
-> {
+export class TestRequestItemProcessor extends GenericRequestItemProcessor<TestRequestItem> {
     public static numberOfApplyIncomingResponseItemCalls = 0
 
     public override canAccept(
         _requestItem: TestRequestItem,
-        _params: AcceptRequestItemParameters
+        _params: AcceptRequestItemParametersJSON
     ): Promise<ValidationResult> {
         if (_requestItem.shouldFailAtCanAccept) {
             return Promise.resolve(ValidationResult.error("aCode", "aMessage"))
@@ -25,17 +21,17 @@ export class TestRequestItemProcessor extends GenericRequestItemProcessor<
     }
 
     public override canReject(
-        _requestItem: TestRequestItem,
-        _params: AcceptRequestItemParameters
+        requestItem: TestRequestItem,
+        _params: RejectRequestItemParametersJSON
     ): Promise<ValidationResult> {
-        if (_requestItem.shouldFailAtCanReject) {
+        if (requestItem.shouldFailAtCanReject) {
             return Promise.resolve(ValidationResult.error("aCode", "aMessage"))
         }
         return Promise.resolve(ValidationResult.success())
     }
 
-    public override canCreateOutgoingRequestItem(_requestItem: TestRequestItem): Promise<ValidationResult> {
-        if (_requestItem.shouldFailAtCanCreateOutgoingRequestItem) {
+    public override canCreateOutgoingRequestItem(requestItem: TestRequestItem): Promise<ValidationResult> {
+        if (requestItem.shouldFailAtCanCreateOutgoingRequestItem) {
             return Promise.resolve(ValidationResult.error("aCode", "aMessage"))
         }
         return Promise.resolve(ValidationResult.success())
@@ -43,9 +39,9 @@ export class TestRequestItemProcessor extends GenericRequestItemProcessor<
 
     public override canApplyIncomingResponseItem(
         _responseItem: ResponseItem,
-        _requestItem: TestRequestItem
+        requestItem: TestRequestItem
     ): Promise<ValidationResult> {
-        if (_requestItem.shouldFailAtCanApplyIncomingResponseItem) {
+        if (requestItem.shouldFailAtCanApplyIncomingResponseItem) {
             return Promise.resolve(ValidationResult.error("aCode", "aMessage"))
         }
         return Promise.resolve(ValidationResult.success())
@@ -59,21 +55,21 @@ export class TestRequestItemProcessor extends GenericRequestItemProcessor<
         return Promise.resolve()
     }
 
-    public override checkPrerequisitesOfIncomingRequestItem(_requestItem: TestRequestItem): Promise<boolean> | boolean {
-        if (_requestItem.shouldFailAtCheckPrerequisitesOfIncomingRequestItem) {
+    public override checkPrerequisitesOfIncomingRequestItem(requestItem: TestRequestItem): Promise<boolean> | boolean {
+        if (requestItem.shouldFailAtCheckPrerequisitesOfIncomingRequestItem) {
             return false
         }
         return true
     }
 
-    public override accept(requestItem: TestRequestItem, params: AcceptRequestItemParameters): AcceptResponseItem {
+    public override accept(requestItem: TestRequestItem, params: AcceptRequestItemParametersJSON): AcceptResponseItem {
         if (requestItem.shouldThrowOnAccept) {
             throw new Error("Accept failed for testing purposes.")
         }
         return super.accept(requestItem, params)
     }
 
-    public override reject(requestItem: TestRequestItem, params: RejectRequestItemParameters): RejectResponseItem {
+    public override reject(requestItem: TestRequestItem, params: RejectRequestItemParametersJSON): RejectResponseItem {
         if (requestItem.shouldThrowOnReject) {
             throw new Error("Reject failed for testing purposes.")
         }
