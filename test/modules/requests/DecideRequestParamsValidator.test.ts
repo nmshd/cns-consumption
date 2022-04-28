@@ -240,6 +240,10 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                             "The RequestItem with index '0.0' was answered as an AcceptRequestItemParameters, but the parent was not accepted."
                     }
                 }
+                // TODO: wenn mind. 1 Item in einer Gruppe akzeptiert ist, und die Gruppe mustBeAccepted ist, müssen alle Items in der Gruppe, die mustBeAccepted sind, akzeptiert werden
+                // {
+                //     description: "(15) success: rejecting"
+                // }
             ]
 
             itParam("${value.description}", params, async function (data) {
