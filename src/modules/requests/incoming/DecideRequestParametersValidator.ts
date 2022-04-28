@@ -47,20 +47,20 @@ export class DecideRequestParametersValidator {
         requestItem: RequestItem | RequestItemGroup,
         responseItem: DecideRequestItemParametersJSON | DecideRequestItemGroupParametersJSON,
         index: string,
-        parentAccepted: boolean
+        isParentAccepted: boolean
     ): Result<void> {
         if (requestItem instanceof RequestItem) {
-            return this.checkItem(requestItem, responseItem, index, parentAccepted)
+            return this.checkItem(requestItem, responseItem, index, isParentAccepted)
         }
 
-        return this.checkItemGroup(requestItem, responseItem, index, parentAccepted)
+        return this.checkItemGroup(requestItem, responseItem, index, isParentAccepted)
     }
 
     private checkItem(
         requestItem: RequestItem,
         response: DecideRequestItemParametersJSON | DecideRequestItemGroupParametersJSON,
         index: string,
-        parentAccepted: boolean
+        isParentAccepted: boolean
     ): Result<void> {
         if (isDecideRequestItemGroupParametersJSON(response)) {
             return Result.fail(
@@ -71,7 +71,7 @@ export class DecideRequestParametersValidator {
             )
         }
 
-        if (!parentAccepted && response.decision === RequestItemDecision.Accept) {
+        if (!isParentAccepted && response.decision === RequestItemDecision.Accept) {
             return Result.fail(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
@@ -80,7 +80,7 @@ export class DecideRequestParametersValidator {
             )
         }
 
-        if (parentAccepted && requestItem.mustBeAccepted && response.decision === RequestItemDecision.Reject) {
+        if (isParentAccepted && requestItem.mustBeAccepted && response.decision === RequestItemDecision.Reject) {
             return Result.fail(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
@@ -96,7 +96,7 @@ export class DecideRequestParametersValidator {
         requestItemGroup: RequestItemGroup,
         responseItemGroup: DecideRequestItemParametersJSON | DecideRequestItemGroupParametersJSON,
         index: string,
-        parentAccepted: boolean
+        isParentAccepted: boolean
     ): Result<void> {
         if (isDecideRequestItemParametersJSON(responseItemGroup)) {
             return Result.fail(
@@ -115,7 +115,7 @@ export class DecideRequestParametersValidator {
 
         const isGroupAccepted = responseItemGroup.items.some((value) => value.decision === RequestItemDecision.Accept)
 
-        if (!parentAccepted && isGroupAccepted) {
+        if (!isParentAccepted && isGroupAccepted) {
             return Result.fail(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
@@ -124,7 +124,7 @@ export class DecideRequestParametersValidator {
             )
         }
 
-        if (parentAccepted && requestItemGroup.mustBeAccepted && !isGroupAccepted) {
+        if (isParentAccepted && requestItemGroup.mustBeAccepted && !isGroupAccepted) {
             return Result.fail(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
