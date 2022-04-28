@@ -5,5 +5,5 @@ export interface DecideRequestItemGroupParametersJSON {
 }
 
 export function isDecideRequestItemGroupParametersJSON(json: any): json is DecideRequestItemGroupParametersJSON {
-    return typeof json.items !== "undefined"
+    return typeof json.items !== "undefined" && typeof json.decision === "undefined"
 }
