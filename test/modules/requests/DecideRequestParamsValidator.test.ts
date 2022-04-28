@@ -6,7 +6,8 @@ import {
     DecideRequestItemGroupParameters,
     DecideRequestParameters,
     DecideRequestParametersValidator,
-    RejectRequestItemParameters
+    RejectRequestItemParameters,
+    RejectRequestParameters
 } from "@nmshd/consumption"
 import { Request } from "@nmshd/content"
 import { CoreAddress, CoreDate, CoreId } from "@nmshd/transport"
@@ -205,6 +206,38 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message:
                             "The RequestItem with index '0.0' that is flagged as required was not accepted. Please use AcceptRequestItemParameters instead."
+                    }
+                },
+                {
+                    description: "(13) error: when the request is rejected no RequestItem may be accepted",
+                    input: {
+                        request: TestObjectFactory.createRequestWithOneItem(),
+                        response: RejectRequestParameters.fromAny({
+                            items: [AcceptRequestItemParameters.from({})],
+                            requestId
+                        })
+                    },
+                    expectedError: {
+                        code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
+                        message:
+                            "The RequestItem with index '0' was answered as an AcceptRequestItemParameters, but the parent was not accepted."
+                    }
+                },
+                {
+                    description: "(14) error: when the request is rejected no RequestItemGroup may be accepted",
+                    input: {
+                        request: TestObjectFactory.createRequestWithOneItemGroup(),
+                        response: RejectRequestParameters.fromAny({
+                            items: [
+                                DecideRequestItemGroupParameters.from({ items: [AcceptRequestItemParameters.from({})] })
+                            ],
+                            requestId
+                        })
+                    },
+                    expectedError: {
+                        code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
+                        message:
+                            "The RequestItem with index '0.0' was answered as an AcceptRequestItemParameters, but the parent was not accepted."
                     }
                 }
             ]

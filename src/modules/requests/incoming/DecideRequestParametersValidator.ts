@@ -65,6 +65,15 @@ export class DecideRequestParametersValidator {
             )
         }
 
+        if (!parentAccepted && response instanceof AcceptRequestItemParameters) {
+            return Result.fail(
+                new ApplicationError(
+                    "error.requests.decide.validation.invalidResponseItemForRequestItem",
+                    `The RequestItem with index '${index}' was answered as an AcceptRequestItemParameters, but the parent was not accepted.`
+                )
+            )
+        }
+
         if (parentAccepted && requestItem.mustBeAccepted && !(response instanceof AcceptRequestItemParameters)) {
             return Result.fail(
                 new ApplicationError(
@@ -103,7 +112,7 @@ export class DecideRequestParametersValidator {
                 requestItemGroup.items[i],
                 responseItemGroup.items[i],
                 `${index}.${i}`,
-                parentAccepted && requestItemGroup.mustBeAccepted
+                parentAccepted
             )
             if (validationResult.isError) return validationResult
         }
