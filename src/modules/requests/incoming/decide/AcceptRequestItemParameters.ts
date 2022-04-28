@@ -1,11 +1,5 @@
-import { ISerializable, type } from "@js-soft/ts-serval"
-import { DecideRequestItemParameters } from "./DecideRequestItemParameters"
+import { RequestItemDecision } from "./RequestItemDecision"
 
-export interface IAcceptRequestItemParameters extends ISerializable {}
-
-@type("AcceptRequestItemParameters")
-export class AcceptRequestItemParameters extends DecideRequestItemParameters implements IAcceptRequestItemParameters {
-    public static from(value: IAcceptRequestItemParameters): AcceptRequestItemParameters {
-        return this.fromAny(value)
-    }
+export interface AcceptRequestItemParametersJSON {
+    decision: RequestItemDecision.Accept
 }

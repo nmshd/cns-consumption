@@ -1,14 +1,13 @@
 import { IDatabaseCollection, IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import {
-    AcceptRequestItemParameters,
     ConsumptionController,
     ConsumptionIds,
     ConsumptionRequest,
     ConsumptionRequestSource,
     ConsumptionRequestStatus,
     ConsumptionResponse,
-    IAcceptRequestParameters,
+    DecideRequestParametersJSON,
     ICheckPrerequisitesOfIncomingRequestParameters,
     ICompleteIncomingRequestParameters,
     ICompleteOugoingRequestParameters,
@@ -17,11 +16,10 @@ import {
     ICreateOutgoingRequestParameters,
     IncomingRequestsController,
     IReceivedIncomingRequestParameters,
-    IRejectRequestParameters,
     IRequireManualDecisionOfIncomingRequestParameters,
     ISentOutgoingRequestParameters,
     OutgoingRequestsController,
-    RejectRequestItemParameters,
+    RequestItemDecision,
     ValidationResult
 } from "@nmshd/consumption"
 import {
@@ -185,8 +183,12 @@ export class RequestsGiven {
 
         if (isStatusAAfterStatusB(status, consumptionRequest.status)) {
             consumptionRequest = await this.context.incomingRequestsController.accept({
-                requestId: consumptionRequest.id,
-                items: [AcceptRequestItemParameters.from({})]
+                requestId: consumptionRequest.id.toString(),
+                items: [
+                    {
+                        decision: RequestItemDecision.Accept
+                    }
+                ]
             })
         }
 
@@ -259,24 +261,28 @@ export class RequestsWhen {
 
     public iTryToCallCanAcceptWithoutARequestId(): Promise<void> {
         this.context.actionToTry = async () => {
-            await this.context.incomingRequestsController.canAccept({} as IAcceptRequestParameters)
+            await this.context.incomingRequestsController.canAccept({} as DecideRequestParametersJSON)
         }
         return Promise.resolve()
     }
 
-    public iTryToCallCanAcceptWith(params: Partial<IAcceptRequestParameters>): Promise<void> {
+    public iTryToCallCanAcceptWith(params: Partial<DecideRequestParametersJSON>): Promise<void> {
         this.context.actionToTry = async () => {
             await this.iCallCanAcceptWith(params)
         }
         return Promise.resolve()
     }
 
-    public async iCallCanAcceptWith(params: Partial<IAcceptRequestParameters>): Promise<ValidationResult> {
-        params.items ??= [AcceptRequestItemParameters.from({})]
-        params.requestId ??= this.context.givenConsumptionRequest!.id
+    public async iCallCanAcceptWith(params: Partial<DecideRequestParametersJSON>): Promise<ValidationResult> {
+        params.items ??= [
+            {
+                decision: RequestItemDecision.Accept
+            }
+        ]
+        params.requestId ??= this.context.givenConsumptionRequest!.id.toString()
 
         this.context.validationResult = await this.context.incomingRequestsController.canAccept(
-            params as IAcceptRequestParameters
+            params as DecideRequestParametersJSON
         )
 
         return this.context.validationResult
@@ -292,24 +298,28 @@ export class RequestsWhen {
 
     public iTryToCallCanRejectWithoutARequestId(): Promise<void> {
         this.context.actionToTry = async () => {
-            await this.context.incomingRequestsController.canReject({} as IRejectRequestParameters)
+            await this.context.incomingRequestsController.canReject({} as DecideRequestParametersJSON)
         }
         return Promise.resolve()
     }
 
-    public iTryToCallCanRejectWith(params: Partial<IRejectRequestParameters>): Promise<void> {
+    public iTryToCallCanRejectWith(params: Partial<DecideRequestParametersJSON>): Promise<void> {
         this.context.actionToTry = async () => {
             await this.iCallCanRejectWith(params)
         }
         return Promise.resolve()
     }
 
-    public async iCallCanRejectWith(params: Partial<IRejectRequestParameters>): Promise<ValidationResult> {
-        params.items ??= [RejectRequestItemParameters.from({})]
-        params.requestId ??= this.context.givenConsumptionRequest!.id
+    public async iCallCanRejectWith(params: Partial<DecideRequestParametersJSON>): Promise<ValidationResult> {
+        params.items ??= [
+            {
+                decision: RequestItemDecision.Reject
+            }
+        ]
+        params.requestId ??= this.context.givenConsumptionRequest!.id.toString()
 
         this.context.validationResult = await this.context.incomingRequestsController.canReject(
-            params as IRejectRequestParameters
+            params as DecideRequestParametersJSON
         )
 
         return this.context.validationResult
@@ -356,38 +366,54 @@ export class RequestsWhen {
     public iTryToAccept(): Promise<void> {
         this.context.actionToTry = async () => {
             await this.context.incomingRequestsController.accept({
-                requestId: this.context.givenConsumptionRequest!.id,
-                items: [AcceptRequestItemParameters.from({})]
+                requestId: this.context.givenConsumptionRequest!.id.toString(),
+                items: [
+                    {
+                        decision: RequestItemDecision.Accept
+                    }
+                ]
             })
         }
         return Promise.resolve()
     }
 
-    public iTryToAcceptWith(params: Partial<IAcceptRequestParameters>): void {
-        params.requestId ??= this.context.givenConsumptionRequest!.id
-        params.items ??= [AcceptRequestItemParameters.from({})]
+    public iTryToAcceptWith(params: Partial<DecideRequestParametersJSON>): void {
+        params.requestId ??= this.context.givenConsumptionRequest!.id.toString()
+        params.items ??= [
+            {
+                decision: RequestItemDecision.Accept
+            }
+        ]
 
         this.context.actionToTry = async () => {
-            await this.context.incomingRequestsController.accept(params as IAcceptRequestParameters)
+            await this.context.incomingRequestsController.accept(params as DecideRequestParametersJSON)
         }
     }
 
     public iTryToReject(): Promise<void> {
         this.context.actionToTry = async () => {
             await this.context.incomingRequestsController.reject({
-                requestId: this.context.givenConsumptionRequest!.id,
-                items: [RejectRequestItemParameters.from({})]
+                requestId: this.context.givenConsumptionRequest!.id.toString(),
+                items: [
+                    {
+                        decision: RequestItemDecision.Reject
+                    }
+                ]
             })
         }
         return Promise.resolve()
     }
 
-    public iTryToRejectWith(params: Partial<IRejectRequestParameters>): void {
-        params.requestId ??= this.context.givenConsumptionRequest!.id
-        params.items ??= [RejectRequestItemParameters.from({})]
+    public iTryToRejectWith(params: Partial<DecideRequestParametersJSON>): void {
+        params.requestId ??= this.context.givenConsumptionRequest!.id.toString()
+        params.items ??= [
+            {
+                decision: RequestItemDecision.Reject
+            }
+        ]
 
         this.context.actionToTry = async () => {
-            await this.context.incomingRequestsController.reject(params as IRejectRequestParameters)
+            await this.context.incomingRequestsController.reject(params as DecideRequestParametersJSON)
         }
     }
 
@@ -593,24 +619,32 @@ export class RequestsWhen {
         )
     }
 
-    public async iAcceptTheRequest(params?: Omit<IAcceptRequestParameters, "requestId">): Promise<void> {
+    public async iAcceptTheRequest(params?: Omit<DecideRequestParametersJSON, "requestId">): Promise<void> {
         params ??= {
-            items: [AcceptRequestItemParameters.from({})]
+            items: [
+                {
+                    decision: RequestItemDecision.Accept
+                }
+            ]
         }
 
         this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.accept({
-            requestId: this.context.givenConsumptionRequest!.id,
+            requestId: this.context.givenConsumptionRequest!.id.toString(),
             ...params
         })
     }
 
-    public async iRejectTheRequest(params?: Omit<IAcceptRequestParameters, "requestId">): Promise<void> {
+    public async iRejectTheRequest(params?: Omit<DecideRequestParametersJSON, "requestId">): Promise<void> {
         params ??= {
-            items: [RejectRequestItemParameters.from({})]
+            items: [
+                {
+                    decision: RequestItemDecision.Reject
+                }
+            ]
         }
 
         this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.reject({
-            requestId: this.context.givenConsumptionRequest!.id,
+            requestId: this.context.givenConsumptionRequest!.id.toString(),
             ...params
         })
     }
@@ -697,8 +731,8 @@ export class RequestsWhen {
     }
 
     public iTryToAcceptARequestWithoutItemsParameters(): Promise<void> {
-        const paramsWithoutItems: Omit<IAcceptRequestParameters, "items"> = {
-            requestId: CoreId.from("CNSREQ1")
+        const paramsWithoutItems: Omit<DecideRequestParametersJSON, "items"> = {
+            requestId: "CNSREQ1"
         }
 
         this.context.actionToTry = async () => {
@@ -709,8 +743,8 @@ export class RequestsWhen {
     }
 
     public iTryToRejectARequestWithoutItemsParameters(): Promise<void> {
-        const paramsWithoutItems: Omit<IRejectRequestParameters, "items"> = {
-            requestId: CoreId.from("CNSREQ1")
+        const paramsWithoutItems: Omit<DecideRequestParametersJSON, "items"> = {
+            requestId: "CNSREQ1"
         }
 
         this.context.actionToTry = async () => {
@@ -769,8 +803,8 @@ export class RequestsWhen {
     }
 
     public iTryToRejectARequestWithSyntacticallyInvalidInput(): Promise<void> {
-        const paramsWithoutItems: Omit<IRejectRequestParameters, "items"> = {
-            requestId: CoreId.from("CNSREQ1")
+        const paramsWithoutItems: Omit<DecideRequestParametersJSON, "items"> = {
+            requestId: "CNSREQ1"
         }
 
         this.context.actionToTry = async () => {

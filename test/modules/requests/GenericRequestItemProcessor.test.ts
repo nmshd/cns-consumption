@@ -1,9 +1,5 @@
-import {
-    AcceptRequestItemParameters,
-    GenericRequestItemProcessor,
-    RejectRequestItemParameters
-} from "@nmshd/consumption"
-import { AcceptResponseItem, RejectResponseItem } from "@nmshd/content"
+import { GenericRequestItemProcessor, RequestItemDecision } from "@nmshd/consumption"
+import { AcceptResponseItem, RejectResponseItem, ResponseItemResult } from "@nmshd/content"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestRequestItem } from "./testHelpers/TestRequestItem"
@@ -27,9 +23,9 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                 it("returns 'success'", async function () {
                     const processor = new GenericRequestItemProcessor()
 
-                    const requestItem = new TestRequestItem()
-                    const params = new AcceptRequestItemParameters()
-                    const result = await processor.canAccept(requestItem, params)
+                    const result = await processor.canAccept(TestRequestItem.from({ mustBeAccepted: false }), {
+                        decision: RequestItemDecision.Accept
+                    })
 
                     expect(result.isSuccess()).to.be.true
                 })
@@ -39,9 +35,9 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                 it("returns 'success'", async function () {
                     const processor = new GenericRequestItemProcessor()
 
-                    const requestItem = new TestRequestItem()
-                    const params = new RejectRequestItemParameters()
-                    const result = await processor.canReject(requestItem, params)
+                    const result = await processor.canReject(TestRequestItem.from({ mustBeAccepted: false }), {
+                        decision: RequestItemDecision.Reject
+                    })
 
                     expect(result.isSuccess()).to.be.true
                 })
@@ -51,9 +47,9 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                 it("returns an AcceptResponseItem", function () {
                     const processor = new GenericRequestItemProcessor()
 
-                    const requestItem = new TestRequestItem()
-                    const params = new AcceptRequestItemParameters()
-                    const result = processor.accept(requestItem, params)
+                    const result = processor.accept(TestRequestItem.from({ mustBeAccepted: false }), {
+                        decision: RequestItemDecision.Accept
+                    })
 
                     expect(result).to.be.instanceOf(AcceptResponseItem)
                 })
@@ -63,9 +59,9 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                 it("returns a RejectResponseItem", function () {
                     const processor = new GenericRequestItemProcessor()
 
-                    const requestItem = new TestRequestItem()
-                    const params = new AcceptRequestItemParameters()
-                    const result = processor.reject(requestItem, params)
+                    const result = processor.reject(TestRequestItem.from({ mustBeAccepted: false }), {
+                        decision: RequestItemDecision.Reject
+                    })
 
                     expect(result).to.be.instanceOf(RejectResponseItem)
                 })
@@ -75,9 +71,10 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
             describe("CanCreateOutgoingRequestItem", function () {
                 it("returns true", async function () {
                     const processor = new GenericRequestItemProcessor()
-                    const requestItem = new TestRequestItem()
 
-                    const actual = await processor.canCreateOutgoingRequestItem(requestItem)
+                    const actual = await processor.canCreateOutgoingRequestItem(
+                        TestRequestItem.from({ mustBeAccepted: false })
+                    )
 
                     expect(actual.isSuccess()).to.be.true
                 })
@@ -86,10 +83,11 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
             describe("CanApplyIncomingResponseItem", function () {
                 it("returns 'success'", async function () {
                     const processor = new GenericRequestItemProcessor()
-                    const requestItem = new TestRequestItem()
-                    const responseItem = new AcceptResponseItem()
 
-                    const actual = await processor.canApplyIncomingResponseItem(responseItem, requestItem)
+                    const actual = await processor.canApplyIncomingResponseItem(
+                        AcceptResponseItem.from({ result: ResponseItemResult.Accepted }),
+                        TestRequestItem.from({ mustBeAccepted: false })
+                    )
 
                     expect(actual.isSuccess()).to.be.true
                 })
