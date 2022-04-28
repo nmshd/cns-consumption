@@ -66,7 +66,7 @@ export class DecideRequestParametersValidator {
             return Result.fail(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    `The RequestItem with index '${index}' was answered as a RequestItemGroup. Please use DecideRequestItemParameters instead.`
+                    `The RequestItem with index '${index}' was answered as a RequestItemGroup.`
                 )
             )
         }
@@ -75,7 +75,7 @@ export class DecideRequestParametersValidator {
             return Result.fail(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    `The RequestItem with index '${index}' was answered as an AcceptRequestItemParameters, but the parent was not accepted.`
+                    `The RequestItem with index '${index}' was accepted, but the parent was not accepted.`
                 )
             )
         }
@@ -84,7 +84,7 @@ export class DecideRequestParametersValidator {
             return Result.fail(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    `The RequestItem with index '${index}' that is flagged as required was not accepted. Please use AcceptRequestItemParameters instead.`
+                    `The RequestItem with index '${index}' that is flagged as 'mustBeAccepted' was not accepted.`
                 )
             )
         }
@@ -102,7 +102,7 @@ export class DecideRequestParametersValidator {
             return Result.fail(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    `The RequestItemGroup with index '${index}' was answered as a RequestItem. Please use DecideRequestItemGroupParameters instead.`
+                    `The RequestItemGroup with index '${index}' was answered as a RequestItem.`
                 )
             )
         }
@@ -128,7 +128,7 @@ export class DecideRequestParametersValidator {
             return Result.fail(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    `The RequestItemGroup with index '${index}' that is flagged as required was not accepted. Please accept all required items in this group.`
+                    `The RequestItemGroup with index '${index}' that is flagged as 'mustBeAccepted' was not accepted. Please accept all 'mustBeAccepted' items in this group.`
                 )
             )
         }

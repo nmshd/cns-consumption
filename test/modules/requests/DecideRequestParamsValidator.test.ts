@@ -139,8 +139,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     },
                     expectedError: {
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                        message:
-                            "The RequestItemGroup with index '0' was answered as a RequestItem. Please use DecideRequestItemGroupParameters instead."
+                        message: "The RequestItemGroup with index '0' was answered as a RequestItem."
                     }
                 },
                 {
@@ -155,8 +154,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     },
                     expectedError: {
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                        message:
-                            "The RequestItem with index '0' was answered as a RequestItemGroup. Please use DecideRequestItemParameters instead."
+                        message: "The RequestItem with index '0' was answered as a RequestItemGroup."
                     }
                 },
                 {
@@ -193,8 +191,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     },
                     expectedError: {
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                        message:
-                            "The RequestItem with index '0' that is flagged as required was not accepted. Please use AcceptRequestItemParameters instead."
+                        message: "The RequestItem with index '0' that is flagged as 'mustBeAccepted' was not accepted."
                     }
                 },
                 {
@@ -210,7 +207,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     expectedError: {
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message:
-                            "The RequestItemGroup with index '0' that is flagged as required was not accepted. Please accept all required items in this group."
+                            "The RequestItemGroup with index '0' that is flagged as 'mustBeAccepted' was not accepted. Please accept all 'mustBeAccepted' items in this group."
                     }
                 },
                 {
@@ -225,8 +222,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     },
                     expectedError: {
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                        message:
-                            "The RequestItem with index '0' was answered as an AcceptRequestItemParameters, but the parent was not accepted."
+                        message: "The RequestItem with index '0' was accepted, but the parent was not accepted."
                     }
                 },
                 {
@@ -245,7 +241,8 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(15) error: accepting a group but not accepting all required items in the group",
+                    description:
+                        "(15) error: accepting a group but not accepting all 'mustBeAccepted' items in the group",
                     input: {
                         request: Request.from({
                             items: [
@@ -274,7 +271,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     expectedError: {
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message:
-                            "The RequestItem with index '0.1' that is flagged as required was not accepted. Please use AcceptRequestItemParameters instead."
+                            "The RequestItem with index '0.1' that is flagged as 'mustBeAccepted' was not accepted."
                     }
                 },
                 {
