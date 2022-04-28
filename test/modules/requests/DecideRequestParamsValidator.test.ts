@@ -1,8 +1,9 @@
 import {
     ConsumptionRequest,
     ConsumptionRequestStatus,
+    DecideRequestItemGroupParametersJSON,
+    DecideRequestItemParametersJSON,
     DecideRequestParametersValidator,
-    InternalDecideRequestParametersJSON,
     RequestDecision,
     RequestItemDecision
 } from "@nmshd/consumption"
@@ -18,7 +19,11 @@ interface TestParam {
     description: string
     input: {
         request: Request
-        response: InternalDecideRequestParametersJSON
+        response: {
+            requestId: string
+            items: (DecideRequestItemParametersJSON | DecideRequestItemGroupParametersJSON)[]
+            decision: RequestDecision
+        }
     }
     expectedError?: {
         code: string

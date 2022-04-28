@@ -12,10 +12,7 @@ export * from "./requests/incoming/decide/AcceptRequestItemParameters"
 export * from "./requests/incoming/decide/DecideRequestItemGroupParameters"
 export * from "./requests/incoming/decide/DecideRequestItemParameters"
 export * from "./requests/incoming/decide/DecideRequestParameters"
-export {
-    InternalDecideRequestParametersJSON,
-    RequestDecision
-} from "./requests/incoming/decide/InternalDecideRequestParameters"
+export { RequestDecision } from "./requests/incoming/decide/InternalDecideRequestParameters"
 export * from "./requests/incoming/decide/RejectRequestItemParameters"
 export * from "./requests/incoming/decide/RequestItemDecision"
 export * from "./requests/incoming/DecideRequestParametersValidator"
