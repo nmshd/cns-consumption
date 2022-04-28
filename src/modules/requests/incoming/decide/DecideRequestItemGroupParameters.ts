@@ -1,17 +1,9 @@
-import { ISerializable, Serializable, serialize, type, validate } from "@js-soft/ts-serval"
-import { DecideRequestItemParameters, IDecideRequestItemParameters } from "./DecideRequestItemParameters"
+import { DecideRequestItemParametersJSON } from "./DecideRequestItemParameters"
 
-export interface IDecideRequestItemGroupParameters extends ISerializable {
-    items: IDecideRequestItemParameters[]
+export interface DecideRequestItemGroupParametersJSON {
+    items: DecideRequestItemParametersJSON[]
 }
 
-@type("DecideRequestItemGroupParameters")
-export class DecideRequestItemGroupParameters extends Serializable implements IDecideRequestItemGroupParameters {
-    @serialize()
-    @validate()
-    public items: DecideRequestItemParameters[]
-
-    public static from(value: IDecideRequestItemGroupParameters): DecideRequestItemGroupParameters {
-        return this.fromAny(value)
-    }
+export function isDecideRequestItemGroupParametersJSON(json: any): json is DecideRequestItemGroupParametersJSON {
+    return typeof json.items !== "undefined"
 }

@@ -1,12 +1,12 @@
 import { AcceptResponseItem, RejectResponseItem, RequestItem, ResponseItem } from "@nmshd/content"
-import { AcceptRequestItemParameters } from "../incoming/decide/AcceptRequestItemParameters"
-import { RejectRequestItemParameters } from "../incoming/decide/RejectRequestItemParameters"
+import { AcceptRequestItemParametersJSON } from "../incoming/decide/AcceptRequestItemParameters"
+import { RejectRequestItemParametersJSON } from "../incoming/decide/RejectRequestItemParameters"
 import { ValidationResult } from "./ValidationResult"
 
 export interface IRequestItemProcessor<
     TRequestItem extends RequestItem = RequestItem,
-    TAcceptParams extends AcceptRequestItemParameters = AcceptRequestItemParameters,
-    TRejectParams extends RejectRequestItemParameters = RejectRequestItemParameters
+    TAcceptParams extends AcceptRequestItemParametersJSON = AcceptRequestItemParametersJSON,
+    TRejectParams extends RejectRequestItemParametersJSON = RejectRequestItemParametersJSON
 > {
     checkPrerequisitesOfIncomingRequestItem(requestItem: TRequestItem): Promise<boolean> | boolean
     canAccept(requestItem: TRequestItem, params: TAcceptParams): Promise<ValidationResult> | ValidationResult

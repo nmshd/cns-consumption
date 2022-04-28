@@ -1,5 +1,8 @@
-import { ISerializable, Serializable } from "@js-soft/ts-serval"
+import { AcceptRequestItemParametersJSON } from "./AcceptRequestItemParameters"
+import { RejectRequestItemParametersJSON } from "./RejectRequestItemParameters"
 
-export interface IDecideRequestItemParameters extends ISerializable {}
+export type DecideRequestItemParametersJSON = AcceptRequestItemParametersJSON | RejectRequestItemParametersJSON
 
-export abstract class DecideRequestItemParameters extends Serializable {}
+export function isDecideRequestItemParametersJSON(json: any): json is DecideRequestItemParametersJSON {
+    return typeof json.decision !== "undefined"
+}

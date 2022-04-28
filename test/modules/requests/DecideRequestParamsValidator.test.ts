@@ -1,13 +1,10 @@
 import {
-    AcceptRequestItemParameters,
-    AcceptRequestParameters,
     ConsumptionRequest,
     ConsumptionRequestStatus,
-    DecideRequestItemGroupParameters,
-    DecideRequestParameters,
     DecideRequestParametersValidator,
-    RejectRequestItemParameters,
-    RejectRequestParameters
+    InternalDecideRequestParametersJSON,
+    RequestDecision,
+    RequestItemDecision
 } from "@nmshd/consumption"
 import { Request } from "@nmshd/content"
 import { CoreAddress, CoreDate, CoreId } from "@nmshd/transport"
@@ -20,7 +17,7 @@ interface TestParam {
     description: string
     input: {
         request: Request
-        response: DecideRequestParameters
+        response: InternalDecideRequestParametersJSON
     }
     expectedError?: {
         code: string
@@ -37,61 +34,62 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
         })
 
         describe("DecideRequestParametersValidator", function () {
-            const requestId = CoreId.from("requestId")
+            const requestId = "requestId"
 
             const params: TestParam[] = [
                 {
                     description: "(1) success: accept request with one RequestItem and accept the item",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
-                        response: AcceptRequestParameters.fromAny({
-                            items: [AcceptRequestItemParameters.from({})],
-                            requestId
-                        })
+                        response: {
+                            items: [{ decision: RequestItemDecision.Accept }],
+                            requestId,
+                            decision: RequestDecision.Accept
+                        }
                     }
                 },
                 {
                     description: "(2) success: accept request with RequestItemGroup and accept the item",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(),
-                        response: AcceptRequestParameters.fromAny({
-                            items: [
-                                DecideRequestItemGroupParameters.from({ items: [AcceptRequestItemParameters.from({})] })
-                            ],
-                            requestId
-                        })
+                        response: {
+                            items: [{ items: [{ decision: RequestItemDecision.Accept }] }],
+                            requestId,
+                            decision: RequestDecision.Accept
+                        }
                     }
                 },
                 {
                     description: "(3) success: accept request with one RequestItem and reject the item",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
-                        response: AcceptRequestParameters.fromAny({
-                            items: [RejectRequestItemParameters.from({})],
-                            requestId
-                        })
+                        response: {
+                            items: [{ decision: RequestItemDecision.Reject }],
+                            requestId,
+                            decision: RequestDecision.Accept
+                        }
                     }
                 },
                 {
                     description: "(4) success: accept request with RequestItemGroup and reject the item",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(),
-                        response: AcceptRequestParameters.fromAny({
-                            items: [
-                                DecideRequestItemGroupParameters.from({ items: [RejectRequestItemParameters.from({})] })
-                            ],
-                            requestId
-                        })
+                        response: {
+                            items: [{ items: [{ decision: RequestItemDecision.Reject }] }],
+                            requestId,
+                            decision: RequestDecision.Accept
+                        }
                     }
                 },
                 {
                     description: "(5) error: id of request is not equal to id of response",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
-                        response: AcceptRequestParameters.fromAny({
-                            items: [AcceptRequestItemParameters.from({})],
-                            requestId: CoreId.from("invalid")
-                        })
+                        response: {
+                            items: [{ decision: RequestItemDecision.Accept }],
+                            requestId: "invalid",
+                            decision: RequestDecision.Accept
+                        }
                     },
                     expectedError: {
                         code: "error.requests.decide.validation.invalidRequestId",
@@ -102,10 +100,11 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     description: "(6) error: request with two items is answered with one item",
                     input: {
                         request: TestObjectFactory.createRequestWithTwoItems(),
-                        response: AcceptRequestParameters.fromAny({
-                            items: [{}],
-                            requestId
-                        })
+                        response: {
+                            items: [{ decision: RequestItemDecision.Accept }],
+                            requestId,
+                            decision: RequestDecision.Accept
+                        }
                     },
                     expectedError: {
                         code: "error.requests.decide.validation.invalidNumberOfItems",
@@ -116,10 +115,11 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     description: "(7) error: request with one item is answered with two items",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
-                        response: AcceptRequestParameters.fromAny({
-                            items: [AcceptRequestItemParameters.from({}), AcceptRequestItemParameters.from({})],
-                            requestId
-                        })
+                        response: {
+                            items: [{ decision: RequestItemDecision.Accept }, { decision: RequestItemDecision.Accept }],
+                            requestId,
+                            decision: RequestDecision.Accept
+                        }
                     },
                     expectedError: {
                         code: "error.requests.decide.validation.invalidNumberOfItems",
@@ -130,10 +130,11 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     description: "(8) error: request with one RequestItemGroup is answered as a RequestItem",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(),
-                        response: AcceptRequestParameters.fromAny({
-                            items: [AcceptRequestItemParameters.from({})],
-                            requestId
-                        })
+                        response: {
+                            items: [{ decision: RequestItemDecision.Accept }],
+                            requestId,
+                            decision: RequestDecision.Accept
+                        }
                     },
                     expectedError: {
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
@@ -145,12 +146,11 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     description: "(9) error: request with one RequestItem is answered as a RequestItemGroup",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
-                        response: AcceptRequestParameters.fromAny({
-                            items: [
-                                DecideRequestItemGroupParameters.from({ items: [AcceptRequestItemParameters.from({})] })
-                            ],
-                            requestId
-                        })
+                        response: {
+                            items: [{ items: [{ decision: RequestItemDecision.Accept }] }],
+                            requestId,
+                            decision: RequestDecision.Accept
+                        }
                     },
                     expectedError: {
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
@@ -162,14 +162,18 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     description: "(10) error: RequestItemGroup and ResponseItemGroup have different number of items",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(),
-                        response: AcceptRequestParameters.fromAny({
+                        response: {
                             items: [
-                                DecideRequestItemGroupParameters.from({
-                                    items: [AcceptRequestItemParameters.from({}), AcceptRequestItemParameters.from({})]
-                                })
+                                {
+                                    items: [
+                                        { decision: RequestItemDecision.Accept },
+                                        { decision: RequestItemDecision.Accept }
+                                    ]
+                                }
                             ],
-                            requestId
-                        })
+                            requestId,
+                            decision: RequestDecision.Accept
+                        }
                     },
                     expectedError: {
                         code: "error.requests.decide.validation.invalidNumberOfItems",
@@ -180,10 +184,11 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     description: "(11) error: item that must be accepted was rejected",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(undefined, true),
-                        response: AcceptRequestParameters.fromAny({
-                            items: [RejectRequestItemParameters.from({})],
-                            requestId
-                        })
+                        response: {
+                            items: [{ decision: RequestItemDecision.Reject }],
+                            requestId,
+                            decision: RequestDecision.Accept
+                        }
                     },
                     expectedError: {
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
@@ -195,12 +200,11 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     description: "(12) error: item in a RequestItemGroup that must be accepted was rejected",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(undefined, true),
-                        response: AcceptRequestParameters.fromAny({
-                            items: [
-                                DecideRequestItemGroupParameters.from({ items: [RejectRequestItemParameters.from({})] })
-                            ],
-                            requestId
-                        })
+                        response: {
+                            items: [{ items: [{ decision: RequestItemDecision.Reject }] }],
+                            requestId,
+                            decision: RequestDecision.Accept
+                        }
                     },
                     expectedError: {
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
@@ -212,10 +216,11 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     description: "(13) error: when the request is rejected no RequestItem may be accepted",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
-                        response: RejectRequestParameters.fromAny({
-                            items: [AcceptRequestItemParameters.from({})],
-                            requestId
-                        })
+                        response: {
+                            items: [{ decision: RequestItemDecision.Accept }],
+                            requestId,
+                            decision: RequestDecision.Reject
+                        }
                     },
                     expectedError: {
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
@@ -227,12 +232,11 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     description: "(14) error: when the request is rejected no RequestItemGroup may be accepted",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(),
-                        response: RejectRequestParameters.fromAny({
-                            items: [
-                                DecideRequestItemGroupParameters.from({ items: [AcceptRequestItemParameters.from({})] })
-                            ],
-                            requestId
-                        })
+                        response: {
+                            items: [{ items: [{ decision: RequestItemDecision.Accept }] }],
+                            requestId,
+                            decision: RequestDecision.Reject
+                        }
                     },
                     expectedError: {
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
@@ -248,7 +252,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
 
             itParam("${value.description}", params, async function (data) {
                 const consumptionRequest = ConsumptionRequest.from({
-                    id: requestId,
+                    id: CoreId.from(requestId),
                     content: data.input.request,
                     createdAt: CoreDate.utc(),
                     isOwn: true,

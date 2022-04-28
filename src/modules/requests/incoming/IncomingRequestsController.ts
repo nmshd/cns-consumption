@@ -32,13 +32,15 @@ import {
     CompleteIncomingRequestParameters,
     ICompleteIncomingRequestParameters
 } from "./complete/CompleteIncomingRequestParameters"
-import { AcceptRequestItemParameters } from "./decide/AcceptRequestItemParameters"
-import { AcceptRequestParameters, IAcceptRequestParameters } from "./decide/AcceptRequestParameters"
-import { DecideRequestItemGroupParameters } from "./decide/DecideRequestItemGroupParameters"
-import { DecideRequestItemParameters, IDecideRequestItemParameters } from "./decide/DecideRequestItemParameters"
-import { DecideRequestParameters } from "./decide/DecideRequestParameters"
-import { RejectRequestItemParameters } from "./decide/RejectRequestItemParameters"
-import { IRejectRequestParameters, RejectRequestParameters } from "./decide/RejectRequestParameters"
+import { DecideRequestItemGroupParametersJSON } from "./decide/DecideRequestItemGroupParameters"
+import { DecideRequestItemParametersJSON } from "./decide/DecideRequestItemParameters"
+import { DecideRequestParametersJSON } from "./decide/DecideRequestParameters"
+import {
+    InternalDecideRequestParameters,
+    InternalDecideRequestParametersJSON,
+    RequestDecision
+} from "./decide/InternalDecideRequestParameters"
+import { RequestItemDecision } from "./decide/RequestItemDecision"
 import { DecideRequestParametersValidator } from "./DecideRequestParametersValidator"
 import {
     IReceivedIncomingRequestParameters,
@@ -164,18 +166,24 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return request
     }
 
-    public async canAccept(params: IAcceptRequestParameters): Promise<ValidationResult> {
-        const parsedParams = AcceptRequestParameters.from(params)
-        return await this.canDecide(parsedParams, "Accept")
+    public async canAccept(params: DecideRequestParametersJSON): Promise<ValidationResult> {
+        return await this.canDecide({ ...params, decision: RequestDecision.Accept })
     }
 
-    public async canReject(params: IRejectRequestParameters): Promise<ValidationResult> {
-        const parsedParams = RejectRequestParameters.from(params)
-        return await this.canDecide(parsedParams, "Reject")
+    public async canReject(params: DecideRequestParametersJSON): Promise<ValidationResult> {
+        return await this.canDecide({ ...params, decision: RequestDecision.Reject })
     }
 
-    private async canDecide(params: DecideRequestParameters, action: "Accept" | "Reject"): Promise<ValidationResult> {
+    private async canDecide(params: InternalDecideRequestParametersJSON): Promise<ValidationResult> {
+        // syntactic validation
+        InternalDecideRequestParameters.from(params)
+
         const request = await this.getOrThrow(params.requestId)
+
+        const validationResult = this.decideRequestParamsValidator.validate(params, request)
+        if (!validationResult.isSuccess) {
+            throw new Error(validationResult.error.message)
+        }
 
         this.assertRequestStatus(
             request,
@@ -183,24 +191,19 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             ConsumptionRequestStatus.ManualDecisionRequired
         )
 
-        const itemResults = await this.canDecideItems(params.items, request.content.items, action)
+        const itemResults = await this.canDecideItems(params.items, request.content.items)
 
         return ValidationResult.fromItems(itemResults)
     }
 
-    private async canDecideGroup(
-        params: DecideRequestItemGroupParameters,
-        requestItemGroup: RequestItemGroup,
-        action: "Accept" | "Reject"
-    ) {
-        const itemResults = await this.canDecideItems(params.items, requestItemGroup.items, action)
+    private async canDecideGroup(params: DecideRequestItemGroupParametersJSON, requestItemGroup: RequestItemGroup) {
+        const itemResults = await this.canDecideItems(params.items, requestItemGroup.items)
         return ValidationResult.fromItems(itemResults)
     }
 
     private async canDecideItems(
-        params: IDecideRequestItemParameters[],
-        items: (RequestItem | RequestItemGroup)[],
-        action: "Accept" | "Reject"
+        params: (DecideRequestItemParametersJSON | DecideRequestItemGroupParametersJSON)[],
+        items: (RequestItem | RequestItemGroup)[]
     ) {
         const validationResults: ValidationResult[] = []
 
@@ -210,16 +213,14 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
             if (requestItem instanceof RequestItemGroup) {
                 const groupResult = await this.canDecideGroup(
-                    decideItemParams as DecideRequestItemGroupParameters,
-                    requestItem,
-                    action
+                    decideItemParams as DecideRequestItemGroupParametersJSON,
+                    requestItem
                 )
                 validationResults.push(groupResult)
             } else {
                 const itemResult = await this.canDecideItem(
-                    decideItemParams as DecideRequestItemParameters,
-                    requestItem,
-                    action
+                    decideItemParams as DecideRequestItemParametersJSON,
+                    requestItem
                 )
                 validationResults.push(itemResult)
             }
@@ -228,32 +229,35 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return validationResults
     }
 
-    private canDecideItem(params: DecideRequestItemParameters, requestItem: RequestItem, action: "Accept" | "Reject") {
+    private async canDecideItem(params: DecideRequestItemParametersJSON, requestItem: RequestItem) {
         const processor = this.processorRegistry.getProcessorForItem(requestItem)
-        return processor[`can${action}`](requestItem, params)
+        if (params.decision === RequestItemDecision.Accept) {
+            return await processor.canAccept(requestItem, params)
+        }
+        return await processor.canReject(requestItem, params)
     }
 
-    public async accept(params: IAcceptRequestParameters): Promise<ConsumptionRequest> {
+    public async accept(params: DecideRequestParametersJSON): Promise<ConsumptionRequest> {
         const canAccept = await this.canAccept(params)
         if (!canAccept.isSuccess()) {
             throw new Error(
                 "Cannot accept the Request with the given parameters. Call 'canAccept' to get more information."
             )
         }
-        return await this.decide(AcceptRequestParameters.from(params))
+        return await this.decide({ ...params, decision: RequestDecision.Accept })
     }
 
-    public async reject(params: IRejectRequestParameters): Promise<ConsumptionRequest> {
+    public async reject(params: DecideRequestParametersJSON): Promise<ConsumptionRequest> {
         const canReject = await this.canReject(params)
         if (!canReject.isSuccess()) {
             throw new Error(
                 "Cannot reject the Request with the given parameters. Call 'canReject' to get more information."
             )
         }
-        return await this.decide(RejectRequestParameters.from(params))
+        return await this.decide({ ...params, decision: RequestDecision.Reject })
     }
 
-    private async decide(params: DecideRequestParameters) {
+    private async decide(params: InternalDecideRequestParametersJSON) {
         const consumptionRequest = await this.getOrThrow(params.requestId)
 
         this.assertRequestStatus(
@@ -261,11 +265,6 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             ConsumptionRequestStatus.DecisionRequired,
             ConsumptionRequestStatus.ManualDecisionRequired
         )
-
-        const validationResult = this.decideRequestParamsValidator.validate(params, consumptionRequest)
-        if (!validationResult.isSuccess) {
-            throw new Error(validationResult.error.message)
-        }
 
         const consumptionResponse = await this.createConsumptionResponse(params, consumptionRequest)
 
@@ -277,15 +276,12 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return consumptionRequest
     }
 
-    private async createConsumptionResponse(
-        params: AcceptRequestParameters | RejectRequestParameters,
-        request: ConsumptionRequest
-    ) {
+    private async createConsumptionResponse(params: InternalDecideRequestParametersJSON, request: ConsumptionRequest) {
         const requestItems = request.content.items
         const responseItems = await this.decideItems(params.items, requestItems)
 
         const response = Response.from({
-            result: params instanceof AcceptRequestParameters ? ResponseResult.Accepted : ResponseResult.Rejected,
+            result: params.decision === RequestDecision.Accept ? ResponseResult.Accepted : ResponseResult.Rejected,
             requestId: request.id,
             items: responseItems
         })
@@ -298,7 +294,10 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return consumptionResponse
     }
 
-    private async decideGroup(groupItemParam: DecideRequestItemGroupParameters, requestItemGroup: RequestItemGroup) {
+    private async decideGroup(
+        groupItemParam: DecideRequestItemGroupParametersJSON,
+        requestItemGroup: RequestItemGroup
+    ) {
         const items = (await this.decideItems(groupItemParam.items, requestItemGroup.items)) as ResponseItem[]
 
         const group = ResponseItemGroup.from({
@@ -309,31 +308,34 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     }
 
     private async decideItems(
-        params: (DecideRequestItemParameters | DecideRequestItemGroupParameters)[],
+        params: (DecideRequestItemParametersJSON | DecideRequestItemGroupParametersJSON)[],
         requestItems: (RequestItemGroup | RequestItem)[]
     ) {
         const responseItems: (ResponseItem | ResponseItemGroup)[] = []
 
         for (let i = 0; i < params.length; i++) {
             const itemParam = params[i]
-            if (itemParam instanceof DecideRequestItemParameters) {
-                responseItems.push(await this.decideItem(itemParam, requestItems[i] as RequestItem))
+            const item = requestItems[i]
+
+            if (item instanceof RequestItemGroup) {
+                responseItems.push(await this.decideGroup(itemParam as DecideRequestItemGroupParametersJSON, item))
             } else {
-                responseItems.push(await this.decideGroup(itemParam, requestItems[i] as RequestItemGroup))
+                responseItems.push(
+                    await this.decideItem(itemParam as DecideRequestItemParametersJSON, requestItems[i] as RequestItem)
+                )
             }
         }
         return responseItems
     }
 
-    private async decideItem(params: DecideRequestItemParameters, requestItem: RequestItem): Promise<ResponseItem> {
+    private async decideItem(params: DecideRequestItemParametersJSON, requestItem: RequestItem): Promise<ResponseItem> {
         const processor = this.processorRegistry.getProcessorForItem(requestItem)
 
         try {
-            if (params instanceof AcceptRequestItemParameters) {
+            if (params.decision === RequestItemDecision.Accept) {
                 return await processor.accept(requestItem, params)
-            } else if (params instanceof RejectRequestItemParameters) {
-                return await processor.reject(requestItem, params)
             }
+            return await processor.reject(requestItem, params)
         } catch (e) {
             let details = ""
             if (e instanceof Error) {
@@ -343,7 +345,6 @@ export class IncomingRequestsController extends ConsumptionBaseController {
                 `An error occurred while processing a '${requestItem.constructor.name}'. You should contact the developer of this RequestItem.${details}}`
             )
         }
-        throw new Error("Unknown params type")
     }
 
     public async complete(params: ICompleteIncomingRequestParameters): Promise<ConsumptionRequest> {
@@ -384,8 +385,8 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return request
     }
 
-    private async getOrThrow(id: CoreId) {
-        const request = await this.get(id)
+    private async getOrThrow(id: CoreId | string) {
+        const request = await this.get(CoreId.from(id))
         if (!request) {
             throw TransportErrors.general.recordNotFound(ConsumptionRequest, id.toString())
         }

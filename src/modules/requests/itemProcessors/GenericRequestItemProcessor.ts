@@ -1,13 +1,13 @@
 import { AcceptResponseItem, RejectResponseItem, RequestItem, ResponseItem, ResponseItemResult } from "@nmshd/content"
-import { AcceptRequestItemParameters } from "../incoming/decide/AcceptRequestItemParameters"
-import { RejectRequestItemParameters } from "../incoming/decide/RejectRequestItemParameters"
+import { AcceptRequestItemParametersJSON } from "../incoming/decide/AcceptRequestItemParameters"
+import { RejectRequestItemParametersJSON } from "../incoming/decide/RejectRequestItemParameters"
 import { IRequestItemProcessor } from "./IRequestItemProcessor"
 import { ValidationResult } from "./ValidationResult"
 
 export class GenericRequestItemProcessor<
     TRequestItem extends RequestItem = RequestItem,
-    TAcceptParams extends AcceptRequestItemParameters = AcceptRequestItemParameters,
-    TRejectParams extends RejectRequestItemParameters = RejectRequestItemParameters
+    TAcceptParams extends AcceptRequestItemParametersJSON = AcceptRequestItemParametersJSON,
+    TRejectParams extends RejectRequestItemParametersJSON = RejectRequestItemParametersJSON
 > implements IRequestItemProcessor<TRequestItem, TAcceptParams, TRejectParams>
 {
     public checkPrerequisitesOfIncomingRequestItem(_requestItem: TRequestItem): Promise<boolean> | boolean {

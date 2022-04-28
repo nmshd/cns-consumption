@@ -1,19 +1,14 @@
 import { Result } from "@js-soft/ts-utils"
 import {
-    AcceptRequestItemParameters,
     ConsumptionController,
     ConsumptionIds,
     ConsumptionRequest,
     ConsumptionRequestStatus,
-    DecideRequestItemGroupParameters,
+    DecideRequestItemGroupParametersJSON,
+    DecideRequestParametersJSON,
     DecideRequestParametersValidator,
     ErrorValidationResult,
-    IAcceptRequestItemParameters,
-    IAcceptRequestParameters,
-    IDecideRequestParameters,
-    IRejectRequestItemParameters,
-    IRejectRequestParameters,
-    RejectRequestItemParameters
+    RequestItemDecision
 } from "@nmshd/consumption"
 import {
     IRequest,
@@ -265,10 +260,10 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                             acceptParams: {
                                 items: [
                                     {
-                                        "@type": "AcceptRequestItemParameters"
-                                    } as IAcceptRequestItemParameters
+                                        decision: RequestItemDecision.Accept
+                                    }
                                 ]
-                            } as Omit<IAcceptRequestParameters, "requestId">
+                            } as Omit<DecideRequestParametersJSON, "requestId">
                         },
 
                         {
@@ -288,15 +283,13 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                             acceptParams: {
                                 items: [
                                     {
-                                        "@type": "AcceptRequestItemParameters",
-                                        result: ResponseItemResult.Accepted
-                                    } as IAcceptRequestItemParameters,
+                                        decision: RequestItemDecision.Accept
+                                    },
                                     {
-                                        "@type": "AcceptRequestItemParameters",
-                                        result: ResponseItemResult.Accepted
-                                    } as IAcceptRequestItemParameters
+                                        decision: RequestItemDecision.Accept
+                                    }
                                 ]
-                            } as Omit<IAcceptRequestParameters, "requestId">
+                            } as Omit<DecideRequestParametersJSON, "requestId">
                         },
 
                         {
@@ -318,16 +311,15 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                             acceptParams: {
                                 items: [
                                     {
-                                        "@type": "DecideRequestItemGroupParameters",
+                                        decision: RequestItemDecision.Accept,
                                         items: [
                                             {
-                                                "@type": "AcceptRequestItemParameters",
-                                                result: ResponseItemResult.Accepted
-                                            } as IAcceptRequestItemParameters
+                                                decision: RequestItemDecision.Accept
+                                            }
                                         ]
-                                    }
+                                    } as DecideRequestItemGroupParametersJSON
                                 ]
-                            } as Omit<IAcceptRequestParameters, "requestId">
+                            } as Omit<DecideRequestParametersJSON, "requestId">
                         }
                     ],
                     async function (testParams) {
@@ -343,8 +335,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 )
 
                 it("throws when no Consumption Request with the given id exists in DB", async function () {
-                    const nonExistentId = CoreId.from("nonExistentId")
-                    await When.iTryToCallCanAcceptWith({ requestId: nonExistentId })
+                    await When.iTryToCallCanAcceptWith({ requestId: "nonExistentId" })
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
 
@@ -389,28 +380,23 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     const acceptParams = {
                         items: [
                             {
-                                "@type": "AcceptRequestItemParameters",
-                                result: ResponseItemResult.Accepted
-                            } as IAcceptRequestItemParameters,
+                                decision: RequestItemDecision.Accept
+                            },
                             {
-                                "@type": "DecideRequestItemGroupParameters",
                                 items: [
                                     {
-                                        "@type": "AcceptRequestItemParameters",
-                                        result: ResponseItemResult.Accepted
-                                    } as IAcceptRequestItemParameters,
+                                        decision: RequestItemDecision.Accept
+                                    },
                                     {
-                                        "@type": "AcceptRequestItemParameters",
-                                        result: ResponseItemResult.Accepted
-                                    } as IAcceptRequestItemParameters,
+                                        decision: RequestItemDecision.Accept
+                                    },
                                     {
-                                        "@type": "AcceptRequestItemParameters",
-                                        result: ResponseItemResult.Accepted
-                                    } as IAcceptRequestItemParameters
+                                        decision: RequestItemDecision.Accept
+                                    }
                                 ]
                             }
                         ]
-                    } as Omit<IAcceptRequestParameters, "requestId">
+                    } as Omit<DecideRequestParametersJSON, "requestId">
 
                     await Given.anIncomingRequestWith({
                         content: request,
@@ -466,10 +452,10 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                             rejectParams: {
                                 items: [
                                     {
-                                        "@type": "RejectRequestItemParameters"
-                                    } as IRejectRequestItemParameters
+                                        decision: RequestItemDecision.Reject
+                                    }
                                 ]
-                            } as Omit<IRejectRequestParameters, "requestId">
+                            } as Omit<DecideRequestParametersJSON, "requestId">
                         },
 
                         {
@@ -489,15 +475,13 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                             rejectParams: {
                                 items: [
                                     {
-                                        "@type": "RejectRequestItemParameters",
-                                        result: ResponseItemResult.Rejected
-                                    } as IRejectRequestItemParameters,
+                                        decision: RequestItemDecision.Reject
+                                    },
                                     {
-                                        "@type": "RejectRequestItemParameters",
-                                        result: ResponseItemResult.Rejected
-                                    } as IRejectRequestItemParameters
+                                        decision: RequestItemDecision.Reject
+                                    }
                                 ]
-                            } as Omit<IRejectRequestParameters, "requestId">
+                            } as Omit<DecideRequestParametersJSON, "requestId">
                         },
 
                         {
@@ -519,16 +503,14 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                             rejectParams: {
                                 items: [
                                     {
-                                        "@type": "DecideRequestItemGroupParameters",
                                         items: [
                                             {
-                                                "@type": "RejectRequestItemParameters",
-                                                result: ResponseItemResult.Rejected
-                                            } as IRejectRequestItemParameters
+                                                decision: RequestItemDecision.Reject
+                                            }
                                         ]
                                     }
                                 ]
-                            } as Omit<IRejectRequestParameters, "requestId">
+                            } as Omit<DecideRequestParametersJSON, "requestId">
                         }
                     ],
                     async function (testParams) {
@@ -536,16 +518,13 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                             content: testParams.request,
                             status: ConsumptionRequestStatus.DecisionRequired
                         })
-                        await When.iCallCanRejectWith({
-                            items: testParams.rejectParams.items
-                        })
+                        await When.iCallCanRejectWith(testParams.rejectParams)
                         await Then.itReturnsAnErrorValidationResult()
                     }
                 )
 
                 it("throws when no Consumption Request with the given id exists in DB", async function () {
-                    const nonExistentId = CoreId.from("nonExistentId")
-                    await When.iTryToCallCanRejectWith({ requestId: nonExistentId })
+                    await When.iTryToCallCanRejectWith({ requestId: "nonExistentId" })
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
 
@@ -590,37 +569,31 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     const rejectParams = {
                         items: [
                             {
-                                "@type": "RejectRequestItemParameters",
-                                result: ResponseItemResult.Rejected
-                            } as IRejectRequestItemParameters,
+                                decision: RequestItemDecision.Reject
+                            },
                             {
-                                "@type": "DecideRequestItemGroupParameters",
+                                decision: RequestItemDecision.Reject,
                                 items: [
                                     {
-                                        "@type": "RejectRequestItemParameters",
-                                        result: ResponseItemResult.Rejected
-                                    } as IRejectRequestItemParameters,
+                                        decision: RequestItemDecision.Reject
+                                    },
                                     {
-                                        "@type": "RejectRequestItemParameters",
-                                        result: ResponseItemResult.Rejected
-                                    } as IRejectRequestItemParameters,
+                                        decision: RequestItemDecision.Reject
+                                    },
                                     {
-                                        "@type": "RejectRequestItemParameters",
-                                        result: ResponseItemResult.Rejected
-                                    } as IRejectRequestItemParameters
+                                        decision: RequestItemDecision.Reject
+                                    }
                                 ]
                             }
                         ]
-                    } as Omit<IRejectRequestParameters, "requestId">
+                    } as Omit<DecideRequestParametersJSON, "requestId">
 
                     await Given.anIncomingRequestWith({
                         content: request,
                         status: ConsumptionRequestStatus.DecisionRequired
                     })
 
-                    const validationResult = await When.iCallCanRejectWith({
-                        items: rejectParams.items
-                    })
+                    const validationResult = await When.iCallCanRejectWith(rejectParams)
 
                     expect(validationResult.isError()).to.be.true
                     expect((validationResult as ErrorValidationResult).code).to.equal("inheritedFromItem")
@@ -657,10 +630,16 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iAcceptTheRequest({
                         items: [
-                            AcceptRequestItemParameters.from({}),
-                            DecideRequestItemGroupParameters.from({
-                                items: [RejectRequestItemParameters.from({})]
-                            })
+                            {
+                                decision: RequestItemDecision.Accept
+                            },
+                            {
+                                items: [
+                                    {
+                                        decision: RequestItemDecision.Reject
+                                    }
+                                ]
+                            }
                         ]
                     })
                     await Then.iExpectTheResponseContent((responseContent) => {
@@ -675,10 +654,16 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iAcceptTheRequest({
                         items: [
-                            AcceptRequestItemParameters.from({}),
-                            DecideRequestItemGroupParameters.from({
-                                items: [RejectRequestItemParameters.from({})]
-                            })
+                            {
+                                decision: RequestItemDecision.Accept
+                            },
+                            {
+                                items: [
+                                    {
+                                        decision: RequestItemDecision.Reject
+                                    }
+                                ]
+                            }
                         ]
                     })
                     await Then.iExpectTheResponseContent((responseContent) => {
@@ -695,10 +680,16 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iAcceptTheRequest({
                         items: [
-                            AcceptRequestItemParameters.from({}),
-                            DecideRequestItemGroupParameters.from({
-                                items: [RejectRequestItemParameters.from({})]
-                            })
+                            {
+                                decision: RequestItemDecision.Accept
+                            },
+                            {
+                                items: [
+                                    {
+                                        decision: RequestItemDecision.Reject
+                                    }
+                                ]
+                            }
                         ]
                     })
                     await Then.iExpectTheResponseContent((responseContent) => {
@@ -733,8 +724,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("throws when no Consumption Request with the given id exists in DB", async function () {
-                    const nonExistentId = CoreId.from("nonExistentId")
-                    When.iTryToAcceptWith({ requestId: nonExistentId })
+                    When.iTryToAcceptWith({ requestId: "nonExistentId" })
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
 
@@ -779,10 +769,16 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iRejectTheRequest({
                         items: [
-                            RejectRequestItemParameters.from({}),
-                            DecideRequestItemGroupParameters.from({
-                                items: [RejectRequestItemParameters.from({})]
-                            })
+                            {
+                                decision: RequestItemDecision.Reject
+                            },
+                            {
+                                items: [
+                                    {
+                                        decision: RequestItemDecision.Reject
+                                    }
+                                ]
+                            }
                         ]
                     })
                     await Then.iExpectTheResponseContent((responseContent) => {
@@ -797,10 +793,16 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iRejectTheRequest({
                         items: [
-                            RejectRequestItemParameters.from({}),
-                            DecideRequestItemGroupParameters.from({
-                                items: [RejectRequestItemParameters.from({})]
-                            })
+                            {
+                                decision: RequestItemDecision.Reject
+                            },
+                            {
+                                items: [
+                                    {
+                                        decision: RequestItemDecision.Reject
+                                    }
+                                ]
+                            }
                         ]
                     })
                     await Then.iExpectTheResponseContent((responseContent) => {
@@ -817,10 +819,17 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestWithAnItemAndAGroupInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iRejectTheRequest({
                         items: [
-                            RejectRequestItemParameters.from({}),
-                            DecideRequestItemGroupParameters.from({
-                                items: [RejectRequestItemParameters.from({})]
-                            })
+                            {
+                                decision: RequestItemDecision.Accept
+                            },
+                            {
+                                decision: RequestItemDecision.Reject,
+                                items: [
+                                    {
+                                        decision: RequestItemDecision.Accept
+                                    }
+                                ]
+                            } as DecideRequestItemGroupParametersJSON
                         ]
                     })
                     await Then.iExpectTheResponseContent((responseContent) => {
@@ -855,8 +864,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("throws when no Consumption Request with the given id exists in DB", async function () {
-                    const nonExistentId = CoreId.from("nonExistentId")
-                    When.iTryToRejectWith({ requestId: nonExistentId })
+                    When.iTryToRejectWith({ requestId: "nonExistentId" })
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
 
@@ -975,8 +983,12 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         requestId: cnsRequest.id
                     })
                     cnsRequest = await consumptionController.incomingRequests.accept({
-                        requestId: cnsRequest.id,
-                        items: [AcceptRequestItemParameters.from({})]
+                        requestId: cnsRequest.id.toString(),
+                        items: [
+                            {
+                                decision: RequestItemDecision.Accept
+                            }
+                        ]
                     })
 
                     const relationshipChange = TestObjectFactory.createOutgoingIRelationshipChange(
@@ -1012,8 +1024,12 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         requestId: cnsRequest.id
                     })
                     cnsRequest = await consumptionController.incomingRequests.accept({
-                        requestId: cnsRequest.id,
-                        items: [AcceptRequestItemParameters.from({})]
+                        requestId: cnsRequest.id.toString(),
+                        items: [
+                            {
+                                decision: RequestItemDecision.Accept
+                            }
+                        ]
                     })
 
                     const responseMessage = TestObjectFactory.createOutgoingIMessage(accountController.identity.address)
@@ -1031,7 +1047,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 }
 
 export class AlwaysTrueDecideRequestParamsValidator extends DecideRequestParametersValidator {
-    public override validate(_params: IDecideRequestParameters, _request: ConsumptionRequest): Result<undefined> {
+    public override validate(_params: DecideRequestParametersJSON, _request: ConsumptionRequest): Result<undefined> {
         return Result.ok(undefined)
     }
 }

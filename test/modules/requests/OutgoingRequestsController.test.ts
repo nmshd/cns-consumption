@@ -4,10 +4,10 @@ import {
     ConsumptionIds,
     ConsumptionRequest,
     ConsumptionRequestStatus,
+    DecideRequestParametersJSON,
     DecideRequestParametersValidator,
     ErrorValidationResult,
     ICreateOutgoingRequestParameters,
-    IDecideRequestParameters,
     IRequestWithoutId,
     ValidationResult
 } from "@nmshd/consumption"
@@ -37,7 +37,7 @@ import { ITestRequestItem, TestRequestItem } from "./testHelpers/TestRequestItem
 import { TestRequestItemProcessor } from "./testHelpers/TestRequestItemProcessor"
 
 export class AlwaysTrueDecideRequestParamsValidator extends DecideRequestParametersValidator {
-    public override validate(_params: IDecideRequestParameters, _request: ConsumptionRequest): Result<undefined> {
+    public override validate(_params: DecideRequestParametersJSON, _request: ConsumptionRequest): Result<undefined> {
         return Result.ok(undefined)
     }
 }
