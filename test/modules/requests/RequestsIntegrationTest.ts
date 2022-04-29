@@ -865,13 +865,14 @@ export class RequestsThen {
         return Promise.resolve()
     }
 
-    public theRequestHasItsResponsePropertySetCorrectly(): Promise<void> {
+    public theRequestHasItsResponsePropertySetCorrectly(expectedResult: ResponseItemResult): Promise<void> {
         expect(this.context.consumptionRequestAfterAction!.response).to.exist
         expect(this.context.consumptionRequestAfterAction!.response).to.be.instanceOf(ConsumptionResponse)
         expect(this.context.consumptionRequestAfterAction!.response!.content).to.be.instanceOf(Response)
         expect(this.context.consumptionRequestAfterAction!.response!.content.requestId.toString()).to.equal(
             (this.context.consumptionRequestAfterAction ?? this.context.givenConsumptionRequest!).id.toString()
         )
+        expect(this.context.consumptionRequestAfterAction?.response!.content.result).to.equal(expectedResult)
 
         return Promise.resolve()
     }
