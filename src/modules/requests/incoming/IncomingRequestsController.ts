@@ -165,7 +165,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     }
 
     public async canAccept(params: DecideRequestParametersJSON): Promise<ValidationResult> {
-        return await this.canDecide({ ...params, accept: false })
+        return await this.canDecide({ ...params, accept: true })
     }
 
     public async canReject(params: DecideRequestParametersJSON): Promise<ValidationResult> {
