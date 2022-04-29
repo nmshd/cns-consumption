@@ -81,9 +81,88 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(),
                         response: {
+                            decision: RequestDecision.Accept,
                             items: [{ items: [{ decision: RequestItemDecision.Reject }] }],
-                            requestId,
-                            decision: RequestDecision.Accept
+                            requestId
+                        }
+                    }
+                },
+                {
+                    description: "success: group must be accepted, item must not be accepted; accept item",
+                    input: {
+                        request: Request.from({
+                            items: [
+                                RequestItemGroup.from({
+                                    mustBeAccepted: true,
+                                    items: [TestRequestItem.from({ mustBeAccepted: false })]
+                                })
+                            ]
+                        }),
+                        response: {
+                            decision: RequestDecision.Accept,
+                            items: [
+                                {
+                                    items: [{ decision: RequestItemDecision.Accept }]
+                                }
+                            ],
+                            requestId
+                        }
+                    }
+                },
+                {
+                    description: "success: group must not be accepted, item must be accepted; reject item",
+                    input: {
+                        request: Request.from({
+                            items: [
+                                RequestItemGroup.from({
+                                    mustBeAccepted: false,
+                                    items: [TestRequestItem.from({ mustBeAccepted: true })]
+                                })
+                            ]
+                        }),
+                        response: {
+                            decision: RequestDecision.Accept,
+                            items: [
+                                {
+                                    items: [{ decision: RequestItemDecision.Reject }]
+                                }
+                            ],
+                            requestId
+                        }
+                    }
+                },
+                {
+                    description: "success: accept a request without accepting any item (no items mustBeAccepted)",
+                    input: {
+                        request: Request.from({
+                            items: [TestRequestItem.from({ mustBeAccepted: false })]
+                        }),
+                        response: {
+                            decision: RequestDecision.Accept,
+                            items: [{ decision: RequestItemDecision.Reject }],
+                            requestId
+                        }
+                    }
+                },
+                {
+                    description: "???: group must be accepted, item must not be accepted; reject the item",
+                    input: {
+                        request: Request.from({
+                            items: [
+                                RequestItemGroup.from({
+                                    mustBeAccepted: true,
+                                    items: [TestRequestItem.from({ mustBeAccepted: false })]
+                                })
+                            ]
+                        }),
+                        response: {
+                            decision: RequestDecision.Accept,
+                            items: [
+                                {
+                                    items: [{ decision: RequestItemDecision.Reject }]
+                                }
+                            ],
+                            requestId
                         }
                     }
                 },
