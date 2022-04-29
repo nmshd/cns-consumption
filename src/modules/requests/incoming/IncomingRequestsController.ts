@@ -242,7 +242,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
                 "Cannot accept the Request with the given parameters. Call 'canAccept' to get more information."
             )
         }
-        return await this.decide({ ...params, accept: false })
+        return await this.decide({ ...params, accept: true })
     }
 
     public async reject(params: DecideRequestParametersJSON): Promise<ConsumptionRequest> {
