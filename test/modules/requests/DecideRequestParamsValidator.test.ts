@@ -323,12 +323,17 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
 
                 const validationResult = validator.validate(data.input.response, consumptionRequest)
 
-                expect(validationResult.isError).to.equal(!!data.expectedError)
-
-                if (!data.expectedError) return
-
-                expect(validationResult.error.code).to.equal(data.expectedError.code)
-                expect(validationResult.error.message).to.equal(data.expectedError.message)
+                if (data.expectedError) {
+                    expect(validationResult.isError, "expected an error, but received success").to.be.true
+                    expect(validationResult.error.code).to.equal(data.expectedError.code)
+                    expect(validationResult.error.message).to.equal(data.expectedError.message)
+                } else {
+                    expect(
+                        validationResult.isError,
+                        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                        `expected success, but received the error '${validationResult.error?.code} - ${validationResult.error?.message}'`
+                    ).to.be.false
+                }
             })
         })
     }
