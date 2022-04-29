@@ -3,3 +3,7 @@ import { DecideRequestItemParametersJSON } from "./DecideRequestItemParameters"
 export interface DecideRequestItemGroupParametersJSON {
     items: DecideRequestItemParametersJSON[]
 }
+
+export function isDecideRequestItemGroupParametersJSON(json: any): json is DecideRequestItemGroupParametersJSON {
+    return typeof json.items !== "undefined" && typeof json.accept === "undefined"
+}

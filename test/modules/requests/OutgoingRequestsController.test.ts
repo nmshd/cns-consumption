@@ -272,7 +272,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.theCreatedOutgoingRequestHasAllProperties()
                     await Then.theRequestIsInStatus(ConsumptionRequestStatus.Completed)
                     await Then.theRequestHasItsSourcePropertySet()
-                    await Then.theRequestHasItsResponsePropertySetCorrectly()
+                    await Then.theRequestHasItsResponsePropertySetCorrectly(ResponseItemResult.Accepted)
                     await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "RelationshipChange" })
                     await Then.theNewRequestIsPersistedInTheDatabase()
                 })
@@ -347,7 +347,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                         responseSourceObject: incomingMessage
                     })
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Completed)
-                    await Then.theRequestHasItsResponsePropertySetCorrectly()
+                    await Then.theRequestHasItsResponsePropertySetCorrectly(ResponseItemResult.Accepted)
                     await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "Message" })
                     await Then.theNewRequestIsPersistedInTheDatabase()
                 })
