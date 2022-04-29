@@ -1,8 +1,7 @@
 import { RequestItem } from "@nmshd/content"
 import { IRequestItemProcessor } from "./IRequestItemProcessor"
-
-export type ProcessorConstructor = new () => IRequestItemProcessor
-export type RequestItemConstructor = new () => RequestItem
+import { ProcessorConstructor } from "./ProcessorConstructor"
+import { RequestItemConstructor } from "./RequestItemConstructor"
 
 export class RequestItemProcessorRegistry {
     private readonly registry: Record<string, ProcessorConstructor | undefined> = {}
