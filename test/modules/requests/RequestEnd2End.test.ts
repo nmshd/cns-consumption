@@ -1,10 +1,5 @@
 /* eslint-disable jest/expect-expect */
-import {
-    ConsumptionController,
-    ConsumptionRequest,
-    ConsumptionRequestStatus,
-    RequestItemDecision
-} from "@nmshd/consumption"
+import { ConsumptionController, ConsumptionRequest, ConsumptionRequestStatus } from "@nmshd/consumption"
 import { AcceptResponseItem, Request, Response } from "@nmshd/content"
 import { AccountController, CoreDate, Message, Relationship, RelationshipTemplate, Transport } from "@nmshd/transport"
 import { expect } from "chai"
@@ -98,7 +93,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                     requestId: rConsumptionRequest.id.toString(),
                     items: [
                         {
-                            decision: RequestItemDecision.Accept
+                            accept: true
                         }
                     ]
                 })
@@ -239,7 +234,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                     requestId: rConsumptionRequest.id.toString(),
                     items: [
                         {
-                            decision: RequestItemDecision.Accept
+                            accept: true
                         }
                     ]
                 })

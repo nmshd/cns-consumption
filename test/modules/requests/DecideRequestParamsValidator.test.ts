@@ -3,9 +3,7 @@ import {
     ConsumptionRequestStatus,
     DecideRequestItemGroupParametersJSON,
     DecideRequestItemParametersJSON,
-    DecideRequestParametersValidator,
-    RequestDecision,
-    RequestItemDecision
+    DecideRequestParametersValidator
 } from "@nmshd/consumption"
 import { Request, RequestItemGroup } from "@nmshd/content"
 import { CoreAddress, CoreDate, CoreId } from "@nmshd/transport"
@@ -22,7 +20,7 @@ interface TestParam {
         response: {
             requestId: string
             items: (DecideRequestItemParametersJSON | DecideRequestItemGroupParametersJSON)[]
-            decision: RequestDecision
+            accept: boolean
         }
     }
     expectedError?: {
@@ -48,8 +46,8 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
                         response: {
-                            decision: RequestDecision.Accept,
-                            items: [{ decision: RequestItemDecision.Accept }],
+                            accept: true,
+                            items: [{ accept: true }],
                             requestId
                         }
                     }
@@ -59,8 +57,8 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(),
                         response: {
-                            decision: RequestDecision.Accept,
-                            items: [{ items: [{ decision: RequestItemDecision.Accept }] }],
+                            accept: true,
+                            items: [{ items: [{ accept: true }] }],
                             requestId
                         }
                     }
@@ -70,8 +68,8 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
                         response: {
-                            decision: RequestDecision.Accept,
-                            items: [{ decision: RequestItemDecision.Reject }],
+                            accept: true,
+                            items: [{ accept: false }],
                             requestId
                         }
                     }
@@ -81,8 +79,8 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(),
                         response: {
-                            decision: RequestDecision.Accept,
-                            items: [{ items: [{ decision: RequestItemDecision.Reject }] }],
+                            accept: true,
+                            items: [{ items: [{ accept: false }] }],
                             requestId
                         }
                     }
@@ -99,10 +97,10 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                             ]
                         }),
                         response: {
-                            decision: RequestDecision.Accept,
+                            accept: true,
                             items: [
                                 {
-                                    items: [{ decision: RequestItemDecision.Accept }]
+                                    items: [{ accept: true }]
                                 }
                             ],
                             requestId
@@ -121,10 +119,10 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                             ]
                         }),
                         response: {
-                            decision: RequestDecision.Accept,
+                            accept: true,
                             items: [
                                 {
-                                    items: [{ decision: RequestItemDecision.Reject }]
+                                    items: [{ accept: false }]
                                 }
                             ],
                             requestId
@@ -138,8 +136,8 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                             items: [TestRequestItem.from({ mustBeAccepted: false })]
                         }),
                         response: {
-                            decision: RequestDecision.Accept,
-                            items: [{ decision: RequestItemDecision.Reject }],
+                            accept: true,
+                            items: [{ accept: false }],
                             requestId
                         }
                     }
@@ -159,13 +157,10 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                             ]
                         }),
                         response: {
-                            decision: RequestDecision.Accept,
+                            accept: true,
                             items: [
                                 {
-                                    items: [
-                                        { decision: RequestItemDecision.Reject },
-                                        { decision: RequestItemDecision.Accept }
-                                    ]
+                                    items: [{ accept: false }, { accept: true }]
                                 }
                             ],
                             requestId
@@ -180,8 +175,8 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
                         response: {
-                            decision: RequestDecision.Accept,
-                            items: [{ decision: RequestItemDecision.Accept }],
+                            accept: true,
+                            items: [{ accept: true }],
                             requestId: "invalid"
                         }
                     },
@@ -195,8 +190,8 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     input: {
                         request: TestObjectFactory.createRequestWithTwoItems(),
                         response: {
-                            decision: RequestDecision.Accept,
-                            items: [{ decision: RequestItemDecision.Accept }],
+                            accept: true,
+                            items: [{ accept: true }],
                             requestId
                         }
                     },
@@ -210,8 +205,8 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
                         response: {
-                            decision: RequestDecision.Accept,
-                            items: [{ decision: RequestItemDecision.Accept }, { decision: RequestItemDecision.Accept }],
+                            accept: true,
+                            items: [{ accept: true }, { accept: true }],
                             requestId
                         }
                     },
@@ -225,8 +220,8 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(),
                         response: {
-                            decision: RequestDecision.Accept,
-                            items: [{ decision: RequestItemDecision.Accept }],
+                            accept: true,
+                            items: [{ accept: true }],
                             requestId
                         }
                     },
@@ -240,8 +235,8 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
                         response: {
-                            decision: RequestDecision.Accept,
-                            items: [{ items: [{ decision: RequestItemDecision.Accept }] }],
+                            accept: true,
+                            items: [{ items: [{ accept: true }] }],
                             requestId
                         }
                     },
@@ -255,13 +250,10 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(),
                         response: {
-                            decision: RequestDecision.Accept,
+                            accept: true,
                             items: [
                                 {
-                                    items: [
-                                        { decision: RequestItemDecision.Accept },
-                                        { decision: RequestItemDecision.Accept }
-                                    ]
+                                    items: [{ accept: true }, { accept: true }]
                                 }
                             ],
                             requestId
@@ -277,8 +269,8 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(undefined, true),
                         response: {
-                            decision: RequestDecision.Accept,
-                            items: [{ decision: RequestItemDecision.Reject }],
+                            accept: true,
+                            items: [{ accept: false }],
                             requestId
                         }
                     },
@@ -293,8 +285,8 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(undefined, true),
                         response: {
-                            decision: RequestDecision.Accept,
-                            items: [{ items: [{ decision: RequestItemDecision.Reject }] }],
+                            accept: true,
+                            items: [{ items: [{ accept: false }] }],
                             requestId
                         }
                     },
@@ -309,9 +301,9 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
                         response: {
-                            items: [{ decision: RequestItemDecision.Accept }],
-                            requestId,
-                            decision: RequestDecision.Reject
+                            accept: false,
+                            items: [{ accept: true }],
+                            requestId
                         }
                     },
                     expectedError: {
@@ -324,9 +316,9 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(),
                         response: {
-                            items: [{ items: [{ decision: RequestItemDecision.Accept }] }],
-                            requestId,
-                            decision: RequestDecision.Reject
+                            accept: false,
+                            items: [{ items: [{ accept: true }] }],
+                            requestId
                         }
                     },
                     expectedError: {
@@ -350,13 +342,10 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                             ]
                         }),
                         response: {
-                            decision: RequestDecision.Accept,
+                            accept: true,
                             items: [
                                 {
-                                    items: [
-                                        { decision: RequestItemDecision.Accept },
-                                        { decision: RequestItemDecision.Reject }
-                                    ]
+                                    items: [{ accept: true }, { accept: false }]
                                 }
                             ],
                             requestId

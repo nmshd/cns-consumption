@@ -1,4 +1,4 @@
-import { GenericRequestItemProcessor, RequestItemDecision } from "@nmshd/consumption"
+import { GenericRequestItemProcessor } from "@nmshd/consumption"
 import { AcceptResponseItem, RejectResponseItem, ResponseItemResult } from "@nmshd/content"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
@@ -24,7 +24,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                     const processor = new GenericRequestItemProcessor()
 
                     const result = await processor.canAccept(TestRequestItem.from({ mustBeAccepted: false }), {
-                        decision: RequestItemDecision.Accept
+                        accept: true
                     })
 
                     expect(result.isSuccess()).to.be.true
@@ -36,7 +36,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                     const processor = new GenericRequestItemProcessor()
 
                     const result = await processor.canReject(TestRequestItem.from({ mustBeAccepted: false }), {
-                        decision: RequestItemDecision.Reject
+                        accept: false
                     })
 
                     expect(result.isSuccess()).to.be.true
@@ -48,7 +48,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                     const processor = new GenericRequestItemProcessor()
 
                     const result = processor.accept(TestRequestItem.from({ mustBeAccepted: false }), {
-                        decision: RequestItemDecision.Accept
+                        accept: true
                     })
 
                     expect(result).to.be.instanceOf(AcceptResponseItem)
@@ -60,7 +60,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                     const processor = new GenericRequestItemProcessor()
 
                     const result = processor.reject(TestRequestItem.from({ mustBeAccepted: false }), {
-                        decision: RequestItemDecision.Reject
+                        accept: false
                     })
 
                     expect(result).to.be.instanceOf(RejectResponseItem)

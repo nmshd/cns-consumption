@@ -6,7 +6,7 @@ import { DecideRequestItemParametersJSON } from "./DecideRequestItemParameters"
 export interface InternalDecideRequestParametersJSON {
     requestId: string
     items: (DecideRequestItemParametersJSON | DecideRequestItemGroupParametersJSON)[]
-    decision: RequestDecision
+    accept: boolean
 }
 
 @type("InternalDecideRequestParameters")
@@ -21,14 +21,9 @@ export class InternalDecideRequestParameters extends Serializable {
 
     @serialize()
     @validate()
-    public decision: RequestDecision
+    public accept: boolean
 
     public static from(value: InternalDecideRequestParametersJSON): InternalDecideRequestParameters {
         return this.fromAny(value)
     }
-}
-
-export enum RequestDecision {
-    Accept = "Accept",
-    Reject = "Reject"
 }

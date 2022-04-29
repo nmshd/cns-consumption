@@ -19,7 +19,6 @@ import {
     IRequireManualDecisionOfIncomingRequestParameters,
     ISentOutgoingRequestParameters,
     OutgoingRequestsController,
-    RequestItemDecision,
     ValidationResult
 } from "@nmshd/consumption"
 import {
@@ -186,7 +185,7 @@ export class RequestsGiven {
                 requestId: consumptionRequest.id.toString(),
                 items: [
                     {
-                        decision: RequestItemDecision.Accept
+                        accept: true
                     }
                 ]
             })
@@ -276,7 +275,7 @@ export class RequestsWhen {
     public async iCallCanAcceptWith(params: Partial<DecideRequestParametersJSON>): Promise<ValidationResult> {
         params.items ??= [
             {
-                decision: RequestItemDecision.Accept
+                accept: true
             }
         ]
         params.requestId ??= this.context.givenConsumptionRequest!.id.toString()
@@ -313,7 +312,7 @@ export class RequestsWhen {
     public async iCallCanRejectWith(params: Partial<DecideRequestParametersJSON>): Promise<ValidationResult> {
         params.items ??= [
             {
-                decision: RequestItemDecision.Reject
+                accept: false
             }
         ]
         params.requestId ??= this.context.givenConsumptionRequest!.id.toString()
@@ -369,7 +368,7 @@ export class RequestsWhen {
                 requestId: this.context.givenConsumptionRequest!.id.toString(),
                 items: [
                     {
-                        decision: RequestItemDecision.Accept
+                        accept: true
                     }
                 ]
             })
@@ -381,7 +380,7 @@ export class RequestsWhen {
         params.requestId ??= this.context.givenConsumptionRequest!.id.toString()
         params.items ??= [
             {
-                decision: RequestItemDecision.Accept
+                accept: true
             }
         ]
 
@@ -396,7 +395,7 @@ export class RequestsWhen {
                 requestId: this.context.givenConsumptionRequest!.id.toString(),
                 items: [
                     {
-                        decision: RequestItemDecision.Reject
+                        accept: false
                     }
                 ]
             })
@@ -408,7 +407,7 @@ export class RequestsWhen {
         params.requestId ??= this.context.givenConsumptionRequest!.id.toString()
         params.items ??= [
             {
-                decision: RequestItemDecision.Reject
+                accept: false
             }
         ]
 
@@ -623,7 +622,7 @@ export class RequestsWhen {
         params ??= {
             items: [
                 {
-                    decision: RequestItemDecision.Accept
+                    accept: true
                 }
             ]
         }
@@ -638,7 +637,7 @@ export class RequestsWhen {
         params ??= {
             items: [
                 {
-                    decision: RequestItemDecision.Reject
+                    accept: false
                 }
             ]
         }

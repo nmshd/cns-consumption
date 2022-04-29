@@ -1,7 +1,5 @@
-import { RequestItemDecision } from "./RequestItemDecision"
-
 export interface RejectRequestItemParametersJSON {
-    decision: RequestItemDecision.Reject
+    accept: false
 
     code?: string
     message?: string

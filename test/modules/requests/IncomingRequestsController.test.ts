@@ -7,8 +7,7 @@ import {
     DecideRequestItemGroupParametersJSON,
     DecideRequestParametersJSON,
     DecideRequestParametersValidator,
-    ErrorValidationResult,
-    RequestItemDecision
+    ErrorValidationResult
 } from "@nmshd/consumption"
 import {
     IRequest,
@@ -260,7 +259,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                             acceptParams: {
                                 items: [
                                     {
-                                        decision: RequestItemDecision.Accept
+                                        accept: true
                                     }
                                 ]
                             } as Omit<DecideRequestParametersJSON, "requestId">
@@ -283,10 +282,10 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                             acceptParams: {
                                 items: [
                                     {
-                                        decision: RequestItemDecision.Accept
+                                        accept: true
                                     },
                                     {
-                                        decision: RequestItemDecision.Accept
+                                        accept: true
                                     }
                                 ]
                             } as Omit<DecideRequestParametersJSON, "requestId">
@@ -313,7 +312,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                                     {
                                         items: [
                                             {
-                                                decision: RequestItemDecision.Accept
+                                                accept: true
                                             }
                                         ]
                                     } as DecideRequestItemGroupParametersJSON
@@ -379,18 +378,18 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     const acceptParams = {
                         items: [
                             {
-                                decision: RequestItemDecision.Accept
+                                accept: true
                             },
                             {
                                 items: [
                                     {
-                                        decision: RequestItemDecision.Accept
+                                        accept: true
                                     },
                                     {
-                                        decision: RequestItemDecision.Accept
+                                        accept: true
                                     },
                                     {
-                                        decision: RequestItemDecision.Accept
+                                        accept: true
                                     }
                                 ]
                             }
@@ -451,7 +450,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                             rejectParams: {
                                 items: [
                                     {
-                                        decision: RequestItemDecision.Reject
+                                        accept: false
                                     }
                                 ]
                             } as Omit<DecideRequestParametersJSON, "requestId">
@@ -474,10 +473,10 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                             rejectParams: {
                                 items: [
                                     {
-                                        decision: RequestItemDecision.Reject
+                                        accept: false
                                     },
                                     {
-                                        decision: RequestItemDecision.Reject
+                                        accept: false
                                     }
                                 ]
                             } as Omit<DecideRequestParametersJSON, "requestId">
@@ -504,7 +503,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                                     {
                                         items: [
                                             {
-                                                decision: RequestItemDecision.Reject
+                                                accept: false
                                             }
                                         ]
                                     }
@@ -568,19 +567,19 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     const rejectParams = {
                         items: [
                             {
-                                decision: RequestItemDecision.Reject
+                                accept: false
                             },
                             {
-                                decision: RequestItemDecision.Reject,
+                                accept: false,
                                 items: [
                                     {
-                                        decision: RequestItemDecision.Reject
+                                        accept: false
                                     },
                                     {
-                                        decision: RequestItemDecision.Reject
+                                        accept: false
                                     },
                                     {
-                                        decision: RequestItemDecision.Reject
+                                        accept: false
                                     }
                                 ]
                             }
@@ -630,12 +629,12 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await When.iAcceptTheRequest({
                         items: [
                             {
-                                decision: RequestItemDecision.Accept
+                                accept: true
                             },
                             {
                                 items: [
                                     {
-                                        decision: RequestItemDecision.Reject
+                                        accept: false
                                     }
                                 ]
                             }
@@ -654,12 +653,12 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await When.iAcceptTheRequest({
                         items: [
                             {
-                                decision: RequestItemDecision.Accept
+                                accept: true
                             },
                             {
                                 items: [
                                     {
-                                        decision: RequestItemDecision.Reject
+                                        accept: false
                                     }
                                 ]
                             }
@@ -680,12 +679,12 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await When.iAcceptTheRequest({
                         items: [
                             {
-                                decision: RequestItemDecision.Accept
+                                accept: true
                             },
                             {
                                 items: [
                                     {
-                                        decision: RequestItemDecision.Reject
+                                        accept: false
                                     }
                                 ]
                             }
@@ -769,12 +768,12 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await When.iRejectTheRequest({
                         items: [
                             {
-                                decision: RequestItemDecision.Reject
+                                accept: false
                             },
                             {
                                 items: [
                                     {
-                                        decision: RequestItemDecision.Reject
+                                        accept: false
                                     }
                                 ]
                             }
@@ -793,12 +792,12 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await When.iRejectTheRequest({
                         items: [
                             {
-                                decision: RequestItemDecision.Reject
+                                accept: false
                             },
                             {
                                 items: [
                                     {
-                                        decision: RequestItemDecision.Reject
+                                        accept: false
                                     }
                                 ]
                             }
@@ -819,12 +818,12 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await When.iRejectTheRequest({
                         items: [
                             {
-                                decision: RequestItemDecision.Reject
+                                accept: false
                             },
                             {
                                 items: [
                                     {
-                                        decision: RequestItemDecision.Reject
+                                        accept: false
                                     }
                                 ]
                             } as DecideRequestItemGroupParametersJSON
@@ -984,7 +983,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         requestId: cnsRequest.id.toString(),
                         items: [
                             {
-                                decision: RequestItemDecision.Accept
+                                accept: true
                             }
                         ]
                     })
@@ -1025,7 +1024,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         requestId: cnsRequest.id.toString(),
                         items: [
                             {
-                                decision: RequestItemDecision.Accept
+                                accept: true
                             }
                         ]
                     })
