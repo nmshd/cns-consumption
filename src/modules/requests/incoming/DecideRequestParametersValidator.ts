@@ -84,7 +84,7 @@ export class DecideRequestParametersValidator {
             return Result.fail(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    `The RequestItem with index '${index}' that is flagged as 'mustBeAccepted' was not accepted.`
+                    `The RequestItem with index '${index}', which is flagged as 'mustBeAccepted', was not accepted.`
                 )
             )
         }
@@ -128,7 +128,7 @@ export class DecideRequestParametersValidator {
             return Result.fail(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    `The RequestItemGroup with index '${index}' that is flagged as 'mustBeAccepted' was not accepted. Please accept all 'mustBeAccepted' items in this group.`
+                    `The RequestItemGroup with index '${index}', which is flagged as 'mustBeAccepted', was not accepted. Please accept all 'mustBeAccepted' items in this group.`
                 )
             )
         }
