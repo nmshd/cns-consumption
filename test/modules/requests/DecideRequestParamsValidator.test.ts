@@ -39,10 +39,10 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
             validator = new DecideRequestParametersValidator()
         })
 
-        describe.only("DecideRequestParametersValidator", function () {
+        describe("DecideRequestParametersValidator", function () {
             const requestId = "requestId"
 
-            const params: TestParam[] = [
+            const successParams: TestParam[] = [
                 {
                     description: "(1) success: accept request with one RequestItem and accept the item",
                     input: {
@@ -88,7 +88,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "success: group must be accepted, item must not be accepted; accept item",
+                    description: "(5) success: group must be accepted, item must not be accepted; accept item",
                     input: {
                         request: Request.from({
                             items: [
@@ -110,7 +110,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "success: group must not be accepted, item must be accepted; reject item",
+                    description: "(6) success: group must not be accepted, item must be accepted; reject item",
                     input: {
                         request: Request.from({
                             items: [
@@ -132,7 +132,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "success: accept a request without accepting any item (no items mustBeAccepted)",
+                    description: "(7) success: accept a request without accepting any item (no items mustBeAccepted)",
                     input: {
                         request: Request.from({
                             items: [TestRequestItem.from({ mustBeAccepted: false })]
@@ -145,13 +145,16 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "???: group must be accepted, item must not be accepted; reject the item",
+                    description: "(8) success: items that must not be accepted in a group are rejected",
                     input: {
                         request: Request.from({
                             items: [
                                 RequestItemGroup.from({
-                                    mustBeAccepted: true,
-                                    items: [TestRequestItem.from({ mustBeAccepted: false })]
+                                    items: [
+                                        TestRequestItem.from({ mustBeAccepted: false }),
+                                        TestRequestItem.from({ mustBeAccepted: true })
+                                    ],
+                                    mustBeAccepted: false
                                 })
                             ]
                         }),
@@ -159,15 +162,21 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                             decision: RequestDecision.Accept,
                             items: [
                                 {
-                                    items: [{ decision: RequestItemDecision.Reject }]
+                                    items: [
+                                        { decision: RequestItemDecision.Reject },
+                                        { decision: RequestItemDecision.Accept }
+                                    ]
                                 }
                             ],
                             requestId
                         }
                     }
-                },
+                }
+            ]
+
+            const errorParams: TestParam[] = [
                 {
-                    description: "(5) error: id of request is not equal to id of response",
+                    description: "(1) error: id of request is not equal to id of response",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
                         response: {
@@ -182,7 +191,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(6) error: request with two items is answered with one item",
+                    description: "(2) error: request with two items is answered with one item",
                     input: {
                         request: TestObjectFactory.createRequestWithTwoItems(),
                         response: {
@@ -197,7 +206,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(7) error: request with one item is answered with two items",
+                    description: "(3) error: request with one item is answered with two items",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
                         response: {
@@ -212,7 +221,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(8) error: request with one RequestItemGroup is answered as a RequestItem",
+                    description: "(4) error: request with one RequestItemGroup is answered as a RequestItem",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(),
                         response: {
@@ -227,7 +236,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(9) error: request with one RequestItem is answered as a RequestItemGroup",
+                    description: "(5) error: request with one RequestItem is answered as a RequestItemGroup",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
                         response: {
@@ -242,7 +251,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(10) error: RequestItemGroup and ResponseItemGroup have different number of items",
+                    description: "(6) error: RequestItemGroup and ResponseItemGroup have different number of items",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(),
                         response: {
@@ -264,7 +273,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(11) error: item that must be accepted was rejected",
+                    description: "(7) error: item that must be accepted was rejected",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(undefined, true),
                         response: {
@@ -280,7 +289,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(12) error: item in a RequestItemGroup that must be accepted was rejected",
+                    description: "(8) error: item in a RequestItemGroup that must be accepted was rejected",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(undefined, true),
                         response: {
@@ -296,7 +305,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(13) error: when the request is rejected no RequestItem may be accepted",
+                    description: "(9) error: when the request is rejected no RequestItem may be accepted",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
                         response: {
@@ -311,7 +320,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(14) error: when the request is rejected no RequestItemGroup may be accepted",
+                    description: "(10) error: when the request is rejected no RequestItemGroup may be accepted",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(),
                         response: {
@@ -327,7 +336,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                 },
                 {
                     description:
-                        "(15) error: accepting a group but not accepting all 'mustBeAccepted' items in the group",
+                        "(11) error: accepting a group but not accepting all 'mustBeAccepted' items in the group",
                     input: {
                         request: Request.from({
                             items: [
@@ -358,38 +367,10 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         message:
                             "The RequestItem with index '0.1', which is flagged as 'mustBeAccepted', was not accepted."
                     }
-                },
-                {
-                    description: "(15) success: items that must not be accepted in a group are rejected",
-                    input: {
-                        request: Request.from({
-                            items: [
-                                RequestItemGroup.from({
-                                    items: [
-                                        TestRequestItem.from({ mustBeAccepted: false }),
-                                        TestRequestItem.from({ mustBeAccepted: true })
-                                    ],
-                                    mustBeAccepted: false
-                                })
-                            ]
-                        }),
-                        response: {
-                            decision: RequestDecision.Accept,
-                            items: [
-                                {
-                                    items: [
-                                        { decision: RequestItemDecision.Reject },
-                                        { decision: RequestItemDecision.Accept }
-                                    ]
-                                }
-                            ],
-                            requestId
-                        }
-                    }
                 }
             ]
 
-            itParam("${value.description}", params, async function (data) {
+            itParam("${value.description}", [...successParams, ...errorParams], async function (data) {
                 const consumptionRequest = ConsumptionRequest.from({
                     id: CoreId.from(requestId),
                     content: data.input.request,
@@ -403,17 +384,18 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
 
                 const validationResult = validator.validate(data.input.response, consumptionRequest)
 
-                if (data.expectedError) {
-                    expect(validationResult.isError, "expected an error, but received success").to.be.true
-                    expect(validationResult.error.code).to.equal(data.expectedError.code)
-                    expect(validationResult.error.message).to.equal(data.expectedError.message)
-                } else {
+                if (!data.expectedError) {
                     expect(
                         validationResult.isError,
                         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                         `expected success, but received the error '${validationResult.error?.code} - ${validationResult.error?.message}'`
                     ).to.be.false
+                    return
                 }
+
+                expect(validationResult.isError, "expected an error, but received success").to.be.true
+                expect(validationResult.error.code).to.equal(data.expectedError.code)
+                expect(validationResult.error.message).to.equal(data.expectedError.message)
             })
         })
     }
