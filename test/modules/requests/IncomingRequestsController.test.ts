@@ -619,7 +619,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 it("can handle valid input", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iAcceptTheRequest()
-                    await Then.theRequestHasItsResponsePropertySetCorrectly()
+                    await Then.theRequestHasItsResponsePropertySetCorrectly(ResponseItemResult.Accepted)
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Decided)
                     await Then.theChangesArePersistedInTheDatabase()
                 })
@@ -758,7 +758,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 it("can handle valid input", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.DecisionRequired)
                     await When.iRejectTheRequest()
-                    await Then.theRequestHasItsResponsePropertySetCorrectly()
+                    await Then.theRequestHasItsResponsePropertySetCorrectly(ResponseItemResult.Rejected)
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Decided)
                     await Then.theChangesArePersistedInTheDatabase()
                 })
