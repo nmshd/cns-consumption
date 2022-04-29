@@ -37,10 +37,8 @@ import { DecideRequestItemParametersJSON } from "./decide/DecideRequestItemParam
 import { DecideRequestParametersJSON } from "./decide/DecideRequestParameters"
 import {
     InternalDecideRequestParameters,
-    InternalDecideRequestParametersJSON,
-    RequestDecision
+    InternalDecideRequestParametersJSON
 } from "./decide/InternalDecideRequestParameters"
-import { RequestItemDecision } from "./decide/RequestItemDecision"
 import { DecideRequestParametersValidator } from "./DecideRequestParametersValidator"
 import {
     IReceivedIncomingRequestParameters,
@@ -167,11 +165,11 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     }
 
     public async canAccept(params: DecideRequestParametersJSON): Promise<ValidationResult> {
-        return await this.canDecide({ ...params, decision: RequestDecision.Accept })
+        return await this.canDecide({ ...params, accept: false })
     }
 
     public async canReject(params: DecideRequestParametersJSON): Promise<ValidationResult> {
-        return await this.canDecide({ ...params, decision: RequestDecision.Reject })
+        return await this.canDecide({ ...params, accept: false })
     }
 
     private async canDecide(params: InternalDecideRequestParametersJSON): Promise<ValidationResult> {
@@ -231,7 +229,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
     private async canDecideItem(params: DecideRequestItemParametersJSON, requestItem: RequestItem) {
         const processor = this.processorRegistry.getProcessorForItem(requestItem)
-        if (params.decision === RequestItemDecision.Accept) {
+        if (params.accept) {
             return await processor.canAccept(requestItem, params)
         }
         return await processor.canReject(requestItem, params)
@@ -244,7 +242,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
                 "Cannot accept the Request with the given parameters. Call 'canAccept' to get more information."
             )
         }
-        return await this.decide({ ...params, decision: RequestDecision.Accept })
+        return await this.decide({ ...params, accept: false })
     }
 
     public async reject(params: DecideRequestParametersJSON): Promise<ConsumptionRequest> {
@@ -254,7 +252,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
                 "Cannot reject the Request with the given parameters. Call 'canReject' to get more information."
             )
         }
-        return await this.decide({ ...params, decision: RequestDecision.Reject })
+        return await this.decide({ ...params, accept: false })
     }
 
     private async decide(params: InternalDecideRequestParametersJSON) {
@@ -281,7 +279,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         const responseItems = await this.decideItems(params.items, requestItems)
 
         const response = Response.from({
-            result: params.decision === RequestDecision.Accept ? ResponseResult.Accepted : ResponseResult.Rejected,
+            result: params.accept ? ResponseResult.Accepted : ResponseResult.Rejected,
             requestId: request.id,
             items: responseItems
         })
@@ -332,7 +330,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         const processor = this.processorRegistry.getProcessorForItem(requestItem)
 
         try {
-            if (params.decision === RequestItemDecision.Accept) {
+            if (params.accept) {
                 return await processor.accept(requestItem, params)
             }
             return await processor.reject(requestItem, params)
