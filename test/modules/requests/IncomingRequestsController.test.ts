@@ -960,7 +960,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
             })
 
-            describe("GetRequests", function () {
+            describe("GetIncomingRequests", function () {
                 it("returns all incoming Requests when invoked with no query", async function () {
                     await Given.anIncomingRequest()
                     await Given.anIncomingRequest()
@@ -973,6 +973,14 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anOutgoingRequest()
                     await When.iGetIncomingRequestsWithTheQuery({})
                     await Then.theNumberOfReturnedRequestsIs(1)
+                })
+
+                it("filters Requests based on given query", async function () {
+                    await Given.anIncomingRequestWith({ status: ConsumptionRequestStatus.Draft })
+                    await Given.anIncomingRequestWith({ status: ConsumptionRequestStatus.Draft })
+                    await Given.anIncomingRequestWith({ status: ConsumptionRequestStatus.Open })
+                    await When.iGetIncomingRequestsWithTheQuery({ status: ConsumptionRequestStatus.Draft })
+                    await Then.theNumberOfReturnedRequestsIs(2)
                 })
             })
 
