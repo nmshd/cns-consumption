@@ -296,14 +296,14 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         await processor.applyIncomingResponseItem(responseItem, requestItem)
     }
 
-    public async get(id: ICoreId): Promise<ConsumptionRequest | undefined> {
+    public async getOutgoingRequest(id: ICoreId): Promise<ConsumptionRequest | undefined> {
         const requestDoc = await this.requestsCollection.findOne({ id: id.toString(), isOwn: true })
         const request = requestDoc ? ConsumptionRequest.from(requestDoc) : undefined
         return request
     }
 
     private async getOrThrow(id: CoreId) {
-        const request = await this.get(id)
+        const request = await this.getOutgoingRequest(id)
         if (!request) {
             throw TransportErrors.general.recordNotFound(ConsumptionRequest, id.toString())
         }

@@ -682,15 +682,19 @@ export class RequestsWhen {
     }
 
     public async iGetTheIncomingRequestWith(id: CoreId): Promise<void> {
-        this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.get(id)
+        this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.getIncomingRequest(
+            id
+        )
     }
 
     public async iGetTheOutgoingRequestWith(id: CoreId): Promise<void> {
-        this.context.consumptionRequestAfterAction = await this.context.outgoingRequestsController.get(id)
+        this.context.consumptionRequestAfterAction = await this.context.outgoingRequestsController.getOutgoingRequest(
+            id
+        )
     }
 
     public async iTryToGetARequestWithANonExistentId(): Promise<void> {
-        this.context.consumptionRequestAfterAction = (await this.context.incomingRequestsController.get(
+        this.context.consumptionRequestAfterAction = (await this.context.incomingRequestsController.getIncomingRequest(
             await CoreId.generate()
         ))!
     }
