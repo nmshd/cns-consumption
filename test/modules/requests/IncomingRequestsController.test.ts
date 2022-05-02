@@ -75,6 +75,10 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 Then = that.Then
             })
 
+            afterEach(function () {
+                context?.reset()
+            })
+
             describe("Received", function () {
                 it("creates an incoming Request with an incoming Message as sourceObject", async function () {
                     const incomingMessage = TestObjectFactory.createIncomingMessage(currentIdentity)
