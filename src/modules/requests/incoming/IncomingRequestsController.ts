@@ -379,8 +379,18 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return request
     }
 
-    public async get(id: ICoreId): Promise<ConsumptionRequest | undefined> {
-        const requestDoc = await this.requestsCollection.findOne({ id: id.toString(), isOwn: false })
+    public async getIncomingRequests(query?: any): Promise<ConsumptionRequest[]> {
+        query ??= {}
+        query.isOwn = false
+
+        const requestDocs = await this.requestsCollection.find(query)
+
+        const requests = requestDocs.map((r) => ConsumptionRequest.from(r))
+        return requests
+    }
+
+    public async get(idIncomingRequest: ICoreId): Promise<ConsumptionRequest | undefined> {
+        const requestDoc = await this.requestsCollection.findOne({ id: idIncomingRequest.toString(), isOwn: false })
         const request = requestDoc ? ConsumptionRequest.from(requestDoc) : undefined
         return request
     }

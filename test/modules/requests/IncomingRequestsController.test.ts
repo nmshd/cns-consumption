@@ -960,6 +960,22 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
             })
 
+            describe("GetRequests", function () {
+                it("returns all incoming Requests when invoked with no query", async function () {
+                    await Given.anIncomingRequest()
+                    await Given.anIncomingRequest()
+                    await When.iGetIncomingRequestsWithTheQuery({})
+                    await Then.theNumberOfReturnedRequestsIs(2)
+                })
+
+                it("does not return outgoing Requests", async function () {
+                    await Given.anIncomingRequest()
+                    await Given.anOutgoingRequest()
+                    await When.iGetIncomingRequestsWithTheQuery({})
+                    await Then.theNumberOfReturnedRequestsIs(1)
+                })
+            })
+
             describe("Flows for incoming Requests", function () {
                 it("Incoming Request via RelationshipTemplate", async function () {
                     const request = Request.from({
