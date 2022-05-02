@@ -975,7 +975,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.theNumberOfReturnedRequestsIs(1)
                 })
 
-                it.only("filters Requests based on given query", async function () {
+                it("filters Requests based on given query", async function () {
                     await Given.anIncomingRequestWith({ status: ConsumptionRequestStatus.Open })
                     await Given.anIncomingRequestWith({ status: ConsumptionRequestStatus.Open })
                     await Given.anIncomingRequestWith({ status: ConsumptionRequestStatus.DecisionRequired })
