@@ -1,13 +1,16 @@
+import { LokiJsConnection } from "@js-soft/docdb-access-loki"
 import { Result } from "@js-soft/ts-utils"
 import {
-    ConsumptionController,
     ConsumptionIds,
     ConsumptionRequest,
     ConsumptionRequestStatus,
     DecideRequestItemGroupParametersJSON,
     DecideRequestParametersJSON,
     DecideRequestParametersValidator,
-    ErrorValidationResult
+    ErrorValidationResult,
+    IncomingRequestsController,
+    OutgoingRequestsController,
+    RequestItemProcessorRegistry
 } from "@nmshd/consumption"
 import {
     IRequest,
@@ -18,10 +21,9 @@ import {
     ResponseItemGroup,
     ResponseItemResult
 } from "@nmshd/content"
-import { AccountController, CoreAddress, CoreId, RelationshipChangeType, Transport } from "@nmshd/transport"
+import { CoreAddress, CoreId, RelationshipChangeType, Transport } from "@nmshd/transport"
 import { expect } from "chai"
 import itParam from "mocha-param"
-import { TestUtil } from "../../core/TestUtil"
 import {
     RequestsGiven,
     RequestsIntegrationTest,
@@ -37,32 +39,37 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
     public run(): void {
         const that = this
         const transport = new Transport(that.connection, that.config, that.loggerFactory)
-        let accountController: AccountController
-        let consumptionController: ConsumptionController
+        let incomingRequestsController: IncomingRequestsController
         let currentIdentity: CoreAddress
+        let context: RequestsTestsContext | undefined
 
         describe("IncomingRequestsController", function () {
             let Given: RequestsGiven // eslint-disable-line @typescript-eslint/naming-convention
             let When: RequestsWhen // eslint-disable-line @typescript-eslint/naming-convention
             let Then: RequestsThen // eslint-disable-line @typescript-eslint/naming-convention
 
-            before(async function () {
+            beforeEach(async function () {
                 this.timeout(5000)
 
-                await TestUtil.clearAccounts(that.connection)
                 await transport.init()
 
-                const accounts = await TestUtil.provideAccounts(transport, 1, [
-                    {
-                        processorConstructor: TestRequestItemProcessor,
-                        itemConstructor: TestRequestItem
-                    }
+                const collection = await (await new LokiJsConnection(".").getDatabase("test")).getCollection("test")
+                const processorRegistry = new RequestItemProcessorRegistry([
+                    { itemConstructor: TestRequestItem, processorConstructor: TestRequestItemProcessor }
                 ])
-                ;({ accountController, consumptionController } = accounts[0])
 
-                currentIdentity = accountController.identity.address
+                currentIdentity = CoreAddress.from("id12345")
 
-                that.init(new RequestsTestsContext(accountController, consumptionController))
+                incomingRequestsController = new IncomingRequestsController(collection, processorRegistry, undefined!)
+
+                context = new RequestsTestsContext(
+                    currentIdentity,
+                    incomingRequestsController,
+                    new OutgoingRequestsController(collection, processorRegistry, undefined!)
+                )
+
+                that.init(context)
+
                 Given = that.Given
                 When = that.When
                 Then = that.Then
@@ -115,13 +122,8 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("throws on syntactically invalid input", async function () {
-                    const paramsWithoutSource = {
-                        receivedRequest: TestObjectFactory.createRequestWithOneItem()
-                    }
-                    await TestUtil.expectThrowsAsync(
-                        consumptionController.incomingRequests.received(paramsWithoutSource as any),
-                        "*requestSourceObject*Value is not defined*"
-                    )
+                    await When.iTryToCallReceivedWithoutSource()
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*requestSourceObject*Value is not defined*")
                 })
             })
 
@@ -897,9 +899,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 it("can handle valid input with a Message as responseSource", async function () {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Decided)
                     await When.iCompleteTheIncomingRequestWith({
-                        responseSourceObject: TestObjectFactory.createOutgoingIMessage(
-                            accountController.identity.address
-                        )
+                        responseSourceObject: TestObjectFactory.createOutgoingIMessage(currentIdentity)
                     })
                     await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Completed)
                     await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "Message" })
@@ -910,7 +910,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestInStatus(ConsumptionRequestStatus.Decided)
                     const outgoingRelationshipCreationChange = TestObjectFactory.createOutgoingIRelationshipChange(
                         RelationshipChangeType.Creation,
-                        accountController.identity.address
+                        currentIdentity
                     )
                     await When.iCompleteTheIncomingRequestWith({
                         responseSourceObject: outgoingRelationshipCreationChange
@@ -939,7 +939,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                 })
             })
 
-            describe("Get", function () {
+            describe("GetRequest", function () {
                 it("returns the Request with the given id if it exists", async function () {
                     const requestId = await ConsumptionIds.request.generate()
                     await Given.anIncomingRequestWith({ id: requestId })
@@ -967,19 +967,19 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     })
                     const template = TestObjectFactory.createIncomingIRelationshipTemplate()
 
-                    let cnsRequest = await consumptionController.incomingRequests.received({
+                    let cnsRequest = await incomingRequestsController.received({
                         receivedRequest: request,
                         requestSourceObject: template
                     })
 
-                    cnsRequest = await consumptionController.incomingRequests.checkPrerequisites({
+                    cnsRequest = await incomingRequestsController.checkPrerequisites({
                         requestId: cnsRequest.id
                     })
 
-                    cnsRequest = await consumptionController.incomingRequests.requireManualDecision({
+                    cnsRequest = await incomingRequestsController.requireManualDecision({
                         requestId: cnsRequest.id
                     })
-                    cnsRequest = await consumptionController.incomingRequests.accept({
+                    cnsRequest = await incomingRequestsController.accept({
                         requestId: cnsRequest.id.toString(),
                         items: [
                             {
@@ -990,10 +990,10 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
                     const relationshipChange = TestObjectFactory.createOutgoingIRelationshipChange(
                         RelationshipChangeType.Creation,
-                        accountController.identity.address
+                        currentIdentity
                     )
 
-                    cnsRequest = await consumptionController.incomingRequests.complete({
+                    cnsRequest = await incomingRequestsController.complete({
                         requestId: cnsRequest.id,
                         responseSourceObject: relationshipChange
                     })
@@ -1006,21 +1006,21 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         id: await CoreId.generate(),
                         items: [TestRequestItem.from({ mustBeAccepted: false })]
                     })
-                    const incomingMessage = TestObjectFactory.createIncomingIMessage(accountController.identity.address)
+                    const incomingMessage = TestObjectFactory.createIncomingIMessage(currentIdentity)
 
-                    let cnsRequest = await consumptionController.incomingRequests.received({
+                    let cnsRequest = await incomingRequestsController.received({
                         receivedRequest: request,
                         requestSourceObject: incomingMessage
                     })
 
-                    cnsRequest = await consumptionController.incomingRequests.checkPrerequisites({
+                    cnsRequest = await incomingRequestsController.checkPrerequisites({
                         requestId: cnsRequest.id
                     })
 
-                    cnsRequest = await consumptionController.incomingRequests.requireManualDecision({
+                    cnsRequest = await incomingRequestsController.requireManualDecision({
                         requestId: cnsRequest.id
                     })
-                    cnsRequest = await consumptionController.incomingRequests.accept({
+                    cnsRequest = await incomingRequestsController.accept({
                         requestId: cnsRequest.id.toString(),
                         items: [
                             {
@@ -1029,9 +1029,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         ]
                     })
 
-                    const responseMessage = TestObjectFactory.createOutgoingIMessage(accountController.identity.address)
+                    const responseMessage = TestObjectFactory.createOutgoingIMessage(currentIdentity)
 
-                    cnsRequest = await consumptionController.incomingRequests.complete({
+                    cnsRequest = await incomingRequestsController.complete({
                         requestId: cnsRequest.id,
                         responseSourceObject: responseMessage
                     })

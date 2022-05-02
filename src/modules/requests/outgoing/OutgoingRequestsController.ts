@@ -1,3 +1,4 @@
+import { IDatabaseCollection } from "@js-soft/docdb-access-abstractions"
 import { Request, RequestItem, RequestItemGroup, Response, ResponseItem, ResponseItemGroup } from "@nmshd/content"
 import {
     CoreAddress,
@@ -7,7 +8,6 @@ import {
     Message,
     RelationshipChange,
     RelationshipTemplate,
-    SynchronizedCollection,
     TransportErrors
 } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionIds } from "../../../consumption"
@@ -35,15 +35,16 @@ import {
 } from "./sentOutgoingRequest/SentOutgoingRequestParameters"
 
 export class OutgoingRequestsController extends ConsumptionBaseController {
-    private consumptionRequests: SynchronizedCollection
-
-    public constructor(parent: ConsumptionController, public readonly processorRegistry: RequestItemProcessorRegistry) {
+    public constructor(
+        public readonly requestsCollection: IDatabaseCollection,
+        public readonly processorRegistry: RequestItemProcessorRegistry,
+        parent: ConsumptionController
+    ) {
         super(ConsumptionControllerName.RequestsController, parent)
     }
 
     public override async init(): Promise<OutgoingRequestsController> {
         await super.init()
-        this.consumptionRequests = await this.parent.accountController.getSynchronizedCollection("Requests")
         return this
     }
 
@@ -121,7 +122,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
             statusLog: []
         })
 
-        await this.consumptionRequests.create(consumptionRequest)
+        await this.requestsCollection.create(consumptionRequest)
         return consumptionRequest
     }
 
@@ -296,7 +297,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     }
 
     public async get(id: ICoreId): Promise<ConsumptionRequest | undefined> {
-        const requestDoc = await this.consumptionRequests.findOne({ id: id.toString(), isOwn: true })
+        const requestDoc = await this.requestsCollection.findOne({ id: id.toString(), isOwn: true })
         const request = requestDoc ? ConsumptionRequest.from(requestDoc) : undefined
         return request
     }
@@ -310,11 +311,11 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     }
 
     private async update(request: ConsumptionRequest) {
-        const requestDoc = await this.consumptionRequests.findOne({ id: request.id.toString(), isOwn: true })
+        const requestDoc = await this.requestsCollection.findOne({ id: request.id.toString(), isOwn: true })
         if (!requestDoc) {
             throw TransportErrors.general.recordNotFound(ConsumptionRequest, request.id.toString())
         }
-        await this.consumptionRequests.update(requestDoc, request)
+        await this.requestsCollection.update(requestDoc, request)
     }
 
     private assertRequestStatus(request: ConsumptionRequest, ...status: ConsumptionRequestStatus[]) {
