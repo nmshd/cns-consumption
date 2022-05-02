@@ -681,6 +681,12 @@ export class RequestsWhen {
         )
     }
 
+    public async iGetOutgoingRequestsWithTheQuery(query?: any): Promise<void> {
+        this.context.consumptionRequestsAfterAction = await this.context.outgoingRequestsController.getOutgoingRequests(
+            query
+        )
+    }
+
     public async iGetTheIncomingRequestWith(id: CoreId): Promise<void> {
         this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.getIncomingRequest(
             id

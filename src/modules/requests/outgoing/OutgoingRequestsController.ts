@@ -296,6 +296,16 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         await processor.applyIncomingResponseItem(responseItem, requestItem)
     }
 
+    public async getOutgoingRequests(query?: any): Promise<ConsumptionRequest[]> {
+        query ??= {}
+        query.isOwn = true
+
+        const requestDocs = await this.requestsCollection.find(query)
+
+        const requests = requestDocs.map((r) => ConsumptionRequest.from(r))
+        return requests
+    }
+
     public async getOutgoingRequest(id: ICoreId): Promise<ConsumptionRequest | undefined> {
         const requestDoc = await this.requestsCollection.findOne({ id: id.toString(), isOwn: true })
         const request = requestDoc ? ConsumptionRequest.from(requestDoc) : undefined

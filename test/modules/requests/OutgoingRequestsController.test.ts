@@ -578,6 +578,30 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.iExpectUndefinedToBeReturned()
                 }).timeout(5000)
             })
+
+            describe("GetOutgoingRequests", function () {
+                it("returns all outgoing Requests when invoked with no query", async function () {
+                    await Given.anOutgoingRequest()
+                    await Given.anOutgoingRequest()
+                    await When.iGetOutgoingRequestsWithTheQuery({})
+                    await Then.theNumberOfReturnedRequestsIs(2)
+                })
+
+                it("does not return outgoing Requests", async function () {
+                    await Given.anOutgoingRequest()
+                    await Given.anIncomingRequest()
+                    await When.iGetOutgoingRequestsWithTheQuery({})
+                    await Then.theNumberOfReturnedRequestsIs(1)
+                })
+
+                it("filters Requests based on given query", async function () {
+                    await Given.anOutgoingRequestWith({ status: ConsumptionRequestStatus.Draft })
+                    await Given.anOutgoingRequestWith({ status: ConsumptionRequestStatus.Draft })
+                    await Given.anOutgoingRequestWith({ status: ConsumptionRequestStatus.Open })
+                    await When.iGetOutgoingRequestsWithTheQuery({ status: ConsumptionRequestStatus.Draft })
+                    await Then.theNumberOfReturnedRequestsIs(2)
+                })
+            })
         })
     }
 }
