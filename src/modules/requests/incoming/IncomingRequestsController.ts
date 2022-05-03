@@ -1,4 +1,3 @@
-import { IDatabaseCollection } from "@js-soft/docdb-access-abstractions"
 import {
     RequestItem,
     RequestItemGroup,
@@ -15,6 +14,7 @@ import {
     Message,
     RelationshipChange,
     RelationshipTemplate,
+    SynchronizedCollection,
     TransportErrors
 } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName } from "../../../consumption"
@@ -54,7 +54,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         new DecideRequestParametersValidator()
 
     public constructor(
-        public readonly requestsCollection: IDatabaseCollection,
+        public readonly consumptionRequests: SynchronizedCollection,
         public readonly processorRegistry: RequestItemProcessorRegistry,
         parent: ConsumptionController
     ) {
@@ -82,7 +82,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             statusLog: []
         })
 
-        await this.requestsCollection.create(consumptionRequest)
+        await this.consumptionRequests.create(consumptionRequest)
 
         return consumptionRequest
     }
@@ -383,14 +383,14 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         query ??= {}
         query.isOwn = false
 
-        const requestDocs = await this.requestsCollection.find(query)
+        const requestDocs = await this.consumptionRequests.find(query)
 
         const requests = requestDocs.map((r) => ConsumptionRequest.from(r))
         return requests
     }
 
     public async getIncomingRequest(idIncomingRequest: ICoreId): Promise<ConsumptionRequest | undefined> {
-        const requestDoc = await this.requestsCollection.findOne({ id: idIncomingRequest.toString(), isOwn: false })
+        const requestDoc = await this.consumptionRequests.findOne({ id: idIncomingRequest.toString(), isOwn: false })
         const request = requestDoc ? ConsumptionRequest.from(requestDoc) : undefined
         return request
     }
@@ -404,11 +404,11 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     }
 
     private async update(request: ConsumptionRequest) {
-        const requestDoc = await this.requestsCollection.findOne({ id: request.id.toString(), isOwn: false })
+        const requestDoc = await this.consumptionRequests.findOne({ id: request.id.toString(), isOwn: false })
         if (!requestDoc) {
             throw TransportErrors.general.recordNotFound(ConsumptionRequest, request.id.toString())
         }
-        await this.requestsCollection.update(requestDoc, request)
+        await this.consumptionRequests.update(requestDoc, request)
     }
 
     private assertRequestStatus(request: ConsumptionRequest, ...status: ConsumptionRequestStatus[]) {

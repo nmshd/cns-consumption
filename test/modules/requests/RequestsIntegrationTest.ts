@@ -41,7 +41,8 @@ import {
     IMessage,
     Message,
     RelationshipChangeType,
-    RelationshipTemplate
+    RelationshipTemplate,
+    SynchronizedCollection
 } from "@nmshd/transport"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
@@ -81,7 +82,7 @@ export class RequestsTestsContext {
 
         const dbConnection = new LokiJsConnection(".")
         const database = await dbConnection.getDatabase(Math.random().toString(36).substring(7))
-        const collection = await database.getCollection("Requests")
+        const collection = new SynchronizedCollection(await database.getCollection("Requests"), 0)
         const processorRegistry = new RequestItemProcessorRegistry([
             { itemConstructor: TestRequestItem, processorConstructor: TestRequestItemProcessor }
         ])
@@ -91,7 +92,7 @@ export class RequestsTestsContext {
         context.outgoingRequestsController = new OutgoingRequestsController(collection, processorRegistry, undefined!)
 
         context.incomingRequestsController = new IncomingRequestsController(collection, processorRegistry, undefined!)
-        context.requestsCollection = context.incomingRequestsController.requestsCollection
+        context.requestsCollection = context.incomingRequestsController.consumptionRequests
 
         const originalCanCreate = context.outgoingRequestsController.canCreate
         context.outgoingRequestsController.canCreate = (params: ICreateOutgoingRequestParameters) => {
