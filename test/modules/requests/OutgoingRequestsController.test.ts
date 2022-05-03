@@ -1,6 +1,5 @@
 import { Result } from "@js-soft/ts-utils"
 import {
-    ConsumptionController,
     ConsumptionIds,
     ConsumptionRequest,
     ConsumptionRequestStatus,
@@ -21,10 +20,9 @@ import {
     ResponseItemResult,
     ResponseResult
 } from "@nmshd/content"
-import { AccountController, CoreId, RelationshipChangeType, Transport } from "@nmshd/transport"
+import { CoreId, RelationshipChangeType, TransportLoggerFactory } from "@nmshd/transport"
 import { expect } from "chai"
 import itParam from "mocha-param"
-import { TestUtil } from "../../core/TestUtil"
 import {
     RequestsGiven,
     RequestsIntegrationTest,
@@ -34,7 +32,6 @@ import {
 } from "./RequestsIntegrationTest"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
 import { ITestRequestItem, TestRequestItem } from "./testHelpers/TestRequestItem"
-import { TestRequestItemProcessor } from "./testHelpers/TestRequestItemProcessor"
 
 export class AlwaysTrueDecideRequestParamsValidator extends DecideRequestParametersValidator {
     public override validate(_params: DecideRequestParametersJSON, _request: ConsumptionRequest): Result<undefined> {
@@ -45,39 +42,29 @@ export class AlwaysTrueDecideRequestParamsValidator extends DecideRequestParamet
 export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
     public run(): void {
         const that = this
-        const transport = new Transport(that.connection, that.config, that.loggerFactory)
-        let accountController: AccountController
-        let consumptionController: ConsumptionController
-        let context: RequestsTestsContext | undefined
+        let context: RequestsTestsContext
 
         describe("OutgoingRequestController", function () {
             let Given: RequestsGiven // eslint-disable-line @typescript-eslint/naming-convention
             let When: RequestsWhen // eslint-disable-line @typescript-eslint/naming-convention
             let Then: RequestsThen // eslint-disable-line @typescript-eslint/naming-convention
 
-            before(async function () {
+            beforeEach(async function () {
                 this.timeout(5000)
 
-                await TestUtil.clearAccounts(that.connection)
-                await transport.init()
+                TransportLoggerFactory.init(that.loggerFactory)
 
-                const accounts = await TestUtil.provideAccounts(transport, 1, [
-                    {
-                        processorConstructor: TestRequestItemProcessor,
-                        itemConstructor: TestRequestItem
-                    }
-                ])
-                ;({ accountController, consumptionController } = accounts[0])
+                context = await RequestsTestsContext.create()
 
-                context = new RequestsTestsContext(accountController, consumptionController)
                 that.init(context)
+
                 Given = that.Given
                 When = that.When
                 Then = that.Then
             })
 
             afterEach(function () {
-                context?.reset()
+                context.reset()
             })
 
             describe("CanCreate", function () {
@@ -254,15 +241,15 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("throws when canCreate returns an error", async function () {
-                    const oldCanCreate = consumptionController.outgoingRequests.canCreate
-                    consumptionController.outgoingRequests.canCreate = (_: ICreateOutgoingRequestParameters) => {
+                    const oldCanCreate = context.outgoingRequestsController.canCreate
+                    context.outgoingRequestsController.canCreate = (_: ICreateOutgoingRequestParameters) => {
                         return Promise.resolve(ValidationResult.error("aCode", "aMessage"))
                     }
 
                     When.iTryToCreateAnOutgoingRequest()
                     await Then.itThrowsAnErrorWithTheErrorMessage("aMessage")
 
-                    consumptionController.outgoingRequests.canCreate = oldCanCreate
+                    context.outgoingRequestsController.canCreate = oldCanCreate
                 })
             })
 
@@ -315,7 +302,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("sets the source property depending on the given source", async function () {
-                    const source = TestObjectFactory.createOutgoingIMessage(accountController.identity.address)
+                    const source = TestObjectFactory.createOutgoingIMessage(context.currentIdentity)
 
                     await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
                     await When.iCallSentWith({ requestSourceObject: source })
@@ -331,7 +318,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("throws when passing an incoming Message", async function () {
-                    const invalidSource = TestObjectFactory.createIncomingIMessage(accountController.identity.address)
+                    const invalidSource = TestObjectFactory.createIncomingIMessage(context.currentIdentity)
 
                     await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
                     When.iTryToCallSentWith({ requestSourceObject: invalidSource })
@@ -342,7 +329,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
             describe("Complete", function () {
                 it("can handle valid input with a Message as responseSourceObject", async function () {
                     await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Open)
-                    const incomingMessage = TestObjectFactory.createIncomingIMessage(accountController.identity.address)
+                    const incomingMessage = TestObjectFactory.createIncomingIMessage(context.currentIdentity)
                     await When.iCompleteTheOutgoingRequestWith({
                         responseSourceObject: incomingMessage
                     })
@@ -560,6 +547,30 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     await When.iGetTheOutgoingRequestWith(theIdOfTheRequest)
                     await Then.iExpectUndefinedToBeReturned()
                 }).timeout(5000)
+            })
+
+            describe("GetOutgoingRequests", function () {
+                it("returns all outgoing Requests when invoked with no query", async function () {
+                    await Given.anOutgoingRequest()
+                    await Given.anOutgoingRequest()
+                    await When.iGetOutgoingRequestsWithTheQuery({})
+                    await Then.theNumberOfReturnedRequestsIs(2)
+                })
+
+                it("does not return outgoing Requests", async function () {
+                    await Given.anOutgoingRequest()
+                    await Given.anIncomingRequest()
+                    await When.iGetOutgoingRequestsWithTheQuery({})
+                    await Then.theNumberOfReturnedRequestsIs(1)
+                })
+
+                it("filters Requests based on given query", async function () {
+                    await Given.anOutgoingRequestWith({ status: ConsumptionRequestStatus.Draft })
+                    await Given.anOutgoingRequestWith({ status: ConsumptionRequestStatus.Draft })
+                    await Given.anOutgoingRequestWith({ status: ConsumptionRequestStatus.Open })
+                    await When.iGetOutgoingRequestsWithTheQuery({ status: ConsumptionRequestStatus.Draft })
+                    await Then.theNumberOfReturnedRequestsIs(2)
+                })
             })
         })
     }

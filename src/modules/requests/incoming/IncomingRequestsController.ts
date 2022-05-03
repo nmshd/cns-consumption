@@ -50,17 +50,19 @@ import {
 } from "./requireManualDecision/RequireManualDecisionOfIncomingRequestParameters"
 
 export class IncomingRequestsController extends ConsumptionBaseController {
-    private consumptionRequests: SynchronizedCollection
     private readonly decideRequestParamsValidator: DecideRequestParametersValidator =
         new DecideRequestParametersValidator()
 
-    public constructor(parent: ConsumptionController, public readonly processorRegistry: RequestItemProcessorRegistry) {
+    public constructor(
+        public readonly consumptionRequests: SynchronizedCollection,
+        public readonly processorRegistry: RequestItemProcessorRegistry,
+        parent: ConsumptionController
+    ) {
         super(ConsumptionControllerName.RequestsController, parent)
     }
 
     public override async init(): Promise<IncomingRequestsController> {
         await super.init()
-        this.consumptionRequests = await this.parent.accountController.getSynchronizedCollection("Requests")
         return this
     }
 
@@ -377,14 +379,24 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return request
     }
 
-    public async get(id: ICoreId): Promise<ConsumptionRequest | undefined> {
-        const requestDoc = await this.consumptionRequests.findOne({ id: id.toString(), isOwn: false })
+    public async getIncomingRequests(query?: any): Promise<ConsumptionRequest[]> {
+        query ??= {}
+        query.isOwn = false
+
+        const requestDocs = await this.consumptionRequests.find(query)
+
+        const requests = requestDocs.map((r) => ConsumptionRequest.from(r))
+        return requests
+    }
+
+    public async getIncomingRequest(idIncomingRequest: ICoreId): Promise<ConsumptionRequest | undefined> {
+        const requestDoc = await this.consumptionRequests.findOne({ id: idIncomingRequest.toString(), isOwn: false })
         const request = requestDoc ? ConsumptionRequest.from(requestDoc) : undefined
         return request
     }
 
     private async getOrThrow(id: CoreId | string) {
-        const request = await this.get(CoreId.from(id))
+        const request = await this.getIncomingRequest(CoreId.from(id))
         if (!request) {
             throw TransportErrors.general.recordNotFound(ConsumptionRequest, id.toString())
         }

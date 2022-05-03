@@ -1,6 +1,6 @@
 {
     "name": "@nmshd/consumption",
-    "version": "2.0.0-alpha.6",
+    "version": "2.0.0-alpha.7",
     "description": "The consumption library extends the transport library.",
     "homepage": "https://enmeshed.eu",
     "repository": "github:nmshd/cns-consumption",

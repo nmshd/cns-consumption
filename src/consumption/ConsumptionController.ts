@@ -59,8 +59,16 @@ export class ConsumptionController {
         this._attributes = await new ConsumptionAttributesController(this).init()
         this._drafts = await new DraftsController(this).init()
         const processorRegistry = new RequestItemProcessorRegistry(requestItemProcessors)
-        this._outgoingRequests = await new OutgoingRequestsController(this, processorRegistry).init()
-        this._incomingRequests = await new IncomingRequestsController(this, processorRegistry).init()
+        this._outgoingRequests = await new OutgoingRequestsController(
+            await this.accountController.getSynchronizedCollection("Requests"),
+            processorRegistry,
+            this
+        ).init()
+        this._incomingRequests = await new IncomingRequestsController(
+            await this.accountController.getSynchronizedCollection("Requests"),
+            processorRegistry,
+            this
+        ).init()
         this._settings = await new SettingsController(this).init()
         this._sharedItems = await new SharedItemsController(this).init()
         this._relationshipInfo = await new RelationshipInfoController(this).init()

@@ -159,6 +159,8 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
             let rMessageWithResponse: Message
             let sMessageWithResponse: Message
 
+            this.timeout(3000)
+
             before(async function () {
                 this.timeout(30000)
                 await transport.init()

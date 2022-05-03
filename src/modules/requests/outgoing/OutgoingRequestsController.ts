@@ -35,15 +35,16 @@ import {
 } from "./sentOutgoingRequest/SentOutgoingRequestParameters"
 
 export class OutgoingRequestsController extends ConsumptionBaseController {
-    private consumptionRequests: SynchronizedCollection
-
-    public constructor(parent: ConsumptionController, public readonly processorRegistry: RequestItemProcessorRegistry) {
+    public constructor(
+        public readonly consumptionRequests: SynchronizedCollection,
+        public readonly processorRegistry: RequestItemProcessorRegistry,
+        parent: ConsumptionController
+    ) {
         super(ConsumptionControllerName.RequestsController, parent)
     }
 
     public override async init(): Promise<OutgoingRequestsController> {
         await super.init()
-        this.consumptionRequests = await this.parent.accountController.getSynchronizedCollection("Requests")
         return this
     }
 
@@ -295,14 +296,24 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         await processor.applyIncomingResponseItem(responseItem, requestItem)
     }
 
-    public async get(id: ICoreId): Promise<ConsumptionRequest | undefined> {
+    public async getOutgoingRequests(query?: any): Promise<ConsumptionRequest[]> {
+        query ??= {}
+        query.isOwn = true
+
+        const requestDocs = await this.consumptionRequests.find(query)
+
+        const requests = requestDocs.map((r) => ConsumptionRequest.from(r))
+        return requests
+    }
+
+    public async getOutgoingRequest(id: ICoreId): Promise<ConsumptionRequest | undefined> {
         const requestDoc = await this.consumptionRequests.findOne({ id: id.toString(), isOwn: true })
         const request = requestDoc ? ConsumptionRequest.from(requestDoc) : undefined
         return request
     }
 
     private async getOrThrow(id: CoreId) {
-        const request = await this.get(id)
+        const request = await this.getOutgoingRequest(id)
         if (!request) {
             throw TransportErrors.general.recordNotFound(ConsumptionRequest, id.toString())
         }

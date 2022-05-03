@@ -1,7 +1,7 @@
 import { IDatabaseCollection, IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
+import { LokiJsConnection } from "@js-soft/docdb-access-loki"
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import {
-    ConsumptionController,
     ConsumptionIds,
     ConsumptionRequest,
     ConsumptionRequestSource,
@@ -19,6 +19,8 @@ import {
     IRequireManualDecisionOfIncomingRequestParameters,
     ISentOutgoingRequestParameters,
     OutgoingRequestsController,
+    ReceivedIncomingRequestParameters,
+    RequestItemProcessorRegistry,
     ValidationResult
 } from "@nmshd/consumption"
 import {
@@ -32,7 +34,6 @@ import {
     ResponseResult
 } from "@nmshd/content"
 import {
-    AccountController,
     CoreAddress,
     CoreId,
     IConfigOverwrite,
@@ -40,7 +41,8 @@ import {
     IMessage,
     Message,
     RelationshipChangeType,
-    RelationshipTemplate
+    RelationshipTemplate,
+    SynchronizedCollection
 } from "@nmshd/transport"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
@@ -66,24 +68,39 @@ export abstract class RequestsIntegrationTest extends IntegrationTest {
 }
 
 export class RequestsTestsContext {
-    public readonly requestsCollection: IDatabaseCollection
-    public readonly incomingRequestsController: IncomingRequestsController
-    public readonly outgoingRequestsController: OutgoingRequestsController
-    public constructor(
-        public readonly accountController: AccountController,
-        public readonly consumptionController: ConsumptionController
-    ) {
-        this.incomingRequestsController = consumptionController.incomingRequests
-        this.outgoingRequestsController = consumptionController.outgoingRequests
+    public requestsCollection: IDatabaseCollection
+    public incomingRequestsController: IncomingRequestsController
+    public outgoingRequestsController: OutgoingRequestsController
+    public currentIdentity: CoreAddress
 
-        this.requestsCollection = (consumptionController.outgoingRequests as any)
-            .consumptionRequests as IDatabaseCollection
+    private constructor() {
+        // hide constructor
+    }
 
-        const oldCanCreate = this.consumptionController.outgoingRequests.canCreate
-        this.consumptionController.outgoingRequests.canCreate = (params: ICreateOutgoingRequestParameters) => {
-            this.canCreateWasCalled = true
-            return oldCanCreate.call(this.consumptionController.outgoingRequests, params)
+    public static async create(): Promise<RequestsTestsContext> {
+        const context = new RequestsTestsContext()
+
+        const dbConnection = new LokiJsConnection(".")
+        const database = await dbConnection.getDatabase(Math.random().toString(36).substring(7))
+        const collection = new SynchronizedCollection(await database.getCollection("Requests"), 0)
+        const processorRegistry = new RequestItemProcessorRegistry([
+            { itemConstructor: TestRequestItem, processorConstructor: TestRequestItemProcessor }
+        ])
+
+        context.currentIdentity = CoreAddress.from("id12345")
+
+        context.outgoingRequestsController = new OutgoingRequestsController(collection, processorRegistry, undefined!)
+
+        context.incomingRequestsController = new IncomingRequestsController(collection, processorRegistry, undefined!)
+        context.requestsCollection = context.incomingRequestsController.consumptionRequests
+
+        const originalCanCreate = context.outgoingRequestsController.canCreate
+        context.outgoingRequestsController.canCreate = (params: ICreateOutgoingRequestParameters) => {
+            context.canCreateWasCalled = true
+            return originalCanCreate.call(context.outgoingRequestsController, params)
         }
+
+        return context
     }
 
     public reset(): void {
@@ -98,6 +115,7 @@ export class RequestsTestsContext {
 
     public givenConsumptionRequest?: ConsumptionRequest
     public consumptionRequestAfterAction?: ConsumptionRequest
+    public consumptionRequestsAfterAction?: ConsumptionRequest[]
     public validationResult?: ValidationResult
     public canCreateWasCalled = false
     public actionToTry?: () => Promise<void>
@@ -150,7 +168,7 @@ export class RequestsGiven {
         params.content ??= TestObjectFactory.createRequestWithOneItem({ id: params.id })
         params.status ??= ConsumptionRequestStatus.Open
 
-        const requestSource = TestObjectFactory.createIncomingMessage(this.context.accountController.identity.address)
+        const requestSource = TestObjectFactory.createIncomingMessage(this.context.currentIdentity)
 
         const consumptionRequest = await this.context.incomingRequestsController.received({
             receivedRequest: params.content,
@@ -194,9 +212,7 @@ export class RequestsGiven {
         if (isStatusAAfterStatusB(status, consumptionRequest.status)) {
             consumptionRequest = await this.context.incomingRequestsController.complete({
                 requestId: consumptionRequest.id,
-                responseSourceObject: TestObjectFactory.createOutgoingIMessage(
-                    this.context.accountController.identity.address
-                )
+                responseSourceObject: TestObjectFactory.createOutgoingIMessage(this.context.currentIdentity)
             })
         }
     }
@@ -241,9 +257,7 @@ export class RequestsGiven {
         if (isStatusAAfterStatusB(status, ConsumptionRequestStatus.Draft)) {
             await this.context.outgoingRequestsController.sent({
                 requestId: consumptionRequest.id,
-                requestSourceObject: TestObjectFactory.createOutgoingIMessage(
-                    this.context.accountController.identity.address
-                )
+                requestSourceObject: TestObjectFactory.createOutgoingIMessage(this.context.currentIdentity)
             })
         }
     }
@@ -389,6 +403,16 @@ export class RequestsWhen {
         }
     }
 
+    public iTryToCallReceivedWithoutSource(): Promise<void> {
+        this.context.actionToTry = async () => {
+            await this.context.incomingRequestsController.received({
+                receivedRequest: TestObjectFactory.createRequestWithOneItem()
+            } as ReceivedIncomingRequestParameters)
+        }
+
+        return Promise.resolve()
+    }
+
     public iTryToReject(): Promise<void> {
         this.context.actionToTry = async () => {
             await this.context.incomingRequestsController.reject({
@@ -466,9 +490,7 @@ export class RequestsWhen {
 
     public async iCallSentWith(params: Partial<ISentOutgoingRequestParameters>): Promise<void> {
         params.requestId ??= this.context.givenConsumptionRequest!.id
-        params.requestSourceObject ??= TestObjectFactory.createOutgoingMessage(
-            this.context.accountController.identity.address
-        )
+        params.requestSourceObject ??= TestObjectFactory.createOutgoingMessage(this.context.currentIdentity)
 
         this.context.consumptionRequestAfterAction = await this.context.outgoingRequestsController.sent({
             requestId: params.requestId,
@@ -486,9 +508,7 @@ export class RequestsWhen {
         receivedResponse?: Omit<IResponse, "id">
     }): void {
         params.requestId ??= this.context.givenConsumptionRequest!.id
-        params.responseSourceObject ??= TestObjectFactory.createIncomingIMessage(
-            this.context.accountController.identity.address
-        )
+        params.responseSourceObject ??= TestObjectFactory.createIncomingIMessage(this.context.currentIdentity)
         params.receivedResponse ??= TestObjectFactory.createResponse()
 
         params.receivedResponse.requestId = params.requestId
@@ -515,9 +535,7 @@ export class RequestsWhen {
 
     public iTryToCallSentWith(params: Partial<ISentOutgoingRequestParameters>): void {
         params.requestId ??= this.context.givenConsumptionRequest!.id
-        params.requestSourceObject ??= TestObjectFactory.createOutgoingMessage(
-            this.context.accountController.identity.address
-        )
+        params.requestSourceObject ??= TestObjectFactory.createOutgoingMessage(this.context.currentIdentity)
 
         this.context.actionToTry = async () => {
             await this.context.outgoingRequestsController.sent(params as ISentOutgoingRequestParameters)
@@ -567,7 +585,7 @@ export class RequestsWhen {
         params: Partial<ICreateOutgoingRequestFromRelationshipCreationChangeParameters>
     ): Promise<void> {
         params.template ??= TestObjectFactory.createOutgoingIRelationshipTemplate(
-            this.context.accountController.identity.address,
+            this.context.currentIdentity,
             TestObjectFactory.createRequestWithOneItem()
         )
         params.creationChange ??= TestObjectFactory.createIncomingIRelationshipChange(RelationshipChangeType.Creation)
@@ -589,9 +607,7 @@ export class RequestsWhen {
 
     public async iCreateAnIncomingRequestWith(params: Partial<IReceivedIncomingRequestParameters>): Promise<void> {
         params.receivedRequest ??= TestObjectFactory.createRequestWithOneItem()
-        params.requestSourceObject ??= TestObjectFactory.createIncomingMessage(
-            this.context.accountController.identity.address
-        )
+        params.requestSourceObject ??= TestObjectFactory.createIncomingMessage(this.context.currentIdentity)
 
         this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.received({
             receivedRequest: params.receivedRequest,
@@ -610,9 +626,7 @@ export class RequestsWhen {
 
     public async iCompleteTheIncomingRequestWith(params: Partial<ICompleteIncomingRequestParameters>): Promise<void> {
         params.requestId ??= this.context.givenConsumptionRequest!.id
-        params.responseSourceObject ??= TestObjectFactory.createOutgoingIMessage(
-            this.context.accountController.identity.address
-        )
+        params.responseSourceObject ??= TestObjectFactory.createOutgoingIMessage(this.context.currentIdentity)
         this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.complete(
             params as ICompleteIncomingRequestParameters
         )
@@ -649,7 +663,7 @@ export class RequestsWhen {
     }
 
     public async iCompleteTheOutgoingRequest(): Promise<void> {
-        const responseSource = TestObjectFactory.createIncomingMessage(this.context.accountController.identity.address)
+        const responseSource = TestObjectFactory.createIncomingMessage(this.context.currentIdentity)
         const responseContent = {
             result: ResponseResult.Accepted,
             requestId: this.context.givenConsumptionRequest!.id,
@@ -669,9 +683,7 @@ export class RequestsWhen {
         receivedResponse?: Omit<IResponse, "id">
     }): Promise<void> {
         params.requestId ??= this.context.givenConsumptionRequest!.id
-        params.responseSourceObject ??= TestObjectFactory.createIncomingIMessage(
-            this.context.accountController.identity.address
-        )
+        params.responseSourceObject ??= TestObjectFactory.createIncomingIMessage(this.context.currentIdentity)
         params.receivedResponse ??= TestObjectFactory.createResponse()
 
         params.receivedResponse.requestId = params.requestId
@@ -681,16 +693,32 @@ export class RequestsWhen {
         )
     }
 
+    public async iGetIncomingRequestsWithTheQuery(query?: any): Promise<void> {
+        this.context.consumptionRequestsAfterAction = await this.context.incomingRequestsController.getIncomingRequests(
+            query
+        )
+    }
+
+    public async iGetOutgoingRequestsWithTheQuery(query?: any): Promise<void> {
+        this.context.consumptionRequestsAfterAction = await this.context.outgoingRequestsController.getOutgoingRequests(
+            query
+        )
+    }
+
     public async iGetTheIncomingRequestWith(id: CoreId): Promise<void> {
-        this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.get(id)
+        this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.getIncomingRequest(
+            id
+        )
     }
 
     public async iGetTheOutgoingRequestWith(id: CoreId): Promise<void> {
-        this.context.consumptionRequestAfterAction = await this.context.outgoingRequestsController.get(id)
+        this.context.consumptionRequestAfterAction = await this.context.outgoingRequestsController.getOutgoingRequest(
+            id
+        )
     }
 
     public async iTryToGetARequestWithANonExistentId(): Promise<void> {
-        this.context.consumptionRequestAfterAction = (await this.context.incomingRequestsController.get(
+        this.context.consumptionRequestAfterAction = (await this.context.incomingRequestsController.getIncomingRequest(
             await CoreId.generate()
         ))!
     }
@@ -787,9 +815,7 @@ export class RequestsWhen {
             ICreateOutgoingRequestFromRelationshipCreationChangeParameters,
             "creationChange"
         > = {
-            template: TestObjectFactory.createOutgoingIRelationshipTemplate(
-                this.context.accountController.identity.address
-            )
+            template: TestObjectFactory.createOutgoingIRelationshipTemplate(this.context.currentIdentity)
         }
 
         this.context.actionToTry = async () => {
@@ -823,6 +849,11 @@ export class RequestsThen {
 
     public canCreateIsBeingCalled(): Promise<void> {
         expect(this.context.canCreateWasCalled).to.equal(true)
+        return Promise.resolve()
+    }
+
+    public theNumberOfReturnedRequestsIs(n: number): Promise<void> {
+        expect(this.context.consumptionRequestsAfterAction).to.have.lengthOf(n)
         return Promise.resolve()
     }
 
