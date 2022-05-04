@@ -1,4 +1,4 @@
-import { Attribute } from "@nmshd/content"
+import { AbstractAttributeQuery } from "@nmshd/content"
 import { CoreDate, CoreId, SynchronizedCollection, TransportErrors } from "@nmshd/transport"
 import { nameof } from "ts-simple-nameof"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionErrors } from "../../consumption"
@@ -83,53 +83,57 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         return this.findCurrent(attributes)
     }
 
-    public async getAttributeByName(name: string): Promise<ConsumptionAttribute | undefined> {
-        const result = await this.attributes.find({
-            [`${nameof<ConsumptionAttribute>((c) => c.content)}.${nameof<Attribute>((a) => a.name)}`]: name
-        })
+    // public async getAttributeByName(name: string): Promise<ConsumptionAttribute | undefined> {
+    //     const result = await this.attributes.find({
+    //         [`${nameof<ConsumptionAttribute>((c) => c.content)}.${nameof<Attribute>((a) => a.name)}`]: name
+    //     })
 
-        const attributes = await this.parseArray<ConsumptionAttribute>(result, ConsumptionAttribute)
-        return this.findCurrent(attributes)
-    }
+    //     const attributes = await this.parseArray<ConsumptionAttribute>(result, ConsumptionAttribute)
+    //     return this.findCurrent(attributes)
+    // }
 
-    public async getAttributeHistoryByName(name: string): Promise<ConsumptionAttribute[]> {
-        const result = await this.attributes.find({
-            [`${nameof<ConsumptionAttribute>((c) => c.content)}.${nameof<Attribute>((a) => a.name)}`]: name
-        })
+    // public async getAttributeHistoryByName(name: string): Promise<ConsumptionAttribute[]> {
+    //     const result = await this.attributes.find({
+    //         [`${nameof<ConsumptionAttribute>((c) => c.content)}.${nameof<Attribute>((a) => a.name)}`]: name
+    //     })
 
-        const attributes = await this.parseArray<ConsumptionAttribute>(result, ConsumptionAttribute)
-        const sorted = attributes.sort((a, b) => {
-            return a.createdAt.compare(b.createdAt)
-        })
-        return sorted
-    }
+    //     const attributes = await this.parseArray<ConsumptionAttribute>(result, ConsumptionAttribute)
+    //     const sorted = attributes.sort((a, b) => {
+    //         return a.createdAt.compare(b.createdAt)
+    //     })
+    //     return sorted
+    // }
 
-    public async getAttributes(query?: any): Promise<ConsumptionAttribute[]> {
+    public async getAttributes<TQuery extends AbstractAttributeQuery = AbstractAttributeQuery>(
+        query?: TQuery
+    ): Promise<ConsumptionAttribute[]> {
         const items = await this.attributes.find(query)
         return await this.parseArray<ConsumptionAttribute>(items, ConsumptionAttribute)
     }
 
-    public async getValidAttributes(query?: any): Promise<ConsumptionAttribute[]> {
+    public async getValidAttributes<TQuery extends AbstractAttributeQuery = AbstractAttributeQuery>(
+        query?: TQuery
+    ): Promise<ConsumptionAttribute[]> {
         const docs = await this.attributes.find(query)
         const items = await this.parseArray<ConsumptionAttribute>(docs, ConsumptionAttribute)
         return this.filterCurrent(items)
     }
 
-    public async getAttributesByName(query?: any): Promise<Record<string, ConsumptionAttribute>> {
-        const attributes = await this.getValidAttributes(query)
+    // public async getAttributesByName(query?: any): Promise<Record<string, ConsumptionAttribute>> {
+    //     const attributes = await this.getValidAttributes(query)
 
-        const mapper = (result: any, attribute: ConsumptionAttribute) => {
-            result[attribute.content.name] = attribute
-            return result
-        }
+    //     const mapper = (result: any, attribute: ConsumptionAttribute) => {
+    //         result[attribute.content.name] = attribute
+    //         return result
+    //     }
 
-        return attributes.reduce(mapper, {} as any)
-    }
+    //     return attributes.reduce(mapper, {} as any)
+    // }
 
     public async createAttribute(attribute: ConsumptionAttribute): Promise<ConsumptionAttribute> {
-        const current = await this.getAttributeByName(attribute.content.name)
+        const current = await this.getAttribute(attribute.id)
         if (current) {
-            throw ConsumptionErrors.attributes.attributeExists(attribute.content.name)
+            throw ConsumptionErrors.attributes.attributeExists(attribute.id.toString()) // TODO: evtl lieber typ oder key
         }
         await this.attributes.create(attribute)
         return attribute
@@ -139,7 +143,7 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         attribute: ConsumptionAttribute,
         validFrom?: CoreDate
     ): Promise<ConsumptionAttribute> {
-        const current = await this.getAttributeByName(attribute.content.name)
+        const current = await this.getAttribute(attribute.id) // TODO: bevor succeed: query und user Auswahl
         if (current && !validFrom) {
             validFrom = CoreDate.utc()
         }
@@ -154,7 +158,7 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
 
     public async updateAttribute(attribute: ConsumptionAttribute): Promise<ConsumptionAttribute> {
         const current = await this.attributes.findOne({
-            [nameof<ConsumptionAttribute>((c) => c.id)]: attribute.id.toString()
+            [nameof<ConsumptionAttribute>((c) => c.id)]: attribute.id.toString() // TODO: why tho
         })
         if (!current) {
             throw TransportErrors.general.recordNotFound(ConsumptionAttribute, attribute.id.toString())
