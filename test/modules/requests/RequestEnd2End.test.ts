@@ -39,13 +39,13 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
 
                 ;({ accountController: sAccountController, consumptionController: sConsumptionController } =
                     accounts[0])
-                sConsumptionController.incomingRequests.processorRegistry.registerProcessor(
+                sConsumptionController.incomingRequests["processorRegistry"].registerProcessor(
                     TestRequestItemProcessor,
                     TestRequestItem
                 )
                 ;({ accountController: rAccountController, consumptionController: rConsumptionController } =
                     accounts[1])
-                rConsumptionController.incomingRequests.processorRegistry.registerProcessor(
+                rConsumptionController.incomingRequests["processorRegistry"].registerProcessor(
                     TestRequestItemProcessor,
                     TestRequestItem
                 )
@@ -170,13 +170,13 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
 
                 ;({ accountController: sAccountController, consumptionController: sConsumptionController } =
                     accounts[0])
-                sConsumptionController.incomingRequests.processorRegistry.registerProcessor(
+                sConsumptionController.incomingRequests["processorRegistry"].registerProcessor(
                     TestRequestItemProcessor,
                     TestRequestItem
                 )
                 ;({ accountController: rAccountController, consumptionController: rConsumptionController } =
                     accounts[1])
-                rConsumptionController.incomingRequests.processorRegistry.registerProcessor(
+                rConsumptionController.incomingRequests["processorRegistry"].registerProcessor(
                     TestRequestItemProcessor,
                     TestRequestItem
                 )

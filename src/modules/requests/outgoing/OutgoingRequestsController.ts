@@ -36,8 +36,8 @@ import {
 
 export class OutgoingRequestsController extends ConsumptionBaseController {
     public constructor(
-        public readonly consumptionRequests: SynchronizedCollection,
-        public readonly processorRegistry: RequestItemProcessorRegistry,
+        private readonly consumptionRequests: SynchronizedCollection,
+        private readonly processorRegistry: RequestItemProcessorRegistry,
         parent: ConsumptionController
     ) {
         super(ConsumptionControllerName.RequestsController, parent)
