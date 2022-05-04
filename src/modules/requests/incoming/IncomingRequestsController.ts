@@ -54,16 +54,11 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         new DecideRequestParametersValidator()
 
     public constructor(
-        public readonly consumptionRequests: SynchronizedCollection,
-        public readonly processorRegistry: RequestItemProcessorRegistry,
+        private readonly consumptionRequests: SynchronizedCollection,
+        private readonly processorRegistry: RequestItemProcessorRegistry,
         parent: ConsumptionController
     ) {
         super(ConsumptionControllerName.RequestsController, parent)
-    }
-
-    public override async init(): Promise<IncomingRequestsController> {
-        await super.init()
-        return this
     }
 
     public async received(params: IReceivedIncomingRequestParameters): Promise<ConsumptionRequest> {

@@ -43,7 +43,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         super(ConsumptionControllerName.RequestsController, parent)
     }
 
-    public override async init(): Promise<OutgoingRequestsController> {
+    public override async init(): Promise<this> {
         await super.init()
         return this
     }
