@@ -43,11 +43,6 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         super(ConsumptionControllerName.RequestsController, parent)
     }
 
-    public override async init(): Promise<this> {
-        await super.init()
-        return this
-    }
-
     public async canCreate(params: ICreateOutgoingRequestParameters): Promise<ValidationResult> {
         const parsedParams = CreateOutgoingRequestParameters.from(params)
 
