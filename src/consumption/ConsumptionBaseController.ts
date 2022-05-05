@@ -17,7 +17,7 @@ export class ConsumptionBaseController {
         this._log = TransportLoggerFactory.getLogger(controllerName)
     }
 
-    public init(): Promise<ConsumptionBaseController> {
+    public init(): Promise<this> {
         return Promise.resolve(this)
     }
 

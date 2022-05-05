@@ -36,16 +36,11 @@ import {
 
 export class OutgoingRequestsController extends ConsumptionBaseController {
     public constructor(
-        public readonly consumptionRequests: SynchronizedCollection,
-        public readonly processorRegistry: RequestItemProcessorRegistry,
+        private readonly consumptionRequests: SynchronizedCollection,
+        private readonly processorRegistry: RequestItemProcessorRegistry,
         parent: ConsumptionController
     ) {
         super(ConsumptionControllerName.RequestsController, parent)
-    }
-
-    public override async init(): Promise<OutgoingRequestsController> {
-        await super.init()
-        return this
     }
 
     public async canCreate(params: ICreateOutgoingRequestParameters): Promise<ValidationResult> {

@@ -12,7 +12,7 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         super(ConsumptionControllerName.ConsumptionAttributesController, parent)
     }
 
-    public override async init(): Promise<ConsumptionAttributesController> {
+    public override async init(): Promise<this> {
         await super.init()
 
         this.attributes = await this.parent.accountController.getSynchronizedCollection("Attributes")

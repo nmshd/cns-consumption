@@ -17,7 +17,7 @@ import {
     SynchronizedCollection,
     TransportErrors
 } from "@nmshd/transport"
-import { ConsumptionBaseController, ConsumptionControllerName } from "../../../consumption"
+import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionIds } from "../../../consumption"
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
 import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProcessorRegistry"
 import { ValidationResult } from "../itemProcessors/ValidationResult"
@@ -54,16 +54,11 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         new DecideRequestParametersValidator()
 
     public constructor(
-        public readonly consumptionRequests: SynchronizedCollection,
-        public readonly processorRegistry: RequestItemProcessorRegistry,
+        private readonly consumptionRequests: SynchronizedCollection,
+        private readonly processorRegistry: RequestItemProcessorRegistry,
         parent: ConsumptionController
     ) {
         super(ConsumptionControllerName.RequestsController, parent)
-    }
-
-    public override async init(): Promise<IncomingRequestsController> {
-        await super.init()
-        return this
     }
 
     public async received(params: IReceivedIncomingRequestParameters): Promise<ConsumptionRequest> {
@@ -72,7 +67,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         const infoFromSource = this.extractInfoFromSource(parsedParams.requestSourceObject)
 
         const consumptionRequest = ConsumptionRequest.from({
-            id: parsedParams.receivedRequest.id ?? (await CoreId.generate()),
+            id: parsedParams.receivedRequest.id ?? (await ConsumptionIds.request.generate()),
             createdAt: CoreDate.utc(),
             status: ConsumptionRequestStatus.Open,
             content: parsedParams.receivedRequest,

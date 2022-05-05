@@ -11,7 +11,7 @@ export class DraftsController extends ConsumptionBaseController {
         super(ConsumptionControllerName.DraftsController, parent)
     }
 
-    public override async init(): Promise<DraftsController> {
+    public override async init(): Promise<this> {
         await super.init()
 
         this.drafts = await this.parent.accountController.getSynchronizedCollection("Drafts")

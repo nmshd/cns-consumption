@@ -92,7 +92,7 @@ export class RequestsTestsContext {
         context.outgoingRequestsController = new OutgoingRequestsController(collection, processorRegistry, undefined!)
 
         context.incomingRequestsController = new IncomingRequestsController(collection, processorRegistry, undefined!)
-        context.requestsCollection = context.incomingRequestsController.consumptionRequests
+        context.requestsCollection = context.incomingRequestsController["consumptionRequests"]
 
         const originalCanCreate = context.outgoingRequestsController.canCreate
         context.outgoingRequestsController.canCreate = (params: ICreateOutgoingRequestParameters) => {

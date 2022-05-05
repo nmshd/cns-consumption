@@ -10,7 +10,7 @@ export class SharedItemsController extends ConsumptionBaseController {
         super(ConsumptionControllerName.SharedItemsController, parent)
     }
 
-    public override async init(): Promise<SharedItemsController> {
+    public override async init(): Promise<this> {
         await super.init()
 
         this.sharedItems = await this.parent.accountController.getSynchronizedCollection("SharedItems")
