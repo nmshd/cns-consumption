@@ -2,9 +2,6 @@ import { IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import { IConfigOverwrite } from "@nmshd/transport"
 import { AttributeTest } from "./modules/attributes/Attribute.test"
-import { RelationshipInfoTest } from "./modules/relationships/RelationshipInfo.test"
-import { RelationshipInfoNoTemplateTest } from "./modules/relationships/RelationshipInfoNoTemplate.test"
-import { RelationshipInfoOldTemplateTest } from "./modules/relationships/RelationshipInfoOldTemplate.test"
 import { RelationshipRequestorTest } from "./modules/relationships/RelationshipRequestor.test"
 import { DecideRequestParametersValidatorTests } from "./modules/requests/DecideRequestParamsValidator.test"
 import { GenericRequestItemProcessorTests } from "./modules/requests/GenericRequestItemProcessor.test"
@@ -35,10 +32,7 @@ export class Test {
         databaseConnection: IDatabaseConnection,
         logger: ILoggerFactory
     ): void {
-        new RelationshipInfoOldTemplateTest(config, databaseConnection, logger).run()
-        new RelationshipInfoNoTemplateTest(config, databaseConnection, logger).run()
         new AttributeTest(config, databaseConnection, logger).run()
-        new RelationshipInfoTest(config, databaseConnection, logger).run()
         new RelationshipRequestorTest(config, databaseConnection, logger).run()
         new RequestEnd2EndTests(config, databaseConnection, logger).run()
         new OutgoingRequestControllerTests(config, databaseConnection, logger).run()
