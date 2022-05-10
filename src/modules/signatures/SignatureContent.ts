@@ -43,10 +43,6 @@ export class SignatureContent extends CoreSerializable {
     public hash: CoreHash
 
     public static from(value: ISignatureContent): SignatureContent {
-        return super.from(value, SignatureContent) as SignatureContent
-    }
-
-    public static deserialize(value: string): SignatureContent {
-        return super.deserializeT<SignatureContent>(value, SignatureContent)
+        return this.fromAny(value)
     }
 }

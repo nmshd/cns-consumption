@@ -8,7 +8,13 @@
         "jest/expect-expect": [
             "error",
             {
-                "assertFunctionNames": ["expect", "expectValid*"]
+                "assertFunctionNames": ["expect", "expectValid*", "*.expectThrows*", "Then.*"]
+            }
+        ],
+        "no-restricted-imports": [
+            "error",
+            {
+                "patterns": ["**/src/**"]
             }
         ]
     }

@@ -2,11 +2,13 @@ import { AccountController, Transport } from "@nmshd/transport"
 import {
     ConsumptionAttributesController,
     DraftsController,
-    RelationshipInfoController,
-    RequestsController,
-    SettingsController,
-    SharedItemsController
+    OutgoingRequestsController,
+    ProcessorConstructor,
+    RequestItemConstructor,
+    RequestItemProcessorRegistry,
+    SettingsController
 } from "../modules"
+import { IncomingRequestsController } from "../modules/requests/incoming/IncomingRequestsController"
 
 export class ConsumptionController {
     public constructor(public readonly transport: Transport, public readonly accountController: AccountController) {}
@@ -21,9 +23,14 @@ export class ConsumptionController {
         return this._drafts
     }
 
-    private _requests: RequestsController
-    public get requests(): RequestsController {
-        return this._requests
+    private _outgoingRequests: OutgoingRequestsController
+    public get outgoingRequests(): OutgoingRequestsController {
+        return this._outgoingRequests
+    }
+
+    private _incomingRequests: IncomingRequestsController
+    public get incomingRequests(): IncomingRequestsController {
+        return this._incomingRequests
     }
 
     private _settings: SettingsController
@@ -31,23 +38,26 @@ export class ConsumptionController {
         return this._settings
     }
 
-    private _sharedItems: SharedItemsController
-    public get sharedItems(): SharedItemsController {
-        return this._sharedItems
-    }
-
-    private _relationshipInfo: RelationshipInfoController
-    public get relationshipInfo(): RelationshipInfoController {
-        return this._relationshipInfo
-    }
-
-    public async init(): Promise<ConsumptionController> {
+    public async init(
+        requestItemProcessors: {
+            processorConstructor: ProcessorConstructor
+            itemConstructor: RequestItemConstructor
+        }[] = []
+    ): Promise<ConsumptionController> {
         this._attributes = await new ConsumptionAttributesController(this).init()
         this._drafts = await new DraftsController(this).init()
-        this._requests = await new RequestsController(this).init()
+        const processorRegistry = new RequestItemProcessorRegistry(requestItemProcessors)
+        this._outgoingRequests = await new OutgoingRequestsController(
+            await this.accountController.getSynchronizedCollection("Requests"),
+            processorRegistry,
+            this
+        ).init()
+        this._incomingRequests = await new IncomingRequestsController(
+            await this.accountController.getSynchronizedCollection("Requests"),
+            processorRegistry,
+            this
+        ).init()
         this._settings = await new SettingsController(this).init()
-        this._sharedItems = await new SharedItemsController(this).init()
-        this._relationshipInfo = await new RelationshipInfoController(this).init()
         return this
     }
 }

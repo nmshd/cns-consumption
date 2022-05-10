@@ -11,7 +11,7 @@ export class SettingsController extends ConsumptionBaseController {
         super(ConsumptionControllerName.SettingsController, parent)
     }
 
-    public async init(): Promise<SettingsController> {
+    public override async init(): Promise<this> {
         await super.init()
 
         this.settings = await this.parent.accountController.getSynchronizedCollection("Settings")
@@ -20,7 +20,7 @@ export class SettingsController extends ConsumptionBaseController {
 
     public async getSetting(id: CoreId): Promise<Setting | undefined> {
         const result = await this.settings.read(id.toString())
-        return result ? await Setting.from(result) : undefined
+        return result ? Setting.from(result) : undefined
     }
 
     public async getSettings(query?: any): Promise<Setting[]> {
@@ -29,7 +29,7 @@ export class SettingsController extends ConsumptionBaseController {
     }
 
     public async createSetting(parameters: ICreateSettingParameters): Promise<Setting> {
-        const setting = await Setting.from({
+        const setting = Setting.from({
             id: await ConsumptionIds.setting.generate(),
             createdAt: CoreDate.utc(),
             key: parameters.key,

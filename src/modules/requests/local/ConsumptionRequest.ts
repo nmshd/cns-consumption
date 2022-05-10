@@ -1,83 +1,108 @@
 import { serialize, type, validate } from "@js-soft/ts-serval"
-import { CoreDate, CoreId, CoreSynchronizable, ICoreDate, ICoreId, ICoreSynchronizable } from "@nmshd/transport"
-import { nameof } from "ts-simple-nameof"
+import { IRequest, Request } from "@nmshd/content"
+import {
+    CoreAddress,
+    CoreDate,
+    CoreId,
+    CoreSerializable,
+    CoreSynchronizable,
+    ICoreAddress,
+    ICoreDate,
+    ICoreId,
+    ICoreSerializable,
+    ICoreSynchronizable
+} from "@nmshd/transport"
+import { ConsumptionRequestStatus } from "./ConsumptionRequestStatus"
+import { ConsumptionRequestStatusLogEntry, IConsumptionRequestStatusLogEntry } from "./ConsumptionRequestStatusLogEntry"
+import { ConsumptionResponse, IConsumptionResponse } from "./ConsumptionResponse"
+
+export interface IConsumptionRequestSource extends ICoreSerializable {
+    type: "Message" | "RelationshipTemplate"
+    reference: ICoreId
+}
+
+@type("ConsumptionRequestSource")
+export class ConsumptionRequestSource extends CoreSerializable implements IConsumptionRequestSource {
+    @serialize()
+    @validate()
+    public type: "Message" | "RelationshipTemplate"
+
+    @serialize()
+    @validate()
+    public reference: CoreId
+
+    public static from(value: IConsumptionRequestSource): ConsumptionRequestSource {
+        return this.fromAny(value)
+    }
+}
 
 export interface IConsumptionRequest extends ICoreSynchronizable {
     isOwn: boolean
-    requestMessage: ICoreId
-    responseMessage?: ICoreId
-    isPending: boolean
+    peer: ICoreAddress
+    createdAt: ICoreDate
+    content: IRequest
+    source?: IConsumptionRequestSource
+    response?: IConsumptionResponse
     status: ConsumptionRequestStatus
-    processingMetadata?: any
-    metadata?: any
-    metadataModifiedAt?: ICoreDate
-}
-
-export enum ConsumptionRequestStatus {
-    Pending = "Pending",
-    Accepted = "Accepted",
-    Rejected = "Rejected",
-    Revoked = "Revoked"
+    statusLog: IConsumptionRequestStatusLogEntry[]
 }
 
 @type("ConsumptionRequest")
 export class ConsumptionRequest extends CoreSynchronizable implements IConsumptionRequest {
-    public readonly technicalProperties = [
-        "@type",
-        "@context",
-        nameof<ConsumptionRequest>((r) => r.isOwn),
-        nameof<ConsumptionRequest>((r) => r.requestMessage),
-        nameof<ConsumptionRequest>((r) => r.responseMessage),
-        nameof<ConsumptionRequest>((r) => r.isPending),
-        nameof<ConsumptionRequest>((r) => r.status)
-    ]
-
-    public readonly metadataProperties = [
-        nameof<ConsumptionRequest>((r) => r.processingMetadata),
-        nameof<ConsumptionRequest>((r) => r.metadata),
-        nameof<ConsumptionRequest>((r) => r.metadataModifiedAt)
-    ]
-
-    @validate()
     @serialize()
+    @validate()
     public isOwn: boolean
 
-    @validate()
     @serialize()
-    public requestMessage: CoreId
+    @validate()
+    public peer: CoreAddress
 
+    @serialize()
+    @validate()
+    public createdAt: CoreDate
+
+    @serialize()
+    @validate()
+    public content: Request
+
+    @serialize()
     @validate({ nullable: true })
-    @serialize()
-    public responseMessage?: CoreId
+    public source?: ConsumptionRequestSource
 
+    @serialize()
+    @validate({ nullable: true })
+    public response?: ConsumptionResponse
+
+    @serialize()
     @validate()
-    @serialize()
-    public isPending: boolean
-
-    @validate({
-        allowedValues: [
-            ConsumptionRequestStatus.Pending,
-            ConsumptionRequestStatus.Accepted,
-            ConsumptionRequestStatus.Rejected,
-            ConsumptionRequestStatus.Revoked
-        ]
-    })
-    @serialize()
     public status: ConsumptionRequestStatus
 
-    @validate({ nullable: true })
-    @serialize({ any: true })
-    public processingMetadata?: any
+    @serialize({ type: ConsumptionRequestStatusLogEntry })
+    @validate()
+    public statusLog: ConsumptionRequestStatusLogEntry[]
 
-    @validate({ nullable: true })
-    @serialize({ any: true })
-    public metadata?: any
+    public changeStatus(newStatus: ConsumptionRequestStatus): void {
+        const logEntry = ConsumptionRequestStatusLogEntry.from({
+            createdAt: CoreDate.utc(),
+            oldStatus: this.status,
+            newStatus
+        })
 
-    @validate({ nullable: true })
-    @serialize()
-    public metadataModifiedAt?: CoreDate
+        this.statusLog.push(logEntry)
 
-    public static async from(value: IConsumptionRequest): Promise<ConsumptionRequest> {
-        return (await super.from(value, ConsumptionRequest)) as ConsumptionRequest
+        this.status = newStatus
+    }
+
+    public sent(source: ConsumptionRequestSource): void {
+        if (this.status !== ConsumptionRequestStatus.Draft) {
+            throw new Error("Consumption Request has to be in status 'Draft'.")
+        }
+
+        this.source = source
+        this.changeStatus(ConsumptionRequestStatus.Open)
+    }
+
+    public static from(value: IConsumptionRequest): ConsumptionRequest {
+        return this.fromAny(value)
     }
 }

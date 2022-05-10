@@ -1,4 +1,4 @@
-import { ISerializable, ISerializableAsync, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval"
+import { ISerializable, Serializable, serialize, type, validate } from "@js-soft/ts-serval"
 import { CoreDate, CoreId, CoreSynchronizable, ICoreDate, ICoreId, ICoreSynchronizable } from "@nmshd/transport"
 import { nameof } from "ts-simple-nameof"
 
@@ -12,7 +12,7 @@ export interface ISetting extends ICoreSynchronizable {
     key: string
     scope: SettingScope
     reference?: ICoreId
-    value: ISerializable | ISerializableAsync
+    value: ISerializable
     createdAt: ICoreDate
     deletedAt?: ICoreDate
     succeedsItem?: ICoreId
@@ -23,7 +23,7 @@ export interface ISetting extends ICoreSynchronizable {
 
 @type("Setting")
 export class Setting extends CoreSynchronizable implements ISetting {
-    public readonly technicalProperties = [
+    public override readonly technicalProperties = [
         "@type",
         "@context",
         nameof<Setting>((r) => r.key),
@@ -35,9 +35,9 @@ export class Setting extends CoreSynchronizable implements ISetting {
         nameof<Setting>((r) => r.succeedsAt)
     ]
 
-    public readonly userdataProperties = [nameof<Setting>((r) => r.value)]
+    public override readonly userdataProperties = [nameof<Setting>((r) => r.value)]
 
-    public readonly metadataProperties = [
+    public override readonly metadataProperties = [
         nameof<Setting>((r) => r.metadata),
         nameof<Setting>((r) => r.metadataModifiedAt)
     ]
@@ -56,7 +56,7 @@ export class Setting extends CoreSynchronizable implements ISetting {
 
     @validate()
     @serialize()
-    public value: SerializableAsync
+    public value: Serializable
 
     @validate()
     @serialize()
@@ -82,7 +82,7 @@ export class Setting extends CoreSynchronizable implements ISetting {
     @serialize()
     public metadataModifiedAt?: CoreDate
 
-    public static async from(value: ISetting): Promise<Setting> {
-        return await super.fromT(value, Setting)
+    public static from(value: ISetting): Setting {
+        return this.fromAny(value)
     }
 }

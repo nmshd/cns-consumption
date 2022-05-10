@@ -20,9 +20,13 @@ export class ConsumptionAttribute<TAttribute extends AbstractAttribute = Abstrac
     extends CoreSynchronizable
     implements IConsumptionAttribute
 {
-    public readonly technicalProperties = ["@type", "@context", nameof<ConsumptionAttribute>((r) => r.createdAt)]
+    public override readonly technicalProperties = [
+        "@type",
+        "@context",
+        nameof<ConsumptionAttribute>((r) => r.createdAt)
+    ]
 
-    public readonly userdataProperties = [nameof<ConsumptionAttribute>((r) => r.content)]
+    public override readonly userdataProperties = [nameof<ConsumptionAttribute>((r) => r.content)]
 
     @validate()
     @serialize({ type: AbstractAttribute })
@@ -44,8 +48,11 @@ export class ConsumptionAttribute<TAttribute extends AbstractAttribute = Abstrac
     @serialize()
     public shareInfo?: ConsumptionAttributeShareInfo
 
-    public static async from(value: IConsumptionAttribute): Promise<ConsumptionAttribute> {
-        return (await super.from(value, ConsumptionAttribute)) as ConsumptionAttribute
+    public static override async from<
+        TAttribute extends AbstractAttribute = AbstractAttribute,
+        TIAttribute extends IAbstractAttribute = IAbstractAttribute
+    >(value: IConsumptionAttribute<TIAttribute>): Promise<ConsumptionAttribute<TAttribute>> {
+        return (await this.fromAny(value)) as ConsumptionAttribute<TAttribute>
     }
 
     public static async fromAttribute(

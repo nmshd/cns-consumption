@@ -1,4 +1,4 @@
-import { ISerializableAsync, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval"
+import { ISerializable, Serializable, serialize, type, validate } from "@js-soft/ts-serval"
 import { CoreDate, CoreSynchronizable, ICoreDate, ICoreSynchronizable } from "@nmshd/transport"
 import { nameof } from "ts-simple-nameof"
 
@@ -6,14 +6,14 @@ export interface IDraft extends ICoreSynchronizable {
     type: string
     createdAt: ICoreDate
     lastModifiedAt: ICoreDate
-    content: ISerializableAsync
+    content: ISerializable
     metadata?: any
     metadataModifiedAt?: ICoreDate
 }
 
 @type("Draft")
 export class Draft extends CoreSynchronizable implements IDraft {
-    public readonly technicalProperties = [
+    public override readonly technicalProperties = [
         "@type",
         "@context",
         nameof<Draft>((r) => r.type),
@@ -21,9 +21,12 @@ export class Draft extends CoreSynchronizable implements IDraft {
         nameof<Draft>((r) => r.lastModifiedAt)
     ]
 
-    public readonly userdataProperties = [nameof<Draft>((r) => r.content)]
+    public override readonly userdataProperties = [nameof<Draft>((r) => r.content)]
 
-    public readonly metadataProperties = [nameof<Draft>((r) => r.metadata), nameof<Draft>((r) => r.metadataModifiedAt)]
+    public override readonly metadataProperties = [
+        nameof<Draft>((r) => r.metadata),
+        nameof<Draft>((r) => r.metadataModifiedAt)
+    ]
 
     @validate()
     @serialize()
@@ -39,7 +42,7 @@ export class Draft extends CoreSynchronizable implements IDraft {
 
     @validate()
     @serialize()
-    public content: SerializableAsync
+    public content: Serializable
 
     @validate({ nullable: true })
     @serialize({ any: true })
@@ -49,7 +52,7 @@ export class Draft extends CoreSynchronizable implements IDraft {
     @serialize()
     public metadataModifiedAt?: CoreDate
 
-    public static async from(value: IDraft | Draft): Promise<Draft> {
-        return (await super.from(value, Draft)) as Draft
+    public static from(value: IDraft | Draft): Draft {
+        return this.fromAny(value)
     }
 }

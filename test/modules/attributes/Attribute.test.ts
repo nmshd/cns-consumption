@@ -2,10 +2,10 @@ import { ConsumptionAttribute, ConsumptionController } from "@nmshd/consumption"
 import { Attribute } from "@nmshd/content"
 import { AccountController, Transport } from "@nmshd/transport"
 import { expect } from "chai"
-import { AbstractTest } from "../../core/AbstractTest"
+import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
 
-export class AttributeTest extends AbstractTest {
+export class AttributeTest extends IntegrationTest {
     public run(): void {
         const that = this
 
@@ -22,9 +22,8 @@ export class AttributeTest extends AbstractTest {
 
                 await transport.init()
 
-                const accounts: AccountController[] = await TestUtil.provideAccounts(transport, 1)
-                testAccount = accounts[0]
-                consumptionController = await new ConsumptionController(transport, testAccount).init()
+                const account = (await TestUtil.provideAccounts(transport, 1))[0]
+                ;({ accountController: testAccount, consumptionController } = account)
             })
 
             it("should fill attributes", async function () {
