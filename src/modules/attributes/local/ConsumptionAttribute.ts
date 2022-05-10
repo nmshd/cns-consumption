@@ -20,13 +20,9 @@ export class ConsumptionAttribute<TAttribute extends AbstractAttribute = Abstrac
     extends CoreSynchronizable
     implements IConsumptionAttribute
 {
-    public override readonly technicalProperties = [
-        "@type",
-        "@context",
-        nameof<ConsumptionAttribute>((r) => r.createdAt)
-    ]
+    public override technicalProperties = ["@type", "@context", nameof<ConsumptionAttribute>((r) => r.createdAt)]
 
-    public override readonly userdataProperties = [nameof<ConsumptionAttribute>((r) => r.content)]
+    public override userdataProperties = [nameof<ConsumptionAttribute>((r) => r.content)]
 
     @validate()
     @serialize({ type: AbstractAttribute })
@@ -48,11 +44,11 @@ export class ConsumptionAttribute<TAttribute extends AbstractAttribute = Abstrac
     @serialize()
     public shareInfo?: ConsumptionAttributeShareInfo
 
-    public static override async from<
+    public static from<
         TAttribute extends AbstractAttribute = AbstractAttribute,
         TIAttribute extends IAbstractAttribute = IAbstractAttribute
-    >(value: IConsumptionAttribute<TIAttribute>): Promise<ConsumptionAttribute<TAttribute>> {
-        return (await this.fromAny(value)) as ConsumptionAttribute<TAttribute>
+    >(value: IConsumptionAttribute<TIAttribute>): ConsumptionAttribute<TAttribute> {
+        return this.fromAny(value) as ConsumptionAttribute<TAttribute>
     }
 
     public static async fromAttribute(
@@ -60,7 +56,7 @@ export class ConsumptionAttribute<TAttribute extends AbstractAttribute = Abstrac
         succeeds?: ICoreId,
         shareInfo?: IConsumptionAttributeShareInfo
     ): Promise<ConsumptionAttribute> {
-        return await this.from({
+        return this.from({
             content: attribute, // TODO: brauchen wir das nach from Update?
             id: await ConsumptionIds.attribute.generate(),
             createdAt: CoreDate.utc(),

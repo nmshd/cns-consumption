@@ -23,6 +23,6 @@ export class ConsumptionAttributeShareInfo extends CoreSerializable implements I
     public sourceAttribute?: CoreId
 
     public static from(value: IConsumptionAttributeShareInfo): ConsumptionAttributeShareInfo {
-        return super.from(value, ConsumptionAttributeShareInfo) as ConsumptionAttributeShareInfo
+        return super.fromAny(value) as ConsumptionAttributeShareInfo
     }
 }
