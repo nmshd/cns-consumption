@@ -17,7 +17,7 @@ export class ConsumptionRequestTest extends UnitTest {
         describe("ConsumptionRequest", function () {
             it("creates objects of all nested classes", function () {
                 const requestJSON: IConsumptionRequest = {
-                    id: CoreId.from("CNSREQ1"),
+                    id: CoreId.from("REQ1"),
                     isOwn: true,
                     peer: CoreAddress.from("id11"),
                     createdAt: CoreDate.from("2020-01-01T00:00:00.000Z"),
