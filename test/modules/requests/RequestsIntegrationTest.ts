@@ -759,7 +759,7 @@ export class RequestsWhen {
 
     public iTryToAcceptARequestWithoutItemsParameters(): Promise<void> {
         const paramsWithoutItems: Omit<DecideRequestParametersJSON, "items"> = {
-            requestId: "CNSREQ1"
+            requestId: "REQ1"
         }
 
         this.context.actionToTry = async () => {
@@ -771,7 +771,7 @@ export class RequestsWhen {
 
     public iTryToRejectARequestWithoutItemsParameters(): Promise<void> {
         const paramsWithoutItems: Omit<DecideRequestParametersJSON, "items"> = {
-            requestId: "CNSREQ1"
+            requestId: "REQ1"
         }
 
         this.context.actionToTry = async () => {
@@ -829,7 +829,7 @@ export class RequestsWhen {
 
     public iTryToRejectARequestWithSyntacticallyInvalidInput(): Promise<void> {
         const paramsWithoutItems: Omit<DecideRequestParametersJSON, "items"> = {
-            requestId: "CNSREQ1"
+            requestId: "REQ1"
         }
 
         this.context.actionToTry = async () => {
