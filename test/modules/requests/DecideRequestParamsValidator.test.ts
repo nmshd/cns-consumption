@@ -86,29 +86,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(5) success: group must be accepted, item must not be accepted; accept item",
-                    input: {
-                        request: Request.from({
-                            items: [
-                                RequestItemGroup.from({
-                                    mustBeAccepted: true,
-                                    items: [TestRequestItem.from({ mustBeAccepted: false })]
-                                })
-                            ]
-                        }),
-                        response: {
-                            accept: true,
-                            items: [
-                                {
-                                    items: [{ accept: true }]
-                                }
-                            ],
-                            requestId
-                        }
-                    }
-                },
-                {
-                    description: "(6) success: group must not be accepted, item must be accepted; reject item",
+                    description: "(5) success: group must not be accepted, item must be accepted; reject item",
                     input: {
                         request: Request.from({
                             items: [
@@ -130,7 +108,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(7) success: accept a request without accepting any item (no items mustBeAccepted)",
+                    description: "(6) success: accept a request without accepting any item (no items mustBeAccepted)",
                     input: {
                         request: Request.from({
                             items: [TestRequestItem.from({ mustBeAccepted: false })]
@@ -143,7 +121,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(8) success: items that must not be accepted in a group are rejected",
+                    description: "(7) success: items that must not be accepted in a group are rejected",
                     input: {
                         request: Request.from({
                             items: [

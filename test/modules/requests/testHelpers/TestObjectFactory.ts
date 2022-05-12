@@ -79,7 +79,7 @@ export class TestObjectFactory {
         return {
             "@type": "Response",
             result: ResponseResult.Accepted,
-            requestId: "CNSREQ1",
+            requestId: "REQ1",
             items: [
                 {
                     "@type": "AcceptResponseItem",
@@ -92,7 +92,7 @@ export class TestObjectFactory {
     public static createResponse(): IResponse {
         return {
             result: ResponseResult.Accepted,
-            requestId: CoreId.from("CNSREQ1"),
+            requestId: CoreId.from("REQ1"),
             items: [
                 AcceptResponseItem.from({
                     result: ResponseItemResult.Accepted
@@ -200,7 +200,7 @@ export class TestObjectFactory {
                             result: ResponseItemResult.Accepted
                         }
                     ],
-                    requestId: CoreId.from(requestId ?? "CNSREQ1")
+                    requestId: CoreId.from(requestId ?? "REQ1")
                 } as IResponse
             }
         }
