@@ -1,9 +1,10 @@
 import { AbstractAttributeQuery } from "@nmshd/content"
-import { CoreDate, CoreId, SynchronizedCollection, TransportErrors } from "@nmshd/transport"
+import { CoreAddress, CoreDate, CoreId, SynchronizedCollection, TransportErrors } from "@nmshd/transport"
 import { nameof } from "ts-simple-nameof"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionErrors } from "../../consumption"
 import { ConsumptionController } from "../../consumption/ConsumptionController"
 import { ConsumptionAttribute } from "./local/ConsumptionAttribute"
+import { ConsumptionAttributeShareInfo } from "./local/ConsumptionAttributeShareInfo"
 
 export class ConsumptionAttributesController extends ConsumptionBaseController {
     private attributes: SynchronizedCollection
@@ -83,27 +84,6 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         return this.findCurrent(attributes)
     }
 
-    // public async getAttributeByName(name: string): Promise<ConsumptionAttribute | undefined> {
-    //     const result = await this.attributes.find({
-    //         [`${nameof<ConsumptionAttribute>((c) => c.content)}.${nameof<Attribute>((a) => a.name)}`]: name
-    //     })
-
-    //     const attributes = await this.parseArray<ConsumptionAttribute>(result, ConsumptionAttribute)
-    //     return this.findCurrent(attributes)
-    // }
-
-    // public async getAttributeHistoryByName(name: string): Promise<ConsumptionAttribute[]> {
-    //     const result = await this.attributes.find({
-    //         [`${nameof<ConsumptionAttribute>((c) => c.content)}.${nameof<Attribute>((a) => a.name)}`]: name
-    //     })
-
-    //     const attributes = await this.parseArray<ConsumptionAttribute>(result, ConsumptionAttribute)
-    //     const sorted = attributes.sort((a, b) => {
-    //         return a.createdAt.compare(b.createdAt)
-    //     })
-    //     return sorted
-    // }
-
     public async getAttributes<TQuery extends AbstractAttributeQuery = AbstractAttributeQuery>(
         query?: TQuery
     ): Promise<ConsumptionAttribute[]> {
@@ -119,46 +99,50 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         return this.filterCurrent(items)
     }
 
-    // public async getAttributesByName(query?: any): Promise<Record<string, ConsumptionAttribute>> {
-    //     const attributes = await this.getValidAttributes(query)
-
-    //     const mapper = (result: any, attribute: ConsumptionAttribute) => {
-    //         result[attribute.content.name] = attribute
-    //         return result
-    //     }
-
-    //     return attributes.reduce(mapper, {} as any)
-    // }
-
     public async createAttribute(attribute: ConsumptionAttribute): Promise<ConsumptionAttribute> {
         const current = await this.getAttribute(attribute.id)
         if (current) {
-            throw ConsumptionErrors.attributes.attributeExists(attribute.id.toString()) // TODO: evtl lieber typ oder key
+            throw ConsumptionErrors.attributes.attributeExists(attribute.id.toString())
         }
         await this.attributes.create(attribute)
         return attribute
     }
 
     public async succeedAttribute(
-        attribute: ConsumptionAttribute,
+        id: CoreId,
+        successor: ConsumptionAttribute,
         validFrom?: CoreDate
     ): Promise<ConsumptionAttribute> {
-        const current = await this.getAttribute(attribute.id) // TODO: bevor succeed: query und user Auswahl
+        const current = await this.getAttribute(id)
         if (current && !validFrom) {
             validFrom = CoreDate.utc()
         }
         if (current) {
-            attribute.content.validFrom = validFrom
+            successor.content.validFrom = validFrom
             current.content.validTo = validFrom
             await this.updateAttribute(current)
         }
-        await this.attributes.create(attribute)
-        return attribute
+        return await this.attributes.create(successor)
+    }
+
+    public async createSharedConsumptionAttributeCopy(
+        attribute: ConsumptionAttribute,
+        peer: CoreAddress,
+        requestReference: CoreId
+    ): Promise<ConsumptionAttribute> {
+        const consumptionAttributeCopy = await ConsumptionAttribute.fromAttribute(attribute.content) // TODO was passiert wenn ein predecessor geteilt wird?
+        consumptionAttributeCopy.succeeds = attribute.succeeds
+        consumptionAttributeCopy.shareInfo = ConsumptionAttributeShareInfo.from({
+            peer: peer,
+            requestReference: requestReference,
+            sourceAttribute: attribute.id
+        })
+        return await this.createAttribute(ConsumptionAttribute.from(consumptionAttributeCopy))
     }
 
     public async updateAttribute(attribute: ConsumptionAttribute): Promise<ConsumptionAttribute> {
         const current = await this.attributes.findOne({
-            [nameof<ConsumptionAttribute>((c) => c.id)]: attribute.id.toString() // TODO: why tho
+            [nameof<ConsumptionAttribute>((c) => c.id)]: attribute.id.toString()
         })
         if (!current) {
             throw TransportErrors.general.recordNotFound(ConsumptionAttribute, attribute.id.toString())
