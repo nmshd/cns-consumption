@@ -134,13 +134,13 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         requestReference: CoreId
     ): Promise<ConsumptionAttribute> {
         const consumptionAttributeCopy = await ConsumptionAttribute.fromAttribute(attribute.content) // TODO was passiert wenn ein predecessor geteilt wird?
-        consumptionAttributeCopy.succeeds = attribute.succeeds
         consumptionAttributeCopy.shareInfo = ConsumptionAttributeShareInfo.from({
             peer: peer,
             requestReference: requestReference,
             sourceAttribute: attribute.id
         })
-        return await this.createAttribute(consumptionAttributeCopy)
+        const sharedConsumptionAttributeCopy = await this.createAttribute(consumptionAttributeCopy)
+        return ConsumptionAttribute.from(sharedConsumptionAttributeCopy)
     }
 
     public async updateAttribute(attribute: ConsumptionAttribute): Promise<ConsumptionAttribute> {
@@ -150,7 +150,8 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         if (!current) {
             throw TransportErrors.general.recordNotFound(ConsumptionAttribute, attribute.id.toString())
         }
-        return ConsumptionAttribute.from(await this.attributes.update(current, attribute))
+        const updatedAttribute = await this.attributes.update(current, attribute)
+        return ConsumptionAttribute.from(updatedAttribute)
     }
 
     public async deleteAttribute(attribute: ConsumptionAttribute): Promise<void> {
