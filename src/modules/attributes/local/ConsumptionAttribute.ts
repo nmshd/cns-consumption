@@ -15,9 +15,15 @@ export interface IConsumptionAttribute extends ICoreSynchronizable {
 
 @type("ConsumptionAttribute")
 export class ConsumptionAttribute extends CoreSynchronizable implements IConsumptionAttribute {
-    public override technicalProperties = ["@type", "@context", nameof<ConsumptionAttribute>((r) => r.createdAt)]
+    public override readonly technicalProperties = [
+        "@type",
+        "@context",
+        nameof<ConsumptionAttribute>((r) => r.createdAt),
+        nameof<ConsumptionAttribute>((r) => r.succeeds),
+        nameof<ConsumptionAttribute>((r) => r.createdAt)
+    ]
 
-    public override userdataProperties = [nameof<ConsumptionAttribute>((r) => r.content)]
+    public override readonly userdataProperties = [nameof<ConsumptionAttribute>((r) => r.content)]
 
     @validate()
     @serialize({ unionTypes: [IdentityAttribute, RelationshipAttribute] })
