@@ -4,13 +4,13 @@ class Attributes {
     public attributeExists(id: string) {
         return new CoreError(
             "error.consumption.attributes.attributeExists",
-            `Attribute with id ${id} already exists. Please use succeed instead.`
+            `Attribute with id '${id}' already exists. Please use succeed instead.`
         )
     }
     public predecessorNotFound(id: string) {
         return new CoreError(
             "error.consumption.attributes.predecessorNotFound",
-            `Attribute with id ${id} does not exist. Please use create instead.`
+            `Attribute with id '${id}' does not exist. Please use create instead.`
         )
     }
 }
