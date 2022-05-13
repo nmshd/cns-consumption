@@ -31,7 +31,7 @@ export class AttributeTest extends IntegrationTest {
                     IdentityAttribute.from({
                         value: {
                             "@type": "Surname",
-                            value: "Becker"
+                            value: "ASurname"
                         },
                         owner: CoreAddress.from("address")
                     })
@@ -41,7 +41,7 @@ export class AttributeTest extends IntegrationTest {
                     IdentityAttribute.from({
                         value: {
                             "@type": "GivenName",
-                            value: "Hugo"
+                            value: "AGivenName"
                         },
                         owner: CoreAddress.from("address")
                     })
@@ -64,11 +64,11 @@ export class AttributeTest extends IntegrationTest {
                     IdentityAttribute.from({
                         value: {
                             "@type": "StreetAddress",
-                            recipient: "Hugo Becker",
-                            street: "Straße",
-                            houseNo: "1",
-                            zipCode: "123456",
-                            city: "Stadt",
+                            recipient: "ARecipient",
+                            street: "AStreet",
+                            houseNo: "AHouseNo",
+                            zipCode: "AZipCode",
+                            city: "ACity",
                             country: "DE"
                         },
                         validTo: CoreDate.utc(),
@@ -115,7 +115,7 @@ export class AttributeTest extends IntegrationTest {
                     IdentityAttribute.from({
                         value: {
                             "@type": "Surname",
-                            value: "Becker"
+                            value: "ASurname"
                         },
                         owner: CoreAddress.from("address")
                     })
@@ -124,7 +124,7 @@ export class AttributeTest extends IntegrationTest {
                     IdentityAttribute.from({
                         value: {
                             "@type": "Surname",
-                            value: "Wagner"
+                            value: "ANewSurname"
                         },
                         owner: CoreAddress.from("address")
                     })
