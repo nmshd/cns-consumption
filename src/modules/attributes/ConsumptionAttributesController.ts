@@ -107,8 +107,7 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
             throw ConsumptionErrors.attributes.attributeExists(attribute.id.toString())
         }
         const newAttribute = await this.attributes.create(attribute)
-        const a = ConsumptionAttribute.from(newAttribute)
-        return a
+        return ConsumptionAttribute.from(newAttribute)
     }
 
     public async succeedAttribute(
@@ -117,17 +116,18 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         validFrom?: CoreDate
     ): Promise<ConsumptionAttribute> {
         const current = await this.getAttribute(id)
-        if (current && !validFrom) {
+        if (!current) {
+            throw ConsumptionErrors.attributes.predecessorNotFound(id.toString())
+        }
+        if (!validFrom) {
             validFrom = CoreDate.utc()
         }
-        if (current) {
-            successor.content.validFrom = validFrom
-            current.content.validTo = validFrom
-            await this.updateAttribute(current)
-        }
+        current.content.validTo = validFrom
+        await this.updateAttribute(current)
+
+        successor.content.validFrom = validFrom
         const createdAttribute = await this.attributes.create(successor)
-        const a = ConsumptionAttribute.from(createdAttribute)
-        return a
+        return ConsumptionAttribute.from(createdAttribute)
     }
 
     public async createSharedConsumptionAttributeCopy(
