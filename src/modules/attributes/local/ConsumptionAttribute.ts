@@ -1,14 +1,13 @@
 import { serialize, type, validate } from "@js-soft/ts-serval"
-import { AbstractAttribute, IAbstractAttribute } from "@nmshd/content"
+import { IdentityAttribute, IIdentityAttribute, IRelationshipAttribute, RelationshipAttribute } from "@nmshd/content"
 import { CoreDate, CoreId, CoreSynchronizable, ICoreDate, ICoreId, ICoreSynchronizable } from "@nmshd/transport"
 import { nameof } from "ts-simple-nameof"
 import { ConsumptionIds } from "../../../consumption"
 import { ConsumptionAttributeShareInfo, IConsumptionAttributeShareInfo } from "./ConsumptionAttributeShareInfo"
 
 // TODO: extend
-export interface IConsumptionAttribute<TIAttribute extends IAbstractAttribute = IAbstractAttribute>
-    extends ICoreSynchronizable {
-    content: TIAttribute
+export interface IConsumptionAttribute extends ICoreSynchronizable {
+    content: IIdentityAttribute | IRelationshipAttribute
     createdAt: ICoreDate
     succeeds?: ICoreId
     succeededBy?: ICoreId
@@ -16,17 +15,14 @@ export interface IConsumptionAttribute<TIAttribute extends IAbstractAttribute = 
 }
 
 @type("ConsumptionAttribute")
-export class ConsumptionAttribute<TAttribute extends AbstractAttribute = AbstractAttribute>
-    extends CoreSynchronizable
-    implements IConsumptionAttribute
-{
+export class ConsumptionAttribute extends CoreSynchronizable implements IConsumptionAttribute {
     public override technicalProperties = ["@type", "@context", nameof<ConsumptionAttribute>((r) => r.createdAt)]
 
     public override userdataProperties = [nameof<ConsumptionAttribute>((r) => r.content)]
 
     @validate()
-    @serialize({ type: AbstractAttribute })
-    public content: TAttribute
+    @serialize({ unionTypes: [IdentityAttribute, RelationshipAttribute] })
+    public content: IdentityAttribute | RelationshipAttribute
 
     @validate()
     @serialize()
@@ -44,15 +40,12 @@ export class ConsumptionAttribute<TAttribute extends AbstractAttribute = Abstrac
     @serialize()
     public shareInfo?: ConsumptionAttributeShareInfo
 
-    public static from<
-        TAttribute extends AbstractAttribute = AbstractAttribute,
-        TIAttribute extends IAbstractAttribute = IAbstractAttribute
-    >(value: IConsumptionAttribute<TIAttribute>): ConsumptionAttribute<TAttribute> {
-        return this.fromAny(value) as ConsumptionAttribute<TAttribute>
+    public static from(value: IConsumptionAttribute): ConsumptionAttribute {
+        return this.fromAny(value)
     }
 
     public static async fromAttribute(
-        attribute: IAbstractAttribute,
+        attribute: IIdentityAttribute | IRelationshipAttribute,
         succeeds?: ICoreId,
         shareInfo?: IConsumptionAttributeShareInfo
     ): Promise<ConsumptionAttribute> {

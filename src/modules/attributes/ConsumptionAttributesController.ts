@@ -76,12 +76,14 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
     }
 
     public async getAttribute(id: CoreId): Promise<ConsumptionAttribute | undefined> {
-        const result = await this.attributes.find({
+        const result = await this.attributes.findOne({
             [nameof<ConsumptionAttribute>((c) => c.id)]: id.toString()
         })
 
-        const attributes = await this.parseArray<ConsumptionAttribute>(result, ConsumptionAttribute)
-        return this.findCurrent(attributes)
+        if (result) {
+            return ConsumptionAttribute.from(result)
+        }
+        return result
     }
 
     public async getAttributes<TQuery extends AbstractAttributeQuery = AbstractAttributeQuery>(
@@ -104,8 +106,9 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         if (current) {
             throw ConsumptionErrors.attributes.attributeExists(attribute.id.toString())
         }
-        await this.attributes.create(attribute)
-        return attribute
+        const newAttribute = await this.attributes.create(attribute)
+        const a = ConsumptionAttribute.from(newAttribute)
+        return a
     }
 
     public async succeedAttribute(
@@ -122,7 +125,9 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
             current.content.validTo = validFrom
             await this.updateAttribute(current)
         }
-        return await this.attributes.create(successor)
+        const createdAttribute = await this.attributes.create(successor)
+        const a = ConsumptionAttribute.from(createdAttribute)
+        return a
     }
 
     public async createSharedConsumptionAttributeCopy(
@@ -137,7 +142,7 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
             requestReference: requestReference,
             sourceAttribute: attribute.id
         })
-        return await this.createAttribute(ConsumptionAttribute.from(consumptionAttributeCopy))
+        return await this.createAttribute(consumptionAttributeCopy)
     }
 
     public async updateAttribute(attribute: ConsumptionAttribute): Promise<ConsumptionAttribute> {
@@ -147,8 +152,7 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         if (!current) {
             throw TransportErrors.general.recordNotFound(ConsumptionAttribute, attribute.id.toString())
         }
-        await this.attributes.update(current, attribute)
-        return attribute
+        return ConsumptionAttribute.from(await this.attributes.update(current, attribute))
     }
 
     public async deleteAttribute(attribute: ConsumptionAttribute): Promise<void> {

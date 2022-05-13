@@ -1,6 +1,6 @@
 import { ConsumptionAttribute, ConsumptionController } from "@nmshd/consumption"
 import { IdentityAttribute } from "@nmshd/content"
-import { AccountController, CoreAddress, Transport } from "@nmshd/transport"
+import { AccountController, CoreAddress, CoreDate, CoreId, Transport } from "@nmshd/transport"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
@@ -57,8 +57,6 @@ export class AttributeTest extends IntegrationTest {
             it("should list all attributes", async function () {
                 const attributes = await consumptionController.attributes.getAttributes()
                 expect(attributes).to.be.of.length(2)
-                // expect(attributes[0].content).instanceOf(IdentityAttribute)
-                // expect(attributes[1].content).instanceOf(IdentityAttribute)
             }).timeout(15000)
 
             it("should fill more attributes", async function () {
@@ -73,6 +71,7 @@ export class AttributeTest extends IntegrationTest {
                             city: "Stadt",
                             country: "DE"
                         },
+                        validTo: CoreDate.utc(),
                         owner: CoreAddress.from("address")
                     })
                 )
@@ -101,6 +100,78 @@ export class AttributeTest extends IntegrationTest {
                 const attributes = await consumptionController.attributes.getAttributes()
                 expect(attributes).to.be.of.length(4)
             }).timeout(15000)
+
+            it("should delete an attribute", async function () {
+                const attributes = await consumptionController.attributes.getAttributes()
+                await consumptionController.attributes.deleteAttribute(attributes[0])
+
+                const attributesAfterDelete = await consumptionController.attributes.getAttributes()
+                expect(attributesAfterDelete).to.be.of.length(3)
+                expect(attributesAfterDelete).not.to.have.deep.members([{ id: attributes[0]?.id }])
+            })
+
+            it("should succeed attributes", async function () {
+                const surname = await ConsumptionAttribute.fromAttribute(
+                    IdentityAttribute.from({
+                        value: {
+                            "@type": "Surname",
+                            value: "Becker"
+                        },
+                        owner: CoreAddress.from("address")
+                    })
+                )
+                const surnameSuccessor = await ConsumptionAttribute.fromAttribute(
+                    IdentityAttribute.from({
+                        value: {
+                            "@type": "Surname",
+                            value: "Wagner"
+                        },
+                        owner: CoreAddress.from("address")
+                    })
+                )
+                const successorDate = CoreDate.utc()
+                const attribute = await consumptionController.attributes.createAttribute(surname)
+                const successor = await consumptionController.attributes.succeedAttribute(
+                    attribute.id,
+                    surnameSuccessor,
+                    successorDate
+                )
+                const succeededAttribute = await consumptionController.attributes.getAttribute(attribute.id)
+                expect(succeededAttribute?.content.validTo?.toISOString()).to.equal(successorDate.toISOString())
+
+                const succeessorAttribute = await consumptionController.attributes.getAttribute(successor.id)
+                expect(succeessorAttribute?.content.validFrom?.toISOString()).to.equal(successorDate.toISOString())
+
+                const allAttributes = await consumptionController.attributes.getAttributes()
+                const allAttributesJSON = allAttributes.map((v) => v.id.toString())
+                expect(allAttributesJSON).to.include(succeededAttribute?.id.toString())
+
+                const currentAttributes = consumptionController.attributes.filterCurrent(allAttributes)
+                const currentAttributesJSON = currentAttributes.map((v) => v.id.toString())
+                expect(currentAttributesJSON).to.not.include(succeededAttribute?.id.toString())
+                expect(currentAttributesJSON).to.include(succeessorAttribute?.id.toString())
+            })
+
+            it("should allow to create a share attribute copy", async function () {
+                const nationality = await ConsumptionAttribute.fromAttribute(
+                    IdentityAttribute.from({
+                        value: {
+                            "@type": "Nationality",
+                            value: "DE"
+                        },
+                        owner: CoreAddress.from("address")
+                    })
+                )
+                const nationalityAttribute = await consumptionController.attributes.createAttribute(nationality)
+                const sharedNationalityAttribute =
+                    await consumptionController.attributes.createSharedConsumptionAttributeCopy(
+                        nationalityAttribute,
+                        CoreAddress.from("address"),
+                        CoreId.from("requestId")
+                    )
+                expect(sharedNationalityAttribute).instanceOf(ConsumptionAttribute)
+                expect(sharedNationalityAttribute.shareInfo?.peer).to.deep.equal
+            })
 
             after(async function () {
                 await testAccount.close()
