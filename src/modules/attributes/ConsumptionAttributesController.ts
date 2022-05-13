@@ -80,10 +80,8 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
             [nameof<ConsumptionAttribute>((c) => c.id)]: id.toString()
         })
 
-        if (result) {
-            return ConsumptionAttribute.from(result)
-        }
-        return result
+        if (!result) return
+        return ConsumptionAttribute.from(result)
     }
 
     public async getAttributes<TQuery extends AbstractAttributeQuery = AbstractAttributeQuery>(

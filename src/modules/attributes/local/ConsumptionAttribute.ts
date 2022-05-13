@@ -5,7 +5,6 @@ import { nameof } from "ts-simple-nameof"
 import { ConsumptionIds } from "../../../consumption"
 import { ConsumptionAttributeShareInfo, IConsumptionAttributeShareInfo } from "./ConsumptionAttributeShareInfo"
 
-// TODO: extend
 export interface IConsumptionAttribute extends ICoreSynchronizable {
     content: IIdentityAttribute | IRelationshipAttribute
     createdAt: ICoreDate
@@ -50,12 +49,11 @@ export class ConsumptionAttribute extends CoreSynchronizable implements IConsump
         shareInfo?: IConsumptionAttributeShareInfo
     ): Promise<ConsumptionAttribute> {
         return this.from({
-            content: attribute, // TODO: brauchen wir das nach from Update?
+            content: attribute,
             id: await ConsumptionIds.attribute.generate(),
             createdAt: CoreDate.utc(),
             succeeds: succeeds,
             shareInfo: shareInfo
-            // TODO: wie übergeben wir succeeds/succeededBy? Vor allem letzteres wird vermutlich nicht beim create übergeben
         })
     }
 }

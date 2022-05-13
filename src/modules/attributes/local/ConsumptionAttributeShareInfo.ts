@@ -1,8 +1,6 @@
 import { serialize, validate } from "@js-soft/ts-serval"
 import { CoreAddress, CoreId, CoreSerializable, ICoreAddress, ICoreId, ICoreSerializable } from "@nmshd/transport"
 
-// TODO: JSON
-
 export interface IConsumptionAttributeShareInfo extends ICoreSerializable {
     requestReference: ICoreId
     peer: ICoreAddress
