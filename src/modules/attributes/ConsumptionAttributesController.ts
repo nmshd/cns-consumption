@@ -1,4 +1,3 @@
-import { AbstractAttributeQuery } from "@nmshd/content"
 import { CoreAddress, CoreDate, CoreId, SynchronizedCollection, TransportErrors } from "@nmshd/transport"
 import { nameof } from "ts-simple-nameof"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionErrors } from "../../consumption"
@@ -84,18 +83,14 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         return ConsumptionAttribute.from(result)
     }
 
-    public async getAttributes<TQuery extends AbstractAttributeQuery = AbstractAttributeQuery>(
-        query?: TQuery
-    ): Promise<ConsumptionAttribute[]> {
-        const items = await this.attributes.find(query)
-        return await this.parseArray<ConsumptionAttribute>(items, ConsumptionAttribute)
+    public async getAttributes(query?: any): Promise<ConsumptionAttribute[]> {
+        const attributes = await this.attributes.find(query)
+        return await this.parseArray<ConsumptionAttribute>(attributes, ConsumptionAttribute)
     }
 
-    public async getValidAttributes<TQuery extends AbstractAttributeQuery = AbstractAttributeQuery>(
-        query?: TQuery
-    ): Promise<ConsumptionAttribute[]> {
-        const docs = await this.attributes.find(query)
-        const items = await this.parseArray<ConsumptionAttribute>(docs, ConsumptionAttribute)
+    public async getValidAttributes(query?: any): Promise<ConsumptionAttribute[]> {
+        const attributes = await this.attributes.find(query)
+        const items = await this.parseArray<ConsumptionAttribute>(attributes, ConsumptionAttribute)
         return this.filterCurrent(items)
     }
 
