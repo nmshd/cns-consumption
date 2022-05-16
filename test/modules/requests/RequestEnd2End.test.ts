@@ -62,7 +62,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                     items: [TestRequestItem.from({ mustBeAccepted: false })]
                 })
                 sTemplate = await sAccountController.relationshipTemplates.sendRelationshipTemplate({
-                    content: RelationshipTemplateBody.from({ newRelationshipRequest: request }),
+                    content: RelationshipTemplateBody.from({ onNewRelationship: request }),
                     expiresAt: CoreDate.utc().add({ hours: 1 }),
                     maxNumberOfRelationships: 1
                 })
@@ -77,7 +77,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
 
             it("recipient: create Consumption Request", async function () {
                 rConsumptionRequest = await rConsumptionController.incomingRequests.received({
-                    receivedRequest: (rTemplate.cache!.content as RelationshipTemplateBody).newRelationshipRequest,
+                    receivedRequest: (rTemplate.cache!.content as RelationshipTemplateBody).onNewRelationship,
                     requestSourceObject: rTemplate
                 })
             })
@@ -144,12 +144,12 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
 
                 // make sure (de-)serialization worked as expected
                 expect(sTemplate.cache!.content).to.be.instanceOf(RelationshipTemplateBody)
-                expect((sTemplate.cache!.content as RelationshipTemplateBody).newRelationshipRequest).to.be.instanceOf(
+                expect((sTemplate.cache!.content as RelationshipTemplateBody).onNewRelationship).to.be.instanceOf(
                     Request
                 )
 
                 expect(rTemplate.cache!.content).to.be.instanceOf(RelationshipTemplateBody)
-                expect((rTemplate.cache!.content as RelationshipTemplateBody).newRelationshipRequest).to.be.instanceOf(
+                expect((rTemplate.cache!.content as RelationshipTemplateBody).onNewRelationship).to.be.instanceOf(
                     Request
                 )
 

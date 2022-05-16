@@ -152,7 +152,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         }
 
         // TODO: is this the correct request (=> could be RelationshipTemplateBody#existingRelationshipRequest)
-        await this._create(id, templateContent.newRelationshipRequest, peer)
+        await this._create(id, templateContent.onNewRelationship, peer)
 
         await this._sent(id, parsedParams.template)
 

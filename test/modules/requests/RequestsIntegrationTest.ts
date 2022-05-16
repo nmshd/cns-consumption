@@ -587,7 +587,7 @@ export class RequestsWhen {
     ): Promise<void> {
         params.template ??= TestObjectFactory.createOutgoingIRelationshipTemplate(
             this.context.currentIdentity,
-            RelationshipTemplateBody.from({ newRelationshipRequest: TestObjectFactory.createRequestWithOneItem() })
+            RelationshipTemplateBody.from({ onNewRelationship: TestObjectFactory.createRequestWithOneItem() })
         )
         params.creationChange ??= TestObjectFactory.createIncomingIRelationshipChange(RelationshipChangeType.Creation)
 
