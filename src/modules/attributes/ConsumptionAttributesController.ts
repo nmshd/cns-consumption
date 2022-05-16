@@ -120,7 +120,7 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         if (!parsedParams.validFrom) {
             parsedParams.validFrom = CoreDate.utc()
         }
-        current.content.validTo = parsedParams.validFrom
+        current.content.validTo = parsedParams.validFrom.subtract(1)
         await this.updateConsumptionAttribute(current)
 
         parsedParams.successorContent.validFrom = parsedParams.validFrom

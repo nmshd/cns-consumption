@@ -149,7 +149,9 @@ export class AttributeTest extends IntegrationTest {
                     createSuccessorParams
                 )
                 const succeededAttribute = await consumptionController.attributes.getConsumptionAttribute(attribute.id)
-                expect(succeededAttribute?.content.validTo?.toISOString()).to.equal(successorDate.toISOString())
+                expect(succeededAttribute?.content.validTo?.toISOString()).to.equal(
+                    successorDate.subtract(1).toISOString()
+                )
 
                 const succeessorAttribute = await consumptionController.attributes.getConsumptionAttribute(successor.id)
                 expect(succeessorAttribute?.content.validFrom?.toISOString()).to.equal(successorDate.toISOString())
@@ -190,7 +192,7 @@ export class AttributeTest extends IntegrationTest {
                         createSharedAttributesParams
                     )
                 expect(sharedNationalityAttribute).instanceOf(ConsumptionAttribute)
-                expect(sharedNationalityAttribute.shareInfo?.peer).to.equal(peer)
+                expect(sharedNationalityAttribute.shareInfo?.peer).to.deep.equal(peer)
             })
 
             afterEach(async function () {
