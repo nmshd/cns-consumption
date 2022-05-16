@@ -42,14 +42,14 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         } else if (
             !attribute.content.validFrom &&
             attribute.content.validTo &&
-            attribute.content.validTo.isAfter(now)
+            attribute.content.validTo.isSameOrAfter(now)
         ) {
             return true
         } else if (
             attribute.content.validFrom &&
             attribute.content.validTo &&
             attribute.content.validFrom.isSameOrBefore(now) &&
-            attribute.content.validTo.isAfter(now)
+            attribute.content.validTo.isSameOrAfter(now)
         ) {
             return true
         }
