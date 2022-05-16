@@ -15,7 +15,7 @@ export class AttributeTest extends IntegrationTest {
     public run(): void {
         const that = this
 
-        describe.only("Attributes", function () {
+        describe("Attributes", function () {
             const transport = new Transport(that.connection, that.config, that.loggerFactory)
 
             let consumptionController: ConsumptionController
@@ -32,7 +32,7 @@ export class AttributeTest extends IntegrationTest {
                 ;({ accountController: testAccount, consumptionController } = account)
             })
 
-            it("should fill attributes", async function () {
+            beforeEach(async function () {
                 const surnameParams: ICreateConsumptionAttributeParams = {
                     attribute: IdentityAttribute.from({
                         value: {
@@ -52,21 +52,19 @@ export class AttributeTest extends IntegrationTest {
                         owner: CoreAddress.from("address")
                     })
                 }
-                const givenName = await consumptionController.attributes.createConsumptionAttribute(surnameParams)
-                const surname = await consumptionController.attributes.createConsumptionAttribute(givenNamesParams)
-
-                expect(surname).instanceOf(ConsumptionAttribute)
-                expect(surname.content).instanceOf(IdentityAttribute)
-                expect(givenName).instanceOf(ConsumptionAttribute)
-                expect(givenName.content).instanceOf(IdentityAttribute)
-            }).timeout(15000)
+                await consumptionController.attributes.createConsumptionAttribute(surnameParams)
+                await consumptionController.attributes.createConsumptionAttribute(givenNamesParams)
+            })
 
             it("should list all attributes", async function () {
                 const attributes = await consumptionController.attributes.getConsumptionAttributes()
                 expect(attributes).to.be.of.length(2)
-            }).timeout(15000)
+            })
 
-            it("should fill more attributes", async function () {
+            it("should create new attributes", async function () {
+                const attributesBeforeCreate = await consumptionController.attributes.getConsumptionAttributes()
+                const nrAttributesBeforeCreate = attributesBeforeCreate.length
+
                 const addressParams: ICreateConsumptionAttributeParams = {
                     attribute: IdentityAttribute.from({
                         value: {
@@ -101,46 +99,49 @@ export class AttributeTest extends IntegrationTest {
                 const birthDate = await consumptionController.attributes.createConsumptionAttribute(birthDateParams)
                 expect(birthDate).instanceOf(ConsumptionAttribute)
                 expect(birthDate.content).instanceOf(IdentityAttribute)
-            }).timeout(15000)
 
-            it("should list all attributes again", async function () {
-                const attributes = await consumptionController.attributes.getConsumptionAttributes()
-                expect(attributes).to.be.of.length(4)
+                const attributesAfterCreate = await consumptionController.attributes.getConsumptionAttributes()
+                const nrAttributesAfterCreate = attributesAfterCreate.length
+                expect(nrAttributesAfterCreate).equals(nrAttributesBeforeCreate + 2)
             }).timeout(15000)
 
             it("should delete an attribute", async function () {
                 const attributes = await consumptionController.attributes.getConsumptionAttributes()
+                const nrAttributesBeforeDelete = attributes.length
                 await consumptionController.attributes.deleteAttribute(attributes[0])
 
                 const attributesAfterDelete = await consumptionController.attributes.getConsumptionAttributes()
-                expect(attributesAfterDelete).to.be.of.length(3)
-                expect(attributesAfterDelete).not.to.have.deep.members([{ id: attributes[0]?.id }])
+                const nrAttributesAfterDelete = attributesAfterDelete.length
+                expect(nrAttributesAfterDelete).equals(nrAttributesBeforeDelete - 1)
+
+                const attributesJSON = attributesAfterDelete.map((v) => v.id.toString())
+                expect(attributesJSON).not.to.include(attributes[0]?.id.toString())
             })
 
             it("should succeed attributes", async function () {
-                const surnameParams: ICreateConsumptionAttributeParams = {
+                const displayNameParams: ICreateConsumptionAttributeParams = {
                     attribute: IdentityAttribute.from({
                         value: {
-                            "@type": "Surname",
-                            value: "ASurname"
+                            "@type": "DisplayName",
+                            value: "ADisplayName"
                         },
                         owner: CoreAddress.from("address")
                     })
                 }
 
-                const surnameSuccessor = IdentityAttribute.from({
+                const displayNameSuccessor = IdentityAttribute.from({
                     value: {
-                        "@type": "Surname",
-                        value: "ANewSurname"
+                        "@type": "DisplayName",
+                        value: "ANewDisplayName"
                     },
                     owner: CoreAddress.from("address")
                 })
 
                 const successorDate = CoreDate.utc()
-                const attribute = await consumptionController.attributes.createConsumptionAttribute(surnameParams)
+                const attribute = await consumptionController.attributes.createConsumptionAttribute(displayNameParams)
 
                 const createSuccessorParams: ISucceedConsumptionAttributeParams = {
-                    successorContent: surnameSuccessor,
+                    successorContent: displayNameSuccessor,
                     succeeds: attribute.id,
                     validFrom: successorDate
                 }
@@ -189,6 +190,13 @@ export class AttributeTest extends IntegrationTest {
                     )
                 expect(sharedNationalityAttribute).instanceOf(ConsumptionAttribute)
                 expect(sharedNationalityAttribute.shareInfo?.peer).to.deep.equal
+            })
+
+            afterEach(async function () {
+                const attributes = await consumptionController.attributes.getConsumptionAttributes()
+                attributes.forEach(async (attribute) => {
+                    await consumptionController.attributes.deleteAttribute(attribute)
+                })
             })
 
             after(async function () {
