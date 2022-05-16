@@ -178,9 +178,10 @@ export class AttributeTest extends IntegrationTest {
                     nationalityParams
                 )
 
+                const peer = CoreAddress.from("address")
                 const createSharedAttributesParams: ICreateSharedConsumptionAttributeCopyParams = {
                     attributeId: nationalityAttribute.id,
-                    peer: CoreAddress.from("address"),
+                    peer: peer,
                     requestReference: CoreId.from("requestId")
                 }
 
@@ -189,7 +190,7 @@ export class AttributeTest extends IntegrationTest {
                         createSharedAttributesParams
                     )
                 expect(sharedNationalityAttribute).instanceOf(ConsumptionAttribute)
-                expect(sharedNationalityAttribute.shareInfo?.peer).to.deep.equal
+                expect(sharedNationalityAttribute.shareInfo?.peer).to.equal(peer)
             })
 
             afterEach(async function () {
