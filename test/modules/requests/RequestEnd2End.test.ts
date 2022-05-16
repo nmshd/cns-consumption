@@ -1,6 +1,12 @@
 /* eslint-disable jest/expect-expect */
 import { ConsumptionController, ConsumptionRequest, ConsumptionRequestStatus } from "@nmshd/consumption"
-import { AcceptResponseItem, Request, Response } from "@nmshd/content"
+import {
+    AcceptResponseItem,
+    RelationshipCreationChangeRequestBody,
+    RelationshipTemplateBody,
+    Request,
+    Response
+} from "@nmshd/content"
 import { AccountController, CoreDate, Message, Relationship, RelationshipTemplate, Transport } from "@nmshd/transport"
 import { expect } from "chai"
 import { TestUtil } from "../../core/TestUtil"
@@ -56,7 +62,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                     items: [TestRequestItem.from({ mustBeAccepted: false })]
                 })
                 sTemplate = await sAccountController.relationshipTemplates.sendRelationshipTemplate({
-                    content: request,
+                    content: RelationshipTemplateBody.from({ newRelationshipRequest: request }),
                     expiresAt: CoreDate.utc().add({ hours: 1 }),
                     maxNumberOfRelationships: 1
                 })
@@ -71,7 +77,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
 
             it("recipient: create Consumption Request", async function () {
                 rConsumptionRequest = await rConsumptionController.incomingRequests.received({
-                    receivedRequest: rTemplate.cache!.content as Request,
+                    receivedRequest: (rTemplate.cache!.content as RelationshipTemplateBody).newRelationshipRequest,
                     requestSourceObject: rTemplate
                 })
             })
@@ -102,7 +108,9 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
             it("recipient: create Relationship with Response in Relationship Change", async function () {
                 rRelationship = await rAccountController.relationships.sendRelationship({
                     template: rTemplate,
-                    content: rConsumptionRequest.response!.content
+                    content: RelationshipCreationChangeRequestBody.from({
+                        response: rConsumptionRequest.response!.content
+                    })
                 })
             })
 
@@ -135,12 +143,26 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                 expect(rConsumptionRequest.id.toString()).to.equal(sConsumptionRequest.id.toString())
 
                 // make sure (de-)serialization worked as expected
-                expect(sTemplate.cache!.content).to.be.instanceOf(Request)
-                expect(rTemplate.cache!.content).to.be.instanceOf(Request)
+                expect(sTemplate.cache!.content).to.be.instanceOf(RelationshipTemplateBody)
+                expect((sTemplate.cache!.content as RelationshipTemplateBody).newRelationshipRequest).to.be.instanceOf(
+                    Request
+                )
+
+                expect(rTemplate.cache!.content).to.be.instanceOf(RelationshipTemplateBody)
+                expect((rTemplate.cache!.content as RelationshipTemplateBody).newRelationshipRequest).to.be.instanceOf(
+                    Request
+                )
+
                 expect(sConsumptionRequest.content.items[0]).to.be.instanceOf(TestRequestItem)
                 expect(rConsumptionRequest.content.items[0]).to.be.instanceOf(TestRequestItem)
-                expect(sRelationship.cache!.changes[0].request.content).to.be.instanceOf(Response)
-                expect(rRelationship.cache!.changes[0].request.content).to.be.instanceOf(Response)
+
+                expect(
+                    (sRelationship.cache!.changes[0].request.content as RelationshipCreationChangeRequestBody).response
+                ).to.be.instanceOf(Response)
+                expect(
+                    (rRelationship.cache!.changes[0].request.content as RelationshipCreationChangeRequestBody).response
+                ).to.be.instanceOf(Response)
+
                 expect(sConsumptionRequest.response!.content.items[0]).to.be.instanceOf(AcceptResponseItem)
                 expect(rConsumptionRequest.response!.content.items[0]).to.be.instanceOf(AcceptResponseItem)
             })
