@@ -3,6 +3,7 @@ import { IdentityAttribute, IIdentityAttribute, IRelationshipAttribute, Relation
 import { CoreDate, CoreId, CoreSynchronizable, ICoreDate, ICoreId, ICoreSynchronizable } from "@nmshd/transport"
 import { nameof } from "ts-simple-nameof"
 import { ConsumptionIds } from "../../../consumption"
+import { ICreateConsumptionAttributeParams } from "../CreateConsumptionAttributeParams"
 import { ConsumptionAttributeShareInfo, IConsumptionAttributeShareInfo } from "./ConsumptionAttributeShareInfo"
 
 export interface IConsumptionAttribute extends ICoreSynchronizable {
@@ -49,17 +50,13 @@ export class ConsumptionAttribute extends CoreSynchronizable implements IConsump
         return this.fromAny(value)
     }
 
-    public static async fromAttribute(
-        attribute: IIdentityAttribute | IRelationshipAttribute,
-        succeeds?: ICoreId,
-        shareInfo?: IConsumptionAttributeShareInfo
-    ): Promise<ConsumptionAttribute> {
+    public static async fromParams(params: ICreateConsumptionAttributeParams): Promise<ConsumptionAttribute> {
         return this.from({
-            content: attribute,
+            content: params.attribute,
             id: await ConsumptionIds.attribute.generate(),
             createdAt: CoreDate.utc(),
-            succeeds: succeeds,
-            shareInfo: shareInfo
+            succeeds: params.succeeds,
+            shareInfo: params.shareInfo
         })
     }
 }

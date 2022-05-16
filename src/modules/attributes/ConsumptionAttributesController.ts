@@ -1,9 +1,18 @@
-import { CoreAddress, CoreDate, CoreId, SynchronizedCollection, TransportErrors } from "@nmshd/transport"
+import { CoreDate, CoreId, SynchronizedCollection, TransportErrors } from "@nmshd/transport"
 import { nameof } from "ts-simple-nameof"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionErrors } from "../../consumption"
 import { ConsumptionController } from "../../consumption/ConsumptionController"
+import { ICreateConsumptionAttributeParams } from "./CreateConsumptionAttributeParams"
+import {
+    CreateSharedConsumptionAttributeCopyParams,
+    ICreateSharedConsumptionAttributeCopyParams
+} from "./CreateSharedConsumptionAttributeCopyParams"
 import { ConsumptionAttribute } from "./local/ConsumptionAttribute"
 import { ConsumptionAttributeShareInfo } from "./local/ConsumptionAttributeShareInfo"
+import {
+    ISucceedConsumptionAttributeParams,
+    SucceedConsumptionAttributeParams
+} from "./SuccedConsumptionAttributeParams"
 
 export class ConsumptionAttributesController extends ConsumptionBaseController {
     private attributes: SynchronizedCollection
@@ -74,7 +83,7 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         return items
     }
 
-    public async getAttribute(id: CoreId): Promise<ConsumptionAttribute | undefined> {
+    public async getConsumptionAttribute(id: CoreId): Promise<ConsumptionAttribute | undefined> {
         const result = await this.attributes.findOne({
             [nameof<ConsumptionAttribute>((c) => c.id)]: id.toString()
         })
@@ -83,62 +92,67 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         return ConsumptionAttribute.from(result)
     }
 
-    public async getAttributes(query?: any): Promise<ConsumptionAttribute[]> {
+    public async getConsumptionAttributes(query?: any): Promise<ConsumptionAttribute[]> {
         const attributes = await this.attributes.find(query)
         return await this.parseArray<ConsumptionAttribute>(attributes, ConsumptionAttribute)
     }
 
-    public async getValidAttributes(query?: any): Promise<ConsumptionAttribute[]> {
+    public async getValidConsumptionAttributes(query?: any): Promise<ConsumptionAttribute[]> {
         const attributes = await this.attributes.find(query)
         const items = await this.parseArray<ConsumptionAttribute>(attributes, ConsumptionAttribute)
         return this.filterCurrent(items)
     }
 
-    public async createAttribute(attribute: ConsumptionAttribute): Promise<ConsumptionAttribute> {
-        const current = await this.getAttribute(attribute.id)
-        if (current) {
-            throw ConsumptionErrors.attributes.attributeExists(attribute.id.toString())
-        }
-        const newAttribute = await this.attributes.create(attribute)
+    public async createConsumptionAttribute(params: ICreateConsumptionAttributeParams): Promise<ConsumptionAttribute> {
+        const consumptionAttribute = await ConsumptionAttribute.fromParams(params)
+        const newAttribute = await this.attributes.create(consumptionAttribute)
         return ConsumptionAttribute.from(newAttribute)
     }
 
-    public async succeedAttribute(
-        id: CoreId,
-        successor: ConsumptionAttribute,
-        validFrom?: CoreDate
+    public async succeedConsumptionAttribute(
+        params: ISucceedConsumptionAttributeParams
     ): Promise<ConsumptionAttribute> {
-        const current = await this.getAttribute(id)
+        const parsedParams = SucceedConsumptionAttributeParams.from(params)
+        const current = await this.getConsumptionAttribute(parsedParams.succeeds)
         if (!current) {
-            throw ConsumptionErrors.attributes.predecessorNotFound(id.toString())
+            throw ConsumptionErrors.attributes.predecessorNotFound(parsedParams.succeeds.toString())
         }
-        if (!validFrom) {
-            validFrom = CoreDate.utc()
+        if (!parsedParams.validFrom) {
+            parsedParams.validFrom = CoreDate.utc()
         }
-        current.content.validTo = validFrom
-        await this.updateAttribute(current)
+        current.content.validTo = parsedParams.validFrom
+        await this.updateConsumptionAttribute(current)
 
-        successor.content.validFrom = validFrom
-        const createdAttribute = await this.attributes.create(successor)
-        return ConsumptionAttribute.from(createdAttribute)
+        parsedParams.successorContent.validFrom = parsedParams.validFrom
+        const successor = {
+            attribute: parsedParams.successorContent,
+            succeeds: parsedParams.succeeds
+        } as ICreateConsumptionAttributeParams
+        return await this.createConsumptionAttribute(successor)
     }
 
     public async createSharedConsumptionAttributeCopy(
-        attribute: ConsumptionAttribute,
-        peer: CoreAddress,
-        requestReference: CoreId
+        params: ICreateSharedConsumptionAttributeCopyParams
     ): Promise<ConsumptionAttribute> {
-        const consumptionAttributeCopy = await ConsumptionAttribute.fromAttribute(attribute.content) // TODO was passiert wenn ein predecessor geteilt wird?
-        consumptionAttributeCopy.shareInfo = ConsumptionAttributeShareInfo.from({
-            peer: peer,
-            requestReference: requestReference,
-            sourceAttribute: attribute.id
+        const parsedParams = CreateSharedConsumptionAttributeCopyParams.from(params)
+        const sourceAttribute = await this.getConsumptionAttribute(parsedParams.attributeId)
+        if (!sourceAttribute) {
+            throw ConsumptionErrors.attributes.predecessorNotFound(parsedParams.attributeId.toString())
+        }
+        const shareInfo = ConsumptionAttributeShareInfo.from({
+            peer: parsedParams.peer,
+            requestReference: parsedParams.requestReference,
+            sourceAttribute: parsedParams.attributeId
         })
-        const sharedConsumptionAttributeCopy = await this.createAttribute(consumptionAttributeCopy)
+        const createConsumptionAttributeParams = {
+            attribute: sourceAttribute.content,
+            shareInfo: shareInfo
+        } as ICreateConsumptionAttributeParams
+        const sharedConsumptionAttributeCopy = await this.createConsumptionAttribute(createConsumptionAttributeParams)
         return ConsumptionAttribute.from(sharedConsumptionAttributeCopy)
     }
 
-    public async updateAttribute(attribute: ConsumptionAttribute): Promise<ConsumptionAttribute> {
+    public async updateConsumptionAttribute(attribute: ConsumptionAttribute): Promise<ConsumptionAttribute> {
         const current = await this.attributes.findOne({
             [nameof<ConsumptionAttribute>((c) => c.id)]: attribute.id.toString()
         })
