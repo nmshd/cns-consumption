@@ -159,8 +159,8 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         if (!current) {
             throw TransportErrors.general.recordNotFound(ConsumptionAttribute, attribute.id.toString())
         }
-        const updatedAttribute = await this.attributes.update(current, attribute)
-        return ConsumptionAttribute.from(updatedAttribute)
+        await this.attributes.update(current, attribute)
+        return attribute
     }
 
     public async deleteAttribute(attribute: ConsumptionAttribute): Promise<void> {
