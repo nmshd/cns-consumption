@@ -117,13 +117,13 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         if (!current) {
             throw ConsumptionErrors.attributes.predecessorNotFound(parsedParams.succeeds.toString())
         }
-        if (!parsedParams.validFrom) {
-            parsedParams.validFrom = CoreDate.utc()
+        if (!parsedParams.successorContent.validFrom) {
+            parsedParams.successorContent.validFrom = CoreDate.utc()
         }
-        current.content.validTo = parsedParams.validFrom.subtract(1)
+        const validFrom = parsedParams.successorContent.validFrom
+        current.content.validTo = validFrom.subtract(1)
         await this.updateConsumptionAttribute(current)
 
-        parsedParams.successorContent.validFrom = parsedParams.validFrom
         const successor = {
             attribute: parsedParams.successorContent,
             succeeds: parsedParams.succeeds
