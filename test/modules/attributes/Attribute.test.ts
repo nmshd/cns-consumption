@@ -129,21 +129,20 @@ export class AttributeTest extends IntegrationTest {
                     })
                 }
 
+                const successorDate = CoreDate.utc()
                 const displayNameSuccessor = IdentityAttribute.from({
                     value: {
                         "@type": "DisplayName",
                         value: "ANewDisplayName"
                     },
-                    owner: CoreAddress.from("address")
+                    owner: CoreAddress.from("address"),
+                    validFrom: successorDate
                 })
 
-                const successorDate = CoreDate.utc()
                 const attribute = await consumptionController.attributes.createConsumptionAttribute(displayNameParams)
-
                 const createSuccessorParams: ISucceedConsumptionAttributeParams = {
                     successorContent: displayNameSuccessor,
-                    succeeds: attribute.id,
-                    validFrom: successorDate
+                    succeeds: attribute.id
                 }
                 const successor = await consumptionController.attributes.succeedConsumptionAttribute(
                     createSuccessorParams

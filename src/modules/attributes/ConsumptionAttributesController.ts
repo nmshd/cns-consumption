@@ -104,9 +104,9 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
     }
 
     public async createConsumptionAttribute(params: ICreateConsumptionAttributeParams): Promise<ConsumptionAttribute> {
-        const consumptionAttribute = await ConsumptionAttribute.fromParams(params)
-        const newAttribute = await this.attributes.create(consumptionAttribute)
-        return ConsumptionAttribute.from(newAttribute)
+        const consumptionAttribute = await ConsumptionAttribute.fromAttribute(params.attribute)
+        await this.attributes.create(consumptionAttribute)
+        return consumptionAttribute
     }
 
     public async succeedConsumptionAttribute(
@@ -124,11 +124,9 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         current.content.validTo = validFrom.subtract(1)
         await this.updateConsumptionAttribute(current)
 
-        const successor = {
-            attribute: parsedParams.successorContent,
-            succeeds: parsedParams.succeeds
-        } as ICreateConsumptionAttributeParams
-        return await this.createConsumptionAttribute(successor)
+        const successor = await ConsumptionAttribute.fromAttribute(parsedParams.successorContent, parsedParams.succeeds)
+        await this.attributes.create(successor)
+        return successor
     }
 
     public async createSharedConsumptionAttributeCopy(
@@ -144,12 +142,14 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
             requestReference: parsedParams.requestReference,
             sourceAttribute: parsedParams.attributeId
         })
-        const createConsumptionAttributeParams = {
-            attribute: sourceAttribute.content,
-            shareInfo: shareInfo
-        } as ICreateConsumptionAttributeParams
-        const sharedConsumptionAttributeCopy = await this.createConsumptionAttribute(createConsumptionAttributeParams)
-        return ConsumptionAttribute.from(sharedConsumptionAttributeCopy)
+
+        const sharedConsumptionAttributeCopy = await ConsumptionAttribute.fromAttribute(
+            sourceAttribute.content,
+            undefined,
+            shareInfo
+        )
+        await this.attributes.create(sharedConsumptionAttributeCopy)
+        return sharedConsumptionAttributeCopy
     }
 
     public async updateConsumptionAttribute(attribute: ConsumptionAttribute): Promise<ConsumptionAttribute> {
