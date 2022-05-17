@@ -104,7 +104,7 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
     }
 
     public async createConsumptionAttribute(params: ICreateConsumptionAttributeParams): Promise<ConsumptionAttribute> {
-        const consumptionAttribute = await ConsumptionAttribute.fromAttribute(params.attribute)
+        const consumptionAttribute = await ConsumptionAttribute.fromAttribute(params.content)
         await this.attributes.create(consumptionAttribute)
         return consumptionAttribute
     }

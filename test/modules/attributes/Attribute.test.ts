@@ -34,7 +34,7 @@ export class AttributeTest extends IntegrationTest {
 
             beforeEach(async function () {
                 const surnameParams: ICreateConsumptionAttributeParams = {
-                    attribute: IdentityAttribute.from({
+                    content: IdentityAttribute.from({
                         value: {
                             "@type": "Surname",
                             value: "ASurname"
@@ -44,7 +44,7 @@ export class AttributeTest extends IntegrationTest {
                 }
 
                 const givenNamesParams: ICreateConsumptionAttributeParams = {
-                    attribute: IdentityAttribute.from({
+                    content: IdentityAttribute.from({
                         value: {
                             "@type": "GivenName",
                             value: "AGivenName"
@@ -66,7 +66,7 @@ export class AttributeTest extends IntegrationTest {
                 const nrAttributesBeforeCreate = attributesBeforeCreate.length
 
                 const addressParams: ICreateConsumptionAttributeParams = {
-                    attribute: IdentityAttribute.from({
+                    content: IdentityAttribute.from({
                         value: {
                             "@type": "StreetAddress",
                             recipient: "ARecipient",
@@ -82,7 +82,7 @@ export class AttributeTest extends IntegrationTest {
                 }
 
                 const birthDateParams: ICreateConsumptionAttributeParams = {
-                    attribute: IdentityAttribute.from({
+                    content: IdentityAttribute.from({
                         value: {
                             "@type": "BirthDate",
                             day: 22,
@@ -120,7 +120,7 @@ export class AttributeTest extends IntegrationTest {
 
             it("should succeed attributes", async function () {
                 const displayNameParams: ICreateConsumptionAttributeParams = {
-                    attribute: IdentityAttribute.from({
+                    content: IdentityAttribute.from({
                         value: {
                             "@type": "DisplayName",
                             value: "ADisplayName"
@@ -167,7 +167,7 @@ export class AttributeTest extends IntegrationTest {
 
             it("should allow to create a share attribute copy", async function () {
                 const nationalityParams: ICreateConsumptionAttributeParams = {
-                    attribute: IdentityAttribute.from({
+                    content: IdentityAttribute.from({
                         value: {
                             "@type": "Nationality",
                             value: "DE"
