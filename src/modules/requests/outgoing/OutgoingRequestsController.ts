@@ -1,4 +1,13 @@
-import { Request, RequestItem, RequestItemGroup, Response, ResponseItem, ResponseItemGroup } from "@nmshd/content"
+import {
+    RelationshipCreationChangeRequestBody,
+    RelationshipTemplateBody,
+    Request,
+    RequestItem,
+    RequestItemGroup,
+    Response,
+    ResponseItem,
+    ResponseItemGroup
+} from "@nmshd/content"
 import {
     CoreAddress,
     CoreDate,
@@ -127,17 +136,27 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         const parsedParams = CreateOutgoingRequestFromRelationshipCreationChangeParameters.from(params)
 
         const peer = parsedParams.creationChange.request.createdBy
-        const id = (parsedParams.creationChange.request.content! as Response).requestId
 
-        await this._create(id, parsedParams.template.cache!.content as Request, peer)
+        const requestBody = parsedParams.creationChange.request.content!
+        if (!(requestBody instanceof RelationshipCreationChangeRequestBody)) {
+            throw new Error(
+                "the body of the request is not supported as is is not type of RelationshipCreationChangeRequestBody"
+            )
+        }
+        const receivedResponse = requestBody.response
+        const id = receivedResponse.requestId
+
+        const templateContent = parsedParams.template.cache!.content
+        if (!(templateContent instanceof RelationshipTemplateBody)) {
+            throw new Error("the body of the template is not supported as is is not type of RelationshipTemplateBody")
+        }
+
+        // TODO: is this the correct request (=> could be RelationshipTemplateBody#existingRelationshipRequest)
+        await this._create(id, templateContent.onNewRelationship, peer)
 
         await this._sent(id, parsedParams.template)
 
-        const consumptionRequest = await this._complete(
-            id,
-            parsedParams.creationChange,
-            parsedParams.creationChange.request.content! as Response
-        )
+        const consumptionRequest = await this._complete(id, parsedParams.creationChange, receivedResponse)
 
         return consumptionRequest
     }

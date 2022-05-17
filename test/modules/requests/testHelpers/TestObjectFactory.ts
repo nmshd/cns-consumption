@@ -1,5 +1,7 @@
 import {
     AcceptResponseItem,
+    IRelationshipCreationChangeRequestBody,
+    IRelationshipTemplateBody,
     IRequest,
     IResponse,
     Request,
@@ -191,17 +193,20 @@ export class TestObjectFactory {
                 createdBy: CoreAddress.from("id1"),
                 createdByDevice: CoreId.from("DVC1"),
                 content: {
-                    "@type": "Response",
-                    result: ResponseResult.Accepted,
-                    items: [
-                        {
-                            // @ts-expect-error
-                            "@type": "AcceptResponseItem",
-                            result: ResponseItemResult.Accepted
-                        }
-                    ],
-                    requestId: CoreId.from(requestId ?? "REQ1")
-                } as IResponse
+                    "@type": "RelationshipCreationChangeRequestBody",
+                    response: {
+                        "@type": "Response",
+                        result: ResponseResult.Accepted,
+                        items: [
+                            {
+                                // @ts-expect-error
+                                "@type": "AcceptResponseItem",
+                                result: ResponseItemResult.Accepted
+                            }
+                        ],
+                        requestId: CoreId.from(requestId ?? "REQ1")
+                    } as IResponse
+                } as IRelationshipCreationChangeRequestBody
             }
         }
     }
@@ -262,7 +267,10 @@ export class TestObjectFactory {
         return RelationshipTemplate.from(this.createOutgoingIRelationshipTemplate(creator))
     }
 
-    public static createOutgoingIRelationshipTemplate(creator: CoreAddress, content?: IRequest): IRelationshipTemplate {
+    public static createOutgoingIRelationshipTemplate(
+        creator: CoreAddress,
+        content?: IRequest | IRelationshipTemplateBody
+    ): IRelationshipTemplate {
         return {
             // @ts-expect-error
             "@type": "RelationshipTemplate",
