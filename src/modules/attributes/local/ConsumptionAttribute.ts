@@ -1,9 +1,28 @@
 import { serialize, type, validate } from "@js-soft/ts-serval"
-import { IdentityAttribute, IIdentityAttribute, IRelationshipAttribute, RelationshipAttribute } from "@nmshd/content"
+import {
+    IdentityAttribute,
+    IdentityAttributeJSON,
+    IIdentityAttribute,
+    IRelationshipAttribute,
+    RelationshipAttribute,
+    RelationshipAttributeJSON
+} from "@nmshd/content"
 import { CoreDate, CoreId, CoreSynchronizable, ICoreDate, ICoreId, ICoreSynchronizable } from "@nmshd/transport"
 import { nameof } from "ts-simple-nameof"
 import { ConsumptionIds } from "../../../consumption"
-import { ConsumptionAttributeShareInfo, IConsumptionAttributeShareInfo } from "./ConsumptionAttributeShareInfo"
+import {
+    ConsumptionAttributeShareInfo,
+    ConsumptionAttributeShareInfoJSON,
+    IConsumptionAttributeShareInfo
+} from "./ConsumptionAttributeShareInfo"
+
+export interface ConsumptionAttributeJSON {
+    content: IdentityAttributeJSON | RelationshipAttributeJSON
+    createdAt: string
+    succeeds: string
+    succeededBy: string
+    shareInfo: ConsumptionAttributeShareInfoJSON
+}
 
 export interface IConsumptionAttribute extends ICoreSynchronizable {
     content: IIdentityAttribute | IRelationshipAttribute
