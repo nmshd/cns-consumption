@@ -1,5 +1,6 @@
 export * from "./attributes/ConsumptionAttributesController"
 export * from "./attributes/CreateConsumptionAttributeParams"
+export * from "./attributes/CreatePeerConsumptionAttributeParams"
 export * from "./attributes/CreateSharedConsumptionAttributeCopyParams"
 export * from "./attributes/local/ConsumptionAttribute"
 export * from "./attributes/SuccedConsumptionAttributeParams"

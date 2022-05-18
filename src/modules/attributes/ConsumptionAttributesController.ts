@@ -3,6 +3,7 @@ import { nameof } from "ts-simple-nameof"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionErrors } from "../../consumption"
 import { ConsumptionController } from "../../consumption/ConsumptionController"
 import { ICreateConsumptionAttributeParams } from "./CreateConsumptionAttributeParams"
+import { ICreatePeerConsumptionAttributeParams } from "./CreatePeerConsumptionAttributeParams"
 import {
     CreateSharedConsumptionAttributeCopyParams,
     ICreateSharedConsumptionAttributeCopyParams
@@ -13,6 +14,7 @@ import {
     ISucceedConsumptionAttributeParams,
     SucceedConsumptionAttributeParams
 } from "./SuccedConsumptionAttributeParams"
+import { IUpdateConsumptionAttributeParams } from "./UpdateConsumptionAttributeParams"
 
 export class ConsumptionAttributesController extends ConsumptionBaseController {
     private attributes: SynchronizedCollection
@@ -113,7 +115,9 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         params: ISucceedConsumptionAttributeParams
     ): Promise<ConsumptionAttribute> {
         const parsedParams = SucceedConsumptionAttributeParams.from(params)
-        const current = await this.getConsumptionAttribute(parsedParams.succeeds)
+        const current = await this.attributes.findOne({
+            [nameof<ConsumptionAttribute>((c) => c.id)]: params.succeeds.toString()
+        })
         if (!current) {
             throw ConsumptionErrors.attributes.predecessorNotFound(parsedParams.succeeds.toString())
         }
@@ -121,8 +125,9 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
             parsedParams.successorContent.validFrom = CoreDate.utc()
         }
         const validFrom = parsedParams.successorContent.validFrom
-        current.content.validTo = validFrom.subtract(1)
-        await this.updateConsumptionAttribute(current)
+        const currentUpdated = ConsumptionAttribute.from(current)
+        currentUpdated.content.validTo = validFrom.subtract(1)
+        await this.attributes.update(current, currentUpdated)
 
         const successor = await ConsumptionAttribute.fromAttribute(parsedParams.successorContent, parsedParams.succeeds)
         await this.attributes.create(successor)
@@ -152,15 +157,40 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         return sharedConsumptionAttributeCopy
     }
 
-    public async updateConsumptionAttribute(attribute: ConsumptionAttribute): Promise<ConsumptionAttribute> {
+    public async createPeerConsumptionAttribute(
+        params: ICreatePeerConsumptionAttributeParams
+    ): Promise<ConsumptionAttribute> {
+        const shareInfo = ConsumptionAttributeShareInfo.from({
+            peer: params.peer,
+            requestReference: params.requestReference
+        })
+        const peerConsumptionAttribute = ConsumptionAttribute.from({
+            id: params.id,
+            content: params.content,
+            shareInfo: shareInfo,
+            createdAt: CoreDate.utc()
+        })
+        await this.attributes.create(peerConsumptionAttribute)
+        return peerConsumptionAttribute
+    }
+
+    public async updateConsumptionAttribute(params: IUpdateConsumptionAttributeParams): Promise<ConsumptionAttribute> {
         const current = await this.attributes.findOne({
-            [nameof<ConsumptionAttribute>((c) => c.id)]: attribute.id.toString()
+            [nameof<ConsumptionAttribute>((c) => c.id)]: params.id.toString()
         })
         if (!current) {
-            throw TransportErrors.general.recordNotFound(ConsumptionAttribute, attribute.id.toString())
+            throw TransportErrors.general.recordNotFound(ConsumptionAttribute, params.id.toString())
         }
-        await this.attributes.update(current, attribute)
-        return attribute
+        const updatedConsumptionAttribute = ConsumptionAttribute.from({
+            id: current.id,
+            content: params.content,
+            createdAt: current.createdAt,
+            shareInfo: current.shareInfo,
+            succeededBy: current.succeededBy,
+            succeeds: current.succeeds
+        })
+        await this.attributes.update(current, updatedConsumptionAttribute)
+        return updatedConsumptionAttribute
     }
 
     public async deleteAttribute(attribute: ConsumptionAttribute): Promise<void> {
