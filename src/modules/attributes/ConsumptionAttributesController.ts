@@ -164,7 +164,7 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
             peer: params.peer,
             requestReference: params.requestReference
         })
-        const peerConsumptionAttribute = await ConsumptionAttribute.from({
+        const peerConsumptionAttribute = ConsumptionAttribute.from({
             id: params.id,
             content: params.content,
             shareInfo: shareInfo,
