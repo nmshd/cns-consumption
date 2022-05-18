@@ -3,6 +3,7 @@ import { nameof } from "ts-simple-nameof"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionErrors } from "../../consumption"
 import { ConsumptionController } from "../../consumption/ConsumptionController"
 import { ICreateConsumptionAttributeParams } from "./CreateConsumptionAttributeParams"
+import { ICreatePeerConsumptionAttributeParams } from "./CreatePeerConsumptionAttributeParams"
 import {
     CreateSharedConsumptionAttributeCopyParams,
     ICreateSharedConsumptionAttributeCopyParams
@@ -154,6 +155,23 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         )
         await this.attributes.create(sharedConsumptionAttributeCopy)
         return sharedConsumptionAttributeCopy
+    }
+
+    public async createPeerConsumptionAttribute(
+        params: ICreatePeerConsumptionAttributeParams
+    ): Promise<ConsumptionAttribute> {
+        const shareInfo = ConsumptionAttributeShareInfo.from({
+            peer: params.peer,
+            requestReference: params.requestReference
+        })
+        const peerConsumptionAttribute = await ConsumptionAttribute.from({
+            id: params.id,
+            content: params.content,
+            shareInfo: shareInfo,
+            createdAt: CoreDate.utc()
+        })
+        await this.attributes.create(peerConsumptionAttribute)
+        return peerConsumptionAttribute
     }
 
     public async updateConsumptionAttribute(params: IUpdateConsumptionAttributeParams): Promise<ConsumptionAttribute> {

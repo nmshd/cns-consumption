@@ -2,10 +2,11 @@ import {
     ConsumptionAttribute,
     ConsumptionController,
     ICreateConsumptionAttributeParams,
+    ICreatePeerConsumptionAttributeParams,
     ICreateSharedConsumptionAttributeCopyParams,
     ISucceedConsumptionAttributeParams
 } from "@nmshd/consumption"
-import { IdentityAttribute } from "@nmshd/content"
+import { IdentityAttribute, Nationality } from "@nmshd/content"
 import { AccountController, CoreAddress, CoreDate, CoreId, Transport } from "@nmshd/transport"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
@@ -192,6 +193,37 @@ export class AttributeTest extends IntegrationTest {
                     )
                 expect(sharedNationalityAttribute).instanceOf(ConsumptionAttribute)
                 expect(sharedNationalityAttribute.shareInfo?.peer).to.deep.equal(peer)
+            })
+
+            it("should allow to create an attribute shared by a peer", async function () {
+                const attribute: ICreateConsumptionAttributeParams = {
+                    content: IdentityAttribute.from({
+                        value: {
+                            "@type": "Nationality",
+                            value: "DE"
+                        },
+                        owner: CoreAddress.from("address")
+                    })
+                }
+                const consumptionAttribute = await consumptionController.attributes.createConsumptionAttribute(
+                    attribute
+                )
+                const createPeerAttributeParams: ICreatePeerConsumptionAttributeParams = {
+                    id: consumptionAttribute.id,
+                    content: attribute.content,
+                    requestReference: CoreId.from("requestId"),
+                    peer: CoreAddress.from("address")
+                }
+                const peerConsumptionAttribute = await consumptionController.attributes.createPeerConsumptionAttribute(
+                    createPeerAttributeParams
+                )
+                expect(peerConsumptionAttribute.content.toJSON()).deep.equals(consumptionAttribute.content.toJSON())
+                expect(peerConsumptionAttribute.content.value).instanceOf(Nationality)
+                expect(createPeerAttributeParams.id).equals(consumptionAttribute.id)
+                expect(createPeerAttributeParams.peer.address).equals(CoreAddress.from("address").toString())
+                expect(createPeerAttributeParams.requestReference.toString()).equals(
+                    CoreId.from("requestId").toString()
+                )
             })
 
             afterEach(async function () {
