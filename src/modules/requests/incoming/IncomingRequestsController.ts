@@ -17,7 +17,12 @@ import {
     SynchronizedCollection,
     TransportErrors
 } from "@nmshd/transport"
-import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionIds } from "../../../consumption"
+import {
+    ConsumptionBaseController,
+    ConsumptionControllerName,
+    ConsumptionErrors,
+    ConsumptionIds
+} from "../../../consumption"
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
 import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProcessorRegistry"
 import { ValidationResult } from "../itemProcessors/ValidationResult"
@@ -186,19 +191,24 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             ConsumptionRequestStatus.ManualDecisionRequired
         )
 
-        const itemResults = await this.canDecideItems(params.items, request.content.items)
+        const itemResults = await this.canDecideItems(params.items, request.content.items, request)
 
         return ValidationResult.fromItems(itemResults)
     }
 
-    private async canDecideGroup(params: DecideRequestItemGroupParametersJSON, requestItemGroup: RequestItemGroup) {
-        const itemResults = await this.canDecideItems(params.items, requestItemGroup.items)
+    private async canDecideGroup(
+        params: DecideRequestItemGroupParametersJSON,
+        requestItemGroup: RequestItemGroup,
+        request: ConsumptionRequest
+    ) {
+        const itemResults = await this.canDecideItems(params.items, requestItemGroup.items, request)
         return ValidationResult.fromItems(itemResults)
     }
 
     private async canDecideItems(
         params: (DecideRequestItemParametersJSON | DecideRequestItemGroupParametersJSON)[],
-        items: (RequestItem | RequestItemGroup)[]
+        items: (RequestItem | RequestItemGroup)[],
+        request: ConsumptionRequest
     ) {
         const validationResults: ValidationResult[] = []
 
@@ -209,13 +219,15 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             if (requestItem instanceof RequestItemGroup) {
                 const groupResult = await this.canDecideGroup(
                     decideItemParams as DecideRequestItemGroupParametersJSON,
-                    requestItem
+                    requestItem,
+                    request
                 )
                 validationResults.push(groupResult)
             } else {
                 const itemResult = await this.canDecideItem(
                     decideItemParams as DecideRequestItemParametersJSON,
-                    requestItem
+                    requestItem,
+                    request
                 )
                 validationResults.push(itemResult)
             }
@@ -224,12 +236,21 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return validationResults
     }
 
-    private async canDecideItem(params: DecideRequestItemParametersJSON, requestItem: RequestItem) {
+    private async canDecideItem(
+        params: DecideRequestItemParametersJSON,
+        requestItem: RequestItem,
+        request: ConsumptionRequest
+    ) {
         const processor = this.processorRegistry.getProcessorForItem(requestItem)
-        if (params.accept) {
-            return await processor.canAccept(requestItem, params)
+
+        try {
+            if (params.accept) {
+                return await processor.canAccept(requestItem, params, request)
+            }
+            return await processor.canReject(requestItem, params, request)
+        } catch (e) {
+            return ValidationResult.error(ConsumptionErrors.requests.unexpectedErrorDuringRequestItemProcessing(e))
         }
-        return await processor.canReject(requestItem, params)
     }
 
     public async accept(params: DecideRequestParametersJSON): Promise<ConsumptionRequest> {
@@ -273,7 +294,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
     private async createConsumptionResponse(params: InternalDecideRequestParametersJSON, request: ConsumptionRequest) {
         const requestItems = request.content.items
-        const responseItems = await this.decideItems(params.items, requestItems)
+        const responseItems = await this.decideItems(params.items, requestItems, request)
 
         const response = Response.from({
             result: params.accept ? ResponseResult.Accepted : ResponseResult.Rejected,
@@ -291,9 +312,10 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
     private async decideGroup(
         groupItemParam: DecideRequestItemGroupParametersJSON,
-        requestItemGroup: RequestItemGroup
+        requestItemGroup: RequestItemGroup,
+        request: ConsumptionRequest
     ) {
-        const items = (await this.decideItems(groupItemParam.items, requestItemGroup.items)) as ResponseItem[]
+        const items = (await this.decideItems(groupItemParam.items, requestItemGroup.items, request)) as ResponseItem[]
 
         const group = ResponseItemGroup.from({
             items: items,
@@ -304,7 +326,8 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
     private async decideItems(
         params: (DecideRequestItemParametersJSON | DecideRequestItemGroupParametersJSON)[],
-        requestItems: (RequestItemGroup | RequestItem)[]
+        requestItems: (RequestItemGroup | RequestItem)[],
+        request: ConsumptionRequest
     ) {
         const responseItems: (ResponseItem | ResponseItemGroup)[] = []
 
@@ -313,24 +336,34 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             const item = requestItems[i]
 
             if (item instanceof RequestItemGroup) {
-                responseItems.push(await this.decideGroup(itemParam as DecideRequestItemGroupParametersJSON, item))
+                responseItems.push(
+                    await this.decideGroup(itemParam as DecideRequestItemGroupParametersJSON, item, request)
+                )
             } else {
                 responseItems.push(
-                    await this.decideItem(itemParam as DecideRequestItemParametersJSON, requestItems[i] as RequestItem)
+                    await this.decideItem(
+                        itemParam as DecideRequestItemParametersJSON,
+                        requestItems[i] as RequestItem,
+                        request
+                    )
                 )
             }
         }
         return responseItems
     }
 
-    private async decideItem(params: DecideRequestItemParametersJSON, requestItem: RequestItem): Promise<ResponseItem> {
+    private async decideItem(
+        params: DecideRequestItemParametersJSON,
+        requestItem: RequestItem,
+        request: ConsumptionRequest
+    ): Promise<ResponseItem> {
         const processor = this.processorRegistry.getProcessorForItem(requestItem)
 
         try {
             if (params.accept) {
-                return await processor.accept(requestItem, params)
+                return await processor.accept(requestItem, params, request)
             }
-            return await processor.reject(requestItem, params)
+            return await processor.reject(requestItem, params, request)
         } catch (e) {
             let details = ""
             if (e instanceof Error) {

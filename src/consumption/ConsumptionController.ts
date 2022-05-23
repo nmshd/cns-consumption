@@ -46,7 +46,7 @@ export class ConsumptionController {
     ): Promise<ConsumptionController> {
         this._attributes = await new ConsumptionAttributesController(this).init()
         this._drafts = await new DraftsController(this).init()
-        const processorRegistry = new RequestItemProcessorRegistry(requestItemProcessors)
+        const processorRegistry = new RequestItemProcessorRegistry(this, requestItemProcessors)
         this._outgoingRequests = await new OutgoingRequestsController(
             await this.accountController.getSynchronizedCollection("Requests"),
             processorRegistry,

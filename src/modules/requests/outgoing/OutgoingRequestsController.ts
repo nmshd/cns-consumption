@@ -113,7 +113,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         })
 
         if (canCreateResult.isError()) {
-            throw new Error(canCreateResult.message)
+            throw canCreateResult.error
         }
 
         const consumptionRequest = ConsumptionRequest.from({
@@ -226,10 +226,10 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         const canComplete = await this.canComplete(request, receivedResponse)
 
         if (canComplete.isError()) {
-            throw new Error(canComplete.message)
+            throw canComplete.error
         }
 
-        await this.applyItems(request.content.items, receivedResponse.items)
+        await this.applyItems(request.content.items, receivedResponse.items, request)
 
         let responseSource: "Message" | "RelationshipChange"
 
@@ -261,7 +261,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
             if (requestItem instanceof RequestItem) {
                 const responseItem = receivedResponse.items[i] as ResponseItem
                 const processor = this.processorRegistry.getProcessorForItem(requestItem)
-                const canApplyItem = await processor.canApplyIncomingResponseItem(responseItem, requestItem)
+                const canApplyItem = await processor.canApplyIncomingResponseItem(responseItem, requestItem, request)
 
                 if (canApplyItem.isError()) {
                     return canApplyItem
@@ -276,7 +276,8 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
                     const processor = this.processorRegistry.getProcessorForItem(groupRequestItem)
                     const canApplyItem = await processor.canApplyIncomingResponseItem(
                         groupResponseItem,
-                        groupRequestItem
+                        groupRequestItem,
+                        request
                     )
 
                     if (canApplyItem.isError()) {
@@ -291,23 +292,24 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
 
     private async applyItems(
         requestItems: (RequestItem | RequestItemGroup)[],
-        responseItems: (ResponseItem | ResponseItemGroup)[]
+        responseItems: (ResponseItem | ResponseItemGroup)[],
+        request: ConsumptionRequest
     ): Promise<void> {
         for (let i = 0; i < responseItems.length; i++) {
             const requestItem = requestItems[i]
             if (requestItem instanceof RequestItem) {
                 const responseItem = responseItems[i] as ResponseItem
-                await this.applyItem(requestItem, responseItem)
+                await this.applyItem(requestItem, responseItem, request)
             } else {
                 const responseItemGroup = responseItems[i] as ResponseItemGroup
-                await this.applyItems(requestItem.items, responseItemGroup.items)
+                await this.applyItems(requestItem.items, responseItemGroup.items, request)
             }
         }
     }
 
-    private async applyItem(requestItem: RequestItem, responseItem: ResponseItem) {
+    private async applyItem(requestItem: RequestItem, responseItem: ResponseItem, request: ConsumptionRequest) {
         const processor = this.processorRegistry.getProcessorForItem(requestItem)
-        await processor.applyIncomingResponseItem(responseItem, requestItem)
+        await processor.applyIncomingResponseItem(responseItem, requestItem, request)
     }
 
     public async getOutgoingRequests(query?: any): Promise<ConsumptionRequest[]> {
