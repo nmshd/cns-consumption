@@ -5,6 +5,7 @@ import {
     ResponseItemResult
 } from "@nmshd/content"
 import { CoreAddress, CoreId, TransportErrors } from "@nmshd/transport"
+import { ConsumptionErrors } from "../../../../consumption"
 import { ConsumptionAttribute } from "../../../attributes/local/ConsumptionAttribute"
 import { ConsumptionRequest } from "../../local/ConsumptionRequest"
 import { GenericRequestItemProcessor } from "../GenericRequestItemProcessor"
@@ -34,6 +35,9 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
             )
         }
 
+        if (!this.consumptionController.accountController.identity.isMe(attribute.content.owner)) {
+            return ValidationResult.error(ConsumptionErrors.requests.canOnlyShareOwnAttributes())
+        }
         return ValidationResult.success()
     }
 

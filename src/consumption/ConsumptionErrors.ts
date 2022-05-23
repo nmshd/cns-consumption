@@ -29,6 +29,13 @@ class Requests {
             error instanceof Error ? error.message : "Unknown error: '${JSON.stringify(e)'"
         )
     }
+
+    public canOnlyShareOwnAttributes() {
+        return new CoreError(
+            "error.consumption.requests.canOnlyShareOwnAttributes",
+            "The given Attribute belongs to someone else. You can only share own Attributes."
+        )
+    }
 }
 
 class RelationshipInfo {
