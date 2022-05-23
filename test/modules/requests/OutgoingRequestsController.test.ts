@@ -1,4 +1,4 @@
-import { Result } from "@js-soft/ts-utils"
+import { ApplicationError, Result } from "@js-soft/ts-utils"
 import {
     ConsumptionIds,
     ConsumptionRequest,
@@ -167,19 +167,19 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                         }
                     })
                     expect(validationResult.isError()).to.be.true
-                    expect((validationResult as ErrorValidationResult).code).to.equal("inheritedFromItem")
-                    expect((validationResult as ErrorValidationResult).message).to.equal(
+                    expect((validationResult as ErrorValidationResult).error.code).to.equal("inheritedFromItem")
+                    expect((validationResult as ErrorValidationResult).error.message).to.equal(
                         "Some child items have errors."
                     )
                     expect(validationResult.items).to.have.lengthOf(2)
 
                     expect(validationResult.items[0].isError()).to.be.true
-                    expect((validationResult.items[0] as ErrorValidationResult).code).to.equal("aCode")
-                    expect((validationResult.items[0] as ErrorValidationResult).message).to.equal("aMessage")
+                    expect((validationResult.items[0] as ErrorValidationResult).error.code).to.equal("aCode")
+                    expect((validationResult.items[0] as ErrorValidationResult).error.message).to.equal("aMessage")
 
                     expect(validationResult.items[1].isError()).to.be.true
-                    expect((validationResult.items[1] as ErrorValidationResult).code).to.equal("aCode")
-                    expect((validationResult.items[1] as ErrorValidationResult).message).to.equal("aMessage")
+                    expect((validationResult.items[1] as ErrorValidationResult).error.code).to.equal("aCode")
+                    expect((validationResult.items[1] as ErrorValidationResult).error.message).to.equal("aMessage")
                 })
 
                 it("returns a validation result that contains each error (complex)", async function () {
@@ -202,8 +202,8 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                         }
                     })
                     expect(validationResult.isError()).to.be.true
-                    expect((validationResult as ErrorValidationResult).code).to.equal("inheritedFromItem")
-                    expect((validationResult as ErrorValidationResult).message).to.equal(
+                    expect((validationResult as ErrorValidationResult).error.code).to.equal("inheritedFromItem")
+                    expect((validationResult as ErrorValidationResult).error.message).to.equal(
                         "Some child items have errors."
                     )
                     expect(validationResult.items).to.have.lengthOf(2)
@@ -211,8 +211,10 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                     expect(validationResult.items[0].isError()).to.be.false
 
                     expect(validationResult.items[1].isError()).to.be.true
-                    expect((validationResult.items[1] as ErrorValidationResult).code).to.equal("inheritedFromItem")
-                    expect((validationResult.items[1] as ErrorValidationResult).message).to.equal(
+                    expect((validationResult.items[1] as ErrorValidationResult).error.code).to.equal(
+                        "inheritedFromItem"
+                    )
+                    expect((validationResult.items[1] as ErrorValidationResult).error.message).to.equal(
                         "Some child items have errors."
                     )
 
@@ -243,7 +245,7 @@ export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
                 it("throws when canCreate returns an error", async function () {
                     const oldCanCreate = context.outgoingRequestsController.canCreate
                     context.outgoingRequestsController.canCreate = (_: ICreateOutgoingRequestParameters) => {
-                        return Promise.resolve(ValidationResult.error("aCode", "aMessage"))
+                        return Promise.resolve(ValidationResult.error(new ApplicationError("aCode", "aMessage")))
                     }
 
                     When.iTryToCreateAnOutgoingRequest()

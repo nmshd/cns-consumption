@@ -393,8 +393,8 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     })
 
                     expect(validationResult.isError()).to.be.true
-                    expect((validationResult as ErrorValidationResult).code).to.equal("inheritedFromItem")
-                    expect((validationResult as ErrorValidationResult).message).to.equal(
+                    expect((validationResult as ErrorValidationResult).error.code).to.equal("inheritedFromItem")
+                    expect((validationResult as ErrorValidationResult).error.message).to.equal(
                         "Some child items have errors."
                     )
                     expect(validationResult.items).to.have.lengthOf(2)
@@ -402,8 +402,10 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     expect(validationResult.items[0].isError()).to.be.false
 
                     expect(validationResult.items[1].isError()).to.be.true
-                    expect((validationResult.items[1] as ErrorValidationResult).code).to.equal("inheritedFromItem")
-                    expect((validationResult.items[1] as ErrorValidationResult).message).to.equal(
+                    expect((validationResult.items[1] as ErrorValidationResult).error.code).to.equal(
+                        "inheritedFromItem"
+                    )
+                    expect((validationResult.items[1] as ErrorValidationResult).error.message).to.equal(
                         "Some child items have errors."
                     )
 
@@ -581,8 +583,8 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     const validationResult = await When.iCallCanRejectWith(rejectParams)
 
                     expect(validationResult.isError()).to.be.true
-                    expect((validationResult as ErrorValidationResult).code).to.equal("inheritedFromItem")
-                    expect((validationResult as ErrorValidationResult).message).to.equal(
+                    expect((validationResult as ErrorValidationResult).error.code).to.equal("inheritedFromItem")
+                    expect((validationResult as ErrorValidationResult).error.message).to.equal(
                         "Some child items have errors."
                     )
                     expect(validationResult.items).to.have.lengthOf(2)
@@ -590,8 +592,10 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     expect(validationResult.items[0].isError()).to.be.false
 
                     expect(validationResult.items[1].isError()).to.be.true
-                    expect((validationResult.items[1] as ErrorValidationResult).code).to.equal("inheritedFromItem")
-                    expect((validationResult.items[1] as ErrorValidationResult).message).to.equal(
+                    expect((validationResult.items[1] as ErrorValidationResult).error.code).to.equal(
+                        "inheritedFromItem"
+                    )
+                    expect((validationResult.items[1] as ErrorValidationResult).error.message).to.equal(
                         "Some child items have errors."
                     )
 

@@ -113,7 +113,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         })
 
         if (canCreateResult.isError()) {
-            throw new Error(canCreateResult.message)
+            throw canCreateResult.error
         }
 
         const consumptionRequest = ConsumptionRequest.from({
@@ -226,7 +226,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         const canComplete = await this.canComplete(request, receivedResponse)
 
         if (canComplete.isError()) {
-            throw new Error(canComplete.message)
+            throw canComplete.error
         }
 
         await this.applyItems(request.content.items, receivedResponse.items)
