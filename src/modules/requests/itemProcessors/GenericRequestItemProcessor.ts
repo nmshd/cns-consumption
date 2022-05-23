@@ -8,8 +8,7 @@ export class GenericRequestItemProcessor<
     TRequestItem extends RequestItem = RequestItem,
     TAcceptParams extends AcceptRequestItemParametersJSON = AcceptRequestItemParametersJSON,
     TRejectParams extends RejectRequestItemParametersJSON = RejectRequestItemParametersJSON
-> implements IRequestItemProcessor<TRequestItem, TAcceptParams, TRejectParams>
-{
+> extends AbstractRequestItemProcessor<TRequestItem, TAcceptParams, TRejectParams> {
     public checkPrerequisitesOfIncomingRequestItem(_requestItem: TRequestItem): Promise<boolean> | boolean {
         return true
     }
