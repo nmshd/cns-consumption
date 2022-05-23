@@ -40,10 +40,12 @@ export abstract class AbstractRequestItemProcessor<
     ): ValidationResult | Promise<ValidationResult>
     public abstract canApplyIncomingResponseItem(
         responseItem: ResponseItem,
-        requestItem: TRequestItem
+        requestItem: TRequestItem,
+        request: ConsumptionRequest
     ): ValidationResult | Promise<ValidationResult>
     public abstract applyIncomingResponseItem(
         responseItem: ResponseItem,
-        requestItem: TRequestItem
+        requestItem: TRequestItem,
+        request: ConsumptionRequest
     ): void | Promise<void>
 }

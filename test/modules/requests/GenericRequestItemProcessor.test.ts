@@ -108,9 +108,12 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                 it("returns 'success'", async function () {
                     const processor = new GenericRequestItemProcessor(undefined!)
 
+                    const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
+
                     const actual = await processor.canApplyIncomingResponseItem(
                         AcceptResponseItem.from({ result: ResponseItemResult.Accepted }),
-                        TestRequestItem.from({ mustBeAccepted: false })
+                        TestRequestItem.from({ mustBeAccepted: false }),
+                        consumptionRequest
                     )
 
                     expect(actual.isSuccess()).to.be.true

@@ -34,7 +34,12 @@ export interface IRequestItemProcessor<
     canCreateOutgoingRequestItem(requestItem: TRequestItem): Promise<ValidationResult> | ValidationResult
     canApplyIncomingResponseItem(
         responseItem: ResponseItem,
-        requestItem: TRequestItem
+        requestItem: TRequestItem,
+        request: ConsumptionRequest
     ): Promise<ValidationResult> | ValidationResult
-    applyIncomingResponseItem(responseItem: ResponseItem, requestItem: TRequestItem): Promise<void> | void
+    applyIncomingResponseItem(
+        responseItem: ResponseItem,
+        requestItem: TRequestItem,
+        request: ConsumptionRequest
+    ): Promise<void> | void
 }
