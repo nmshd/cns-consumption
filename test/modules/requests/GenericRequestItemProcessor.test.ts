@@ -23,9 +23,15 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                 it("returns 'success'", async function () {
                     const processor = new GenericRequestItemProcessor(undefined!)
 
-                    const result = await processor.canAccept(TestRequestItem.from({ mustBeAccepted: false }), {
-                        accept: true
-                    })
+                    const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
+
+                    const result = await processor.canAccept(
+                        TestRequestItem.from({ mustBeAccepted: false }),
+                        {
+                            accept: true
+                        },
+                        consumptionRequest
+                    )
 
                     expect(result.isSuccess()).to.be.true
                 })
@@ -35,9 +41,15 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                 it("returns 'success'", async function () {
                     const processor = new GenericRequestItemProcessor(undefined!)
 
-                    const result = await processor.canReject(TestRequestItem.from({ mustBeAccepted: false }), {
-                        accept: false
-                    })
+                    const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
+
+                    const result = await processor.canReject(
+                        TestRequestItem.from({ mustBeAccepted: false }),
+                        {
+                            accept: false
+                        },
+                        consumptionRequest
+                    )
 
                     expect(result.isSuccess()).to.be.true
                 })
@@ -47,9 +59,15 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                 it("returns an AcceptResponseItem", function () {
                     const processor = new GenericRequestItemProcessor(undefined!)
 
-                    const result = processor.accept(TestRequestItem.from({ mustBeAccepted: false }), {
-                        accept: true
-                    })
+                    const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
+
+                    const result = processor.accept(
+                        TestRequestItem.from({ mustBeAccepted: false }),
+                        {
+                            accept: true
+                        },
+                        consumptionRequest
+                    )
 
                     expect(result).to.be.instanceOf(AcceptResponseItem)
                 })
@@ -59,9 +77,15 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                 it("returns a RejectResponseItem", function () {
                     const processor = new GenericRequestItemProcessor(undefined!)
 
-                    const result = processor.reject(TestRequestItem.from({ mustBeAccepted: false }), {
-                        accept: false
-                    })
+                    const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
+
+                    const result = processor.reject(
+                        TestRequestItem.from({ mustBeAccepted: false }),
+                        {
+                            accept: false
+                        },
+                        consumptionRequest
+                    )
 
                     expect(result).to.be.instanceOf(RejectResponseItem)
                 })

@@ -1,7 +1,8 @@
 import { AcceptResponseItem, RejectResponseItem, RequestItem, ResponseItem, ResponseItemResult } from "@nmshd/content"
 import { AcceptRequestItemParametersJSON } from "../incoming/decide/AcceptRequestItemParameters"
 import { RejectRequestItemParametersJSON } from "../incoming/decide/RejectRequestItemParameters"
-import { IRequestItemProcessor } from "./IRequestItemProcessor"
+import { ConsumptionRequest } from "../local/ConsumptionRequest"
+import { AbstractRequestItemProcessor } from "./AbstractRequestItemProcessor"
 import { ValidationResult } from "./ValidationResult"
 
 export class GenericRequestItemProcessor<
@@ -13,22 +14,38 @@ export class GenericRequestItemProcessor<
         return true
     }
 
-    public canAccept(_requestItem: TRequestItem, _params: TAcceptParams): Promise<ValidationResult> | ValidationResult {
+    public canAccept(
+        _requestItem: TRequestItem,
+        _params: TAcceptParams,
+        _request: ConsumptionRequest
+    ): Promise<ValidationResult> | ValidationResult {
         return ValidationResult.success()
     }
 
-    public canReject(_requestItem: TRequestItem, _params: TRejectParams): Promise<ValidationResult> | ValidationResult {
+    public canReject(
+        _requestItem: TRequestItem,
+        _params: TRejectParams,
+        _request: ConsumptionRequest
+    ): Promise<ValidationResult> | ValidationResult {
         return ValidationResult.success()
     }
 
-    public accept(requestItem: TRequestItem, _params: TAcceptParams): AcceptResponseItem {
+    public accept(
+        requestItem: TRequestItem,
+        _params: TAcceptParams,
+        _request: ConsumptionRequest
+    ): AcceptResponseItem | Promise<AcceptResponseItem> {
         return AcceptResponseItem.from({
             result: ResponseItemResult.Accepted,
             metadata: requestItem.responseMetadata
         })
     }
 
-    public reject(requestItem: TRequestItem, _params: TRejectParams): RejectResponseItem {
+    public reject(
+        requestItem: TRequestItem,
+        _params: TRejectParams,
+        _request: ConsumptionRequest
+    ): RejectResponseItem | Promise<RejectResponseItem> {
         return RejectResponseItem.from({
             result: ResponseItemResult.Rejected,
             metadata: requestItem.responseMetadata

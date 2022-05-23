@@ -1,6 +1,7 @@
 import { AcceptResponseItem, RejectResponseItem, RequestItem, ResponseItem } from "@nmshd/content"
 import { AcceptRequestItemParametersJSON } from "../incoming/decide/AcceptRequestItemParameters"
 import { RejectRequestItemParametersJSON } from "../incoming/decide/RejectRequestItemParameters"
+import { ConsumptionRequest } from "../local/ConsumptionRequest"
 import { ValidationResult } from "./ValidationResult"
 
 export interface IRequestItemProcessor<
@@ -9,10 +10,26 @@ export interface IRequestItemProcessor<
     TRejectParams extends RejectRequestItemParametersJSON = RejectRequestItemParametersJSON
 > {
     checkPrerequisitesOfIncomingRequestItem(requestItem: TRequestItem): Promise<boolean> | boolean
-    canAccept(requestItem: TRequestItem, params: TAcceptParams): Promise<ValidationResult> | ValidationResult
-    canReject(requestItem: TRequestItem, params: TRejectParams): Promise<ValidationResult> | ValidationResult
-    accept(requestItem: TRequestItem, params: TAcceptParams): Promise<AcceptResponseItem> | AcceptResponseItem
-    reject(requestItem: TRequestItem, params: TRejectParams): Promise<RejectResponseItem> | RejectResponseItem
+    canAccept(
+        requestItem: TRequestItem,
+        params: TAcceptParams,
+        request: ConsumptionRequest
+    ): Promise<ValidationResult> | ValidationResult
+    canReject(
+        requestItem: TRequestItem,
+        params: TRejectParams,
+        request: ConsumptionRequest
+    ): Promise<ValidationResult> | ValidationResult
+    accept(
+        requestItem: TRequestItem,
+        params: TAcceptParams,
+        request: ConsumptionRequest
+    ): Promise<AcceptResponseItem> | AcceptResponseItem
+    reject(
+        requestItem: TRequestItem,
+        params: TRejectParams,
+        request: ConsumptionRequest
+    ): Promise<RejectResponseItem> | RejectResponseItem
 
     canCreateOutgoingRequestItem(requestItem: TRequestItem): Promise<ValidationResult> | ValidationResult
     canApplyIncomingResponseItem(
