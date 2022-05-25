@@ -8,8 +8,11 @@ import {
     CreateSharedConsumptionAttributeCopyParams,
     ICreateSharedConsumptionAttributeCopyParams
 } from "./CreateSharedConsumptionAttributeCopyParams"
+import { IGetIdentityAttributesParams } from "./GetIdentityAttributesParams"
+import { IGetRelationshipAttributesParams } from "./GetRelationshipAttributesParams"
 import { ConsumptionAttribute } from "./local/ConsumptionAttribute"
 import { ConsumptionAttributeShareInfo } from "./local/ConsumptionAttributeShareInfo"
+import { identityQueryTranslator, relationshipQueryTranslator } from "./local/QueryTranslator"
 import {
     ISucceedConsumptionAttributeParams,
     SucceedConsumptionAttributeParams
@@ -103,6 +106,22 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         const attributes = await this.attributes.find(query)
         const items = await this.parseArray<ConsumptionAttribute>(attributes, ConsumptionAttribute)
         return this.filterCurrent(items)
+    }
+
+    public async getRelationshipAttributes(params: IGetRelationshipAttributesParams): Promise<ConsumptionAttribute[]> {
+        const queryWithType: any = params.query
+        queryWithType["attributeType"] = "RelationshipAttribute"
+        const dbQuery = relationshipQueryTranslator.parse(queryWithType)
+        const attributes = await this.attributes.find(dbQuery)
+        return attributes
+    }
+
+    public async getIdentityAttributes(params: IGetIdentityAttributesParams): Promise<ConsumptionAttribute[]> {
+        const queryWithType: any = params.query
+        queryWithType["attributeType"] = "IdentityAttribute"
+        const dbQuery = identityQueryTranslator.parse(queryWithType)
+        const attributes = await this.attributes.find(dbQuery)
+        return attributes
     }
 
     public async createConsumptionAttribute(params: ICreateConsumptionAttributeParams): Promise<ConsumptionAttribute> {
