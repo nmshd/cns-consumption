@@ -16,10 +16,24 @@ class Attributes {
 }
 
 class Requests {
-    public requestsExists(id: string) {
+    public requestExists(id: string) {
         return new CoreError(
             "error.consumption.requests.requestExists",
             `Request with id ${id} already exists and can't be created.`
+        )
+    }
+
+    public unexpectedErrorDuringRequestItemProcessing(error: any) {
+        return new CoreError(
+            "error.consumption.requests.unexpectedErrorDuringRequestItemProcessing",
+            error instanceof Error ? error.message : "Unknown error: '${JSON.stringify(e)'"
+        )
+    }
+
+    public canOnlyShareOwnAttributes() {
+        return new CoreError(
+            "error.consumption.requests.canOnlyShareOwnAttributes",
+            "The given Attribute belongs to someone else. You can only share own Attributes."
         )
     }
 }

@@ -1,3 +1,5 @@
+import { ApplicationError } from "@js-soft/ts-utils"
+
 export abstract class ValidationResult {
     protected constructor(public readonly items: ValidationResult[]) {}
 
@@ -13,13 +15,13 @@ export abstract class ValidationResult {
         return new SuccessfulValidatonResult(items)
     }
 
-    public static error(code: string, message: string, items: ValidationResult[] = []): ErrorValidationResult {
-        return new ErrorValidationResult(code, message, items)
+    public static error(error: ApplicationError, items: ValidationResult[] = []): ErrorValidationResult {
+        return new ErrorValidationResult(error, items)
     }
 
     public static fromItems(items: ValidationResult[]): ValidationResult {
         return items.some((r) => r.isError())
-            ? ValidationResult.error("inheritedFromItem", "Some child items have errors.", items)
+            ? ValidationResult.error(new ApplicationError("inheritedFromItem", "Some child items have errors."), items)
             : ValidationResult.success(items)
     }
 }
@@ -31,7 +33,7 @@ export class SuccessfulValidatonResult extends ValidationResult {
 }
 
 export class ErrorValidationResult extends ValidationResult {
-    public constructor(public readonly code: string, public readonly message: string, items: ValidationResult[]) {
+    public constructor(public readonly error: ApplicationError, items: ValidationResult[]) {
         super(items)
     }
 }

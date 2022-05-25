@@ -38,12 +38,12 @@ export class RequestItemProcessorRegistryTests extends IntegrationTest {
         let registry: RequestItemProcessorRegistry
 
         beforeEach(function () {
-            registry = new RequestItemProcessorRegistry()
+            registry = new RequestItemProcessorRegistry(undefined!)
         })
 
         describe("RequestItemProcessorRegistry", function () {
             it("can be created with a map of processors", function () {
-                const registry = new RequestItemProcessorRegistry([
+                const registry = new RequestItemProcessorRegistry(undefined!, [
                     {
                         itemConstructor: TestRequestItem,
                         processorConstructor: TestRequestItemProcessor

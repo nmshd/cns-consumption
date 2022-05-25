@@ -10,7 +10,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
             /* ****** Incoming RequestItems ******* */
             describe("CheckPrerequisitesOfIncomingRequestItem", function () {
                 it("returns true", async function () {
-                    const processor = new GenericRequestItemProcessor()
+                    const processor = new GenericRequestItemProcessor(undefined!)
                     const requestItem = new TestRequestItem()
 
                     const actual = await processor.checkPrerequisitesOfIncomingRequestItem(requestItem)
@@ -21,11 +21,17 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
 
             describe("CanAccept", function () {
                 it("returns 'success'", async function () {
-                    const processor = new GenericRequestItemProcessor()
+                    const processor = new GenericRequestItemProcessor(undefined!)
 
-                    const result = await processor.canAccept(TestRequestItem.from({ mustBeAccepted: false }), {
-                        accept: true
-                    })
+                    const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
+
+                    const result = await processor.canAccept(
+                        TestRequestItem.from({ mustBeAccepted: false }),
+                        {
+                            accept: true
+                        },
+                        consumptionRequest
+                    )
 
                     expect(result.isSuccess()).to.be.true
                 })
@@ -33,11 +39,17 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
 
             describe("CanReject", function () {
                 it("returns 'success'", async function () {
-                    const processor = new GenericRequestItemProcessor()
+                    const processor = new GenericRequestItemProcessor(undefined!)
 
-                    const result = await processor.canReject(TestRequestItem.from({ mustBeAccepted: false }), {
-                        accept: false
-                    })
+                    const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
+
+                    const result = await processor.canReject(
+                        TestRequestItem.from({ mustBeAccepted: false }),
+                        {
+                            accept: false
+                        },
+                        consumptionRequest
+                    )
 
                     expect(result.isSuccess()).to.be.true
                 })
@@ -45,11 +57,17 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
 
             describe("Accept", function () {
                 it("returns an AcceptResponseItem", function () {
-                    const processor = new GenericRequestItemProcessor()
+                    const processor = new GenericRequestItemProcessor(undefined!)
 
-                    const result = processor.accept(TestRequestItem.from({ mustBeAccepted: false }), {
-                        accept: true
-                    })
+                    const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
+
+                    const result = processor.accept(
+                        TestRequestItem.from({ mustBeAccepted: false }),
+                        {
+                            accept: true
+                        },
+                        consumptionRequest
+                    )
 
                     expect(result).to.be.instanceOf(AcceptResponseItem)
                 })
@@ -57,11 +75,17 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
 
             describe("Reject", function () {
                 it("returns a RejectResponseItem", function () {
-                    const processor = new GenericRequestItemProcessor()
+                    const processor = new GenericRequestItemProcessor(undefined!)
 
-                    const result = processor.reject(TestRequestItem.from({ mustBeAccepted: false }), {
-                        accept: false
-                    })
+                    const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
+
+                    const result = processor.reject(
+                        TestRequestItem.from({ mustBeAccepted: false }),
+                        {
+                            accept: false
+                        },
+                        consumptionRequest
+                    )
 
                     expect(result).to.be.instanceOf(RejectResponseItem)
                 })
@@ -70,7 +94,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
             /* ****** Outgoing RequestItems ******* */
             describe("CanCreateOutgoingRequestItem", function () {
                 it("returns true", async function () {
-                    const processor = new GenericRequestItemProcessor()
+                    const processor = new GenericRequestItemProcessor(undefined!)
 
                     const actual = await processor.canCreateOutgoingRequestItem(
                         TestRequestItem.from({ mustBeAccepted: false })
@@ -82,11 +106,14 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
 
             describe("CanApplyIncomingResponseItem", function () {
                 it("returns 'success'", async function () {
-                    const processor = new GenericRequestItemProcessor()
+                    const processor = new GenericRequestItemProcessor(undefined!)
+
+                    const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
 
                     const actual = await processor.canApplyIncomingResponseItem(
                         AcceptResponseItem.from({ result: ResponseItemResult.Accepted }),
-                        TestRequestItem.from({ mustBeAccepted: false })
+                        TestRequestItem.from({ mustBeAccepted: false }),
+                        consumptionRequest
                     )
 
                     expect(actual.isSuccess()).to.be.true

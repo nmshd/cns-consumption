@@ -1,4 +1,5 @@
 import { RequestItem } from "@nmshd/content"
+import { ConsumptionController } from "../../../consumption/ConsumptionController"
 import { IRequestItemProcessor } from "./IRequestItemProcessor"
 import { ProcessorConstructor } from "./ProcessorConstructor"
 import { RequestItemConstructor } from "./RequestItemConstructor"
@@ -7,6 +8,7 @@ export class RequestItemProcessorRegistry {
     private readonly registry: Record<string, ProcessorConstructor | undefined> = {}
 
     public constructor(
+        private readonly consumptionController: ConsumptionController,
         processors: { processorConstructor: ProcessorConstructor; itemConstructor: RequestItemConstructor }[] = []
     ) {
         for (const { itemConstructor, processorConstructor } of processors) {
@@ -35,6 +37,6 @@ export class RequestItemProcessorRegistry {
         if (!constructor) {
             throw new Error(`There was no processor registered for '${item.constructor.name}'.`)
         }
-        return new constructor()
+        return new constructor(this.consumptionController)
     }
 }

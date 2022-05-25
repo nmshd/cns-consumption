@@ -1,53 +1,75 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { AcceptResponseItem, RejectResponseItem, RequestItem, ResponseItem, ResponseItemResult } from "@nmshd/content"
 import { AcceptRequestItemParametersJSON } from "../incoming/decide/AcceptRequestItemParameters"
 import { RejectRequestItemParametersJSON } from "../incoming/decide/RejectRequestItemParameters"
-import { IRequestItemProcessor } from "./IRequestItemProcessor"
+import { ConsumptionRequest } from "../local/ConsumptionRequest"
+import { AbstractRequestItemProcessor } from "./AbstractRequestItemProcessor"
 import { ValidationResult } from "./ValidationResult"
 
 export class GenericRequestItemProcessor<
     TRequestItem extends RequestItem = RequestItem,
     TAcceptParams extends AcceptRequestItemParametersJSON = AcceptRequestItemParametersJSON,
     TRejectParams extends RejectRequestItemParametersJSON = RejectRequestItemParametersJSON
-> implements IRequestItemProcessor<TRequestItem, TAcceptParams, TRejectParams>
-{
+> extends AbstractRequestItemProcessor<TRequestItem, TAcceptParams, TRejectParams> {
     public checkPrerequisitesOfIncomingRequestItem(_requestItem: TRequestItem): Promise<boolean> | boolean {
         return true
     }
 
-    public canAccept(_requestItem: TRequestItem, _params: TAcceptParams): Promise<ValidationResult> | ValidationResult {
+    public canAccept(
+        requestItem: TRequestItem,
+        params: TAcceptParams,
+        request: ConsumptionRequest
+    ): Promise<ValidationResult> | ValidationResult {
         return ValidationResult.success()
     }
 
-    public canReject(_requestItem: TRequestItem, _params: TRejectParams): Promise<ValidationResult> | ValidationResult {
+    public canReject(
+        requestItem: TRequestItem,
+        params: TRejectParams,
+        request: ConsumptionRequest
+    ): Promise<ValidationResult> | ValidationResult {
         return ValidationResult.success()
     }
 
-    public accept(requestItem: TRequestItem, _params: TAcceptParams): AcceptResponseItem {
+    public accept(
+        requestItem: TRequestItem,
+        params: TAcceptParams,
+        request: ConsumptionRequest
+    ): AcceptResponseItem | Promise<AcceptResponseItem> {
         return AcceptResponseItem.from({
             result: ResponseItemResult.Accepted,
             metadata: requestItem.responseMetadata
         })
     }
 
-    public reject(requestItem: TRequestItem, _params: TRejectParams): RejectResponseItem {
+    public reject(
+        requestItem: TRequestItem,
+        params: TRejectParams,
+        request: ConsumptionRequest
+    ): RejectResponseItem | Promise<RejectResponseItem> {
         return RejectResponseItem.from({
             result: ResponseItemResult.Rejected,
             metadata: requestItem.responseMetadata
         })
     }
 
+    public canCreateOutgoingRequestItem(requestItem: TRequestItem): Promise<ValidationResult> | ValidationResult {
+        return ValidationResult.success()
+    }
+
     public canApplyIncomingResponseItem(
-        _responseItem: AcceptResponseItem,
-        _requestItem: TRequestItem
+        responseItem: AcceptResponseItem,
+        requestItem: TRequestItem,
+        request: ConsumptionRequest
     ): Promise<ValidationResult> | ValidationResult {
         return ValidationResult.success()
     }
 
-    public canCreateOutgoingRequestItem(_requestItem: TRequestItem): Promise<ValidationResult> | ValidationResult {
-        return ValidationResult.success()
-    }
-
-    public applyIncomingResponseItem(_responseItem: ResponseItem, _requestItem: TRequestItem): Promise<void> | void {
+    public applyIncomingResponseItem(
+        responseItem: ResponseItem,
+        requestItem: TRequestItem,
+        request: ConsumptionRequest
+    ): Promise<void> | void {
         // do nothing
     }
 }

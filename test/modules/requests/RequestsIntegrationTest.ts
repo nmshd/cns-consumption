@@ -84,7 +84,7 @@ export class RequestsTestsContext {
         const dbConnection = new LokiJsConnection(".")
         const database = await dbConnection.getDatabase(Math.random().toString(36).substring(7))
         const collection = new SynchronizedCollection(await database.getCollection("Requests"), 0)
-        const processorRegistry = new RequestItemProcessorRegistry([
+        const processorRegistry = new RequestItemProcessorRegistry(undefined!, [
             { itemConstructor: TestRequestItem, processorConstructor: TestRequestItemProcessor }
         ])
 
