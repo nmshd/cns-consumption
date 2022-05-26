@@ -242,7 +242,7 @@ export class AttributeTest extends IntegrationTest {
                     }
                 }
 
-                const attributes = await consumptionController.attributes.getRelationshipAttributes(query)
+                const attributes = await consumptionController.attributes.executeRelationshipAttributeQuery(query)
                 const attributesId = attributes.map((v) => v.id.toString())
                 expect(attributesId).to.not.include(identityAttribute.id.toString())
                 expect(attributesId).to.include(relationshipAttribute.id.toString())
@@ -283,7 +283,7 @@ export class AttributeTest extends IntegrationTest {
                     }
                 }
 
-                const attributes = await consumptionController.attributes.getIdentityAttributes(query)
+                const attributes = await consumptionController.attributes.executeIdentityAttributeQuery(query)
                 const attributesId = attributes.map((v) => v.id.toString())
                 expect(attributesId).to.not.include(relationshipAttribute.id.toString())
                 expect(attributesId).to.include(identityAttribute.id.toString())
