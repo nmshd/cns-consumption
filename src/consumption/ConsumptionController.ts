@@ -1,14 +1,12 @@
 import { AccountController, Transport } from "@nmshd/transport"
-import {
-    ConsumptionAttributesController,
-    DraftsController,
-    OutgoingRequestsController,
-    ProcessorConstructor,
-    RequestItemConstructor,
-    RequestItemProcessorRegistry,
-    SettingsController
-} from "../modules"
+import { ConsumptionAttributesController } from "../modules/attributes/ConsumptionAttributesController"
+import { DraftsController } from "../modules/drafts/DraftsController"
 import { IncomingRequestsController } from "../modules/requests/incoming/IncomingRequestsController"
+import { ProcessorConstructor } from "../modules/requests/itemProcessors/ProcessorConstructor"
+import { RequestItemConstructor } from "../modules/requests/itemProcessors/RequestItemConstructor"
+import { RequestItemProcessorRegistry } from "../modules/requests/itemProcessors/RequestItemProcessorRegistry"
+import { OutgoingRequestsController } from "../modules/requests/outgoing/OutgoingRequestsController"
+import { SettingsController } from "../modules/settings/SettingsController"
 
 export class ConsumptionController {
     public constructor(public readonly transport: Transport, public readonly accountController: AccountController) {}
