@@ -27,6 +27,7 @@ import {
     AcceptResponseItem,
     IRequest,
     IResponse,
+    RelationshipTemplateBody,
     Request,
     RequestItemGroup,
     Response,
@@ -83,7 +84,7 @@ export class RequestsTestsContext {
         const dbConnection = new LokiJsConnection(".")
         const database = await dbConnection.getDatabase(Math.random().toString(36).substring(7))
         const collection = new SynchronizedCollection(await database.getCollection("Requests"), 0)
-        const processorRegistry = new RequestItemProcessorRegistry([
+        const processorRegistry = new RequestItemProcessorRegistry(undefined!, [
             { itemConstructor: TestRequestItem, processorConstructor: TestRequestItemProcessor }
         ])
 
@@ -586,7 +587,7 @@ export class RequestsWhen {
     ): Promise<void> {
         params.template ??= TestObjectFactory.createOutgoingIRelationshipTemplate(
             this.context.currentIdentity,
-            TestObjectFactory.createRequestWithOneItem()
+            RelationshipTemplateBody.from({ onNewRelationship: TestObjectFactory.createRequestWithOneItem() })
         )
         params.creationChange ??= TestObjectFactory.createIncomingIRelationshipChange(RelationshipChangeType.Creation)
 

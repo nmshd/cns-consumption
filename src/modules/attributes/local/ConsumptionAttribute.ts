@@ -1,14 +1,35 @@
 import { serialize, type, validate } from "@js-soft/ts-serval"
-import { Attribute, IAttribute } from "@nmshd/content"
-import { CoreDate, CoreSynchronizable, ICoreDate, ICoreSynchronizable } from "@nmshd/transport"
+import {
+    IdentityAttribute,
+    IdentityAttributeJSON,
+    IIdentityAttribute,
+    IRelationshipAttribute,
+    RelationshipAttribute,
+    RelationshipAttributeJSON
+} from "@nmshd/content"
+import { CoreDate, CoreId, CoreSynchronizable, ICoreDate, ICoreId, ICoreSynchronizable } from "@nmshd/transport"
 import { nameof } from "ts-simple-nameof"
 import { ConsumptionIds } from "../../../consumption"
+import {
+    ConsumptionAttributeShareInfo,
+    ConsumptionAttributeShareInfoJSON,
+    IConsumptionAttributeShareInfo
+} from "./ConsumptionAttributeShareInfo"
+
+export interface ConsumptionAttributeJSON {
+    content: IdentityAttributeJSON | RelationshipAttributeJSON
+    createdAt: string
+    succeeds: string
+    succeededBy: string
+    shareInfo: ConsumptionAttributeShareInfoJSON
+}
 
 export interface IConsumptionAttribute extends ICoreSynchronizable {
-    content: IAttribute
+    content: IIdentityAttribute | IRelationshipAttribute
     createdAt: ICoreDate
-    metadata?: any
-    metadataModifiedAt?: ICoreDate
+    succeeds?: ICoreId
+    succeededBy?: ICoreId
+    shareInfo?: IConsumptionAttributeShareInfo
 }
 
 @type("ConsumptionAttribute")
@@ -16,41 +37,48 @@ export class ConsumptionAttribute extends CoreSynchronizable implements IConsump
     public override readonly technicalProperties = [
         "@type",
         "@context",
+        nameof<ConsumptionAttribute>((r) => r.createdAt),
+        nameof<ConsumptionAttribute>((r) => r.succeeds),
         nameof<ConsumptionAttribute>((r) => r.createdAt)
     ]
 
     public override readonly userdataProperties = [nameof<ConsumptionAttribute>((r) => r.content)]
 
-    public override readonly metadataProperties = [
-        nameof<ConsumptionAttribute>((r) => r.metadata),
-        nameof<ConsumptionAttribute>((r) => r.metadataModifiedAt)
-    ]
-
     @validate()
-    @serialize({ type: Attribute })
-    public content: Attribute
+    @serialize({ unionTypes: [IdentityAttribute, RelationshipAttribute] })
+    public content: IdentityAttribute | RelationshipAttribute
 
     @validate()
     @serialize()
     public createdAt: CoreDate
 
     @validate({ nullable: true })
-    @serialize({ any: true })
-    public metadata?: any
+    @serialize()
+    public succeeds?: CoreId
 
     @validate({ nullable: true })
     @serialize()
-    public metadataModifiedAt?: CoreDate
+    public succeededBy?: CoreId
+
+    @validate({ nullable: true })
+    @serialize()
+    public shareInfo?: ConsumptionAttributeShareInfo
 
     public static from(value: IConsumptionAttribute): ConsumptionAttribute {
         return this.fromAny(value)
     }
 
-    public static async fromAttribute(attribute: IAttribute): Promise<ConsumptionAttribute> {
+    public static async fromAttribute(
+        attribute: IIdentityAttribute | IRelationshipAttribute,
+        succeeds?: ICoreId,
+        shareInfo?: IConsumptionAttributeShareInfo
+    ): Promise<ConsumptionAttribute> {
         return this.from({
-            content: Attribute.from(attribute),
+            content: attribute,
             id: await ConsumptionIds.attribute.generate(),
-            createdAt: CoreDate.utc()
+            createdAt: CoreDate.utc(),
+            succeeds: succeeds,
+            shareInfo: shareInfo
         })
     }
 }

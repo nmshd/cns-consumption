@@ -1,19 +1,39 @@
 import { CoreError } from "@nmshd/transport"
 
 class Attributes {
-    public attributeExists(name: string) {
+    public attributeExists(id: string) {
         return new CoreError(
             "error.consumption.attributes.attributeExists",
-            `Attribute with name ${name} already exists. Please use succeed instead.`
+            `Attribute with id '${id}' already exists. Please use succeed instead.`
+        )
+    }
+    public predecessorNotFound(id: string) {
+        return new CoreError(
+            "error.consumption.attributes.predecessorNotFound",
+            `Attribute with id '${id}' does not exist. Please use create instead.`
         )
     }
 }
 
 class Requests {
-    public requestsExists(id: string) {
+    public requestExists(id: string) {
         return new CoreError(
             "error.consumption.requests.requestExists",
             `Request with id ${id} already exists and can't be created.`
+        )
+    }
+
+    public unexpectedErrorDuringRequestItemProcessing(error: any) {
+        return new CoreError(
+            "error.consumption.requests.unexpectedErrorDuringRequestItemProcessing",
+            error instanceof Error ? error.message : "Unknown error: '${JSON.stringify(e)'"
+        )
+    }
+
+    public canOnlyShareOwnAttributes() {
+        return new CoreError(
+            "error.consumption.requests.canOnlyShareOwnAttributes",
+            "The given Attribute belongs to someone else. You can only share own Attributes."
         )
     }
 }

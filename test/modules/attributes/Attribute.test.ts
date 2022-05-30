@@ -1,6 +1,20 @@
-import { ConsumptionAttribute, ConsumptionController } from "@nmshd/consumption"
-import { Attribute } from "@nmshd/content"
-import { AccountController, Transport } from "@nmshd/transport"
+import {
+    ConsumptionAttribute,
+    ConsumptionController,
+    ICreateConsumptionAttributeParams,
+    ICreatePeerConsumptionAttributeParams,
+    ICreateSharedConsumptionAttributeCopyParams,
+    IGetIdentityAttributesParams,
+    IGetRelationshipAttributesParams,
+    ISucceedConsumptionAttributeParams
+} from "@nmshd/consumption"
+import {
+    IdentityAttribute,
+    Nationality,
+    RelationshipAttribute,
+    RelationshipAttributeConfidentiality
+} from "@nmshd/content"
+import { AccountController, CoreAddress, CoreDate, CoreId, Transport } from "@nmshd/transport"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
@@ -26,59 +40,292 @@ export class AttributeTest extends IntegrationTest {
                 ;({ accountController: testAccount, consumptionController } = account)
             })
 
-            it("should fill attributes", async function () {
-                const familyName = await ConsumptionAttribute.fromAttribute(
-                    Attribute.from({ name: "Person.familyName", value: "Becker" })
-                )
+            beforeEach(async function () {
+                const surnameParams: ICreateConsumptionAttributeParams = {
+                    content: IdentityAttribute.from({
+                        value: {
+                            "@type": "Surname",
+                            value: "ASurname"
+                        },
+                        owner: CoreAddress.from("address")
+                    })
+                }
 
-                const givenName = await ConsumptionAttribute.fromAttribute(
-                    Attribute.from({ name: "Person.givenName", value: "Hugo" })
-                )
-                expect(familyName).instanceOf(ConsumptionAttribute)
-                expect(familyName.content).instanceOf(Attribute)
-                expect(givenName).instanceOf(ConsumptionAttribute)
-                expect(givenName.content).instanceOf(Attribute)
-                await consumptionController.attributes.createAttribute(familyName)
-                await consumptionController.attributes.createAttribute(givenName)
-            }).timeout(15000)
+                const givenNamesParams: ICreateConsumptionAttributeParams = {
+                    content: IdentityAttribute.from({
+                        value: {
+                            "@type": "GivenName",
+                            value: "AGivenName"
+                        },
+                        owner: CoreAddress.from("address")
+                    })
+                }
+                await consumptionController.attributes.createConsumptionAttribute(surnameParams)
+                await consumptionController.attributes.createConsumptionAttribute(givenNamesParams)
+            })
 
             it("should list all attributes", async function () {
-                const attributes = await consumptionController.attributes.getAttributes()
+                const attributes = await consumptionController.attributes.getConsumptionAttributes()
                 expect(attributes).to.be.of.length(2)
-                expect(attributes[0].content.name).to.equal("Person.familyName")
-                expect(attributes[0].content.value).to.equal("Becker")
-            }).timeout(15000)
+            })
 
-            it("should return an object with all attributes", async function () {
-                const map = await consumptionController.attributes.getAttributesByName()
-                expect(map["Person.familyName"]).instanceOf(ConsumptionAttribute)
-                expect(map["Person.familyName"].content.value).to.equal("Becker")
-                expect(map["Person.givenName"]).instanceOf(ConsumptionAttribute)
-                expect(map["Person.givenName"].content.value).to.equal("Hugo")
-            }).timeout(15000)
+            it("should create new attributes", async function () {
+                const attributesBeforeCreate = await consumptionController.attributes.getConsumptionAttributes()
+                const nrAttributesBeforeCreate = attributesBeforeCreate.length
 
-            it("should fill more attributes", async function () {
-                const gender = await ConsumptionAttribute.fromAttribute({ name: "Person.gender", value: "m" })
-                expect(gender).instanceOf(ConsumptionAttribute)
-                expect(gender.content).instanceOf(Attribute)
+                const addressParams: ICreateConsumptionAttributeParams = {
+                    content: IdentityAttribute.from({
+                        value: {
+                            "@type": "StreetAddress",
+                            recipient: "ARecipient",
+                            street: "AStreet",
+                            houseNo: "AHouseNo",
+                            zipCode: "AZipCode",
+                            city: "ACity",
+                            country: "DE"
+                        },
+                        validTo: CoreDate.utc(),
+                        owner: CoreAddress.from("address")
+                    })
+                }
 
-                const birthDate = await ConsumptionAttribute.fromAttribute({
-                    name: "Person.birthDate",
-                    value: "17.11.1911"
-                })
+                const birthDateParams: ICreateConsumptionAttributeParams = {
+                    content: IdentityAttribute.from({
+                        value: {
+                            "@type": "BirthDate",
+                            day: 22,
+                            month: 2,
+                            year: 2022
+                        },
+                        owner: CoreAddress.from("address")
+                    })
+                }
+
+                const address = await consumptionController.attributes.createConsumptionAttribute(addressParams)
+                expect(address).instanceOf(ConsumptionAttribute)
+                expect(address.content).instanceOf(IdentityAttribute)
+                const birthDate = await consumptionController.attributes.createConsumptionAttribute(birthDateParams)
                 expect(birthDate).instanceOf(ConsumptionAttribute)
-                expect(birthDate.content).instanceOf(Attribute)
+                expect(birthDate.content).instanceOf(IdentityAttribute)
 
-                await consumptionController.attributes.createAttribute(gender)
-                await consumptionController.attributes.createAttribute(birthDate)
+                const attributesAfterCreate = await consumptionController.attributes.getConsumptionAttributes()
+                const nrAttributesAfterCreate = attributesAfterCreate.length
+                expect(nrAttributesAfterCreate).equals(nrAttributesBeforeCreate + 2)
             }).timeout(15000)
 
-            it("should list all attributes again", async function () {
-                const attributes = await consumptionController.attributes.getAttributes()
-                expect(attributes).to.be.of.length(4)
-                expect(attributes[3].content.name).equals("Person.birthDate")
-                expect(attributes[3].content.value).equals("17.11.1911")
-            }).timeout(15000)
+            it("should delete an attribute", async function () {
+                const attributes = await consumptionController.attributes.getConsumptionAttributes()
+                const nrAttributesBeforeDelete = attributes.length
+                await consumptionController.attributes.deleteAttribute(attributes[0])
+
+                const attributesAfterDelete = await consumptionController.attributes.getConsumptionAttributes()
+                const nrAttributesAfterDelete = attributesAfterDelete.length
+                expect(nrAttributesAfterDelete).equals(nrAttributesBeforeDelete - 1)
+
+                const attributesJSON = attributesAfterDelete.map((v) => v.id.toString())
+                expect(attributesJSON).not.to.include(attributes[0]?.id.toString())
+            })
+
+            it("should succeed attributes", async function () {
+                const displayNameParams: ICreateConsumptionAttributeParams = {
+                    content: IdentityAttribute.from({
+                        value: {
+                            "@type": "DisplayName",
+                            value: "ADisplayName"
+                        },
+                        owner: CoreAddress.from("address")
+                    })
+                }
+
+                const successorDate = CoreDate.utc()
+                const displayNameSuccessor = IdentityAttribute.from({
+                    value: {
+                        "@type": "DisplayName",
+                        value: "ANewDisplayName"
+                    },
+                    owner: CoreAddress.from("address"),
+                    validFrom: successorDate
+                })
+
+                const attribute = await consumptionController.attributes.createConsumptionAttribute(displayNameParams)
+                const createSuccessorParams: ISucceedConsumptionAttributeParams = {
+                    successorContent: displayNameSuccessor,
+                    succeeds: attribute.id
+                }
+                const successor = await consumptionController.attributes.succeedConsumptionAttribute(
+                    createSuccessorParams
+                )
+                const succeededAttribute = await consumptionController.attributes.getConsumptionAttribute(attribute.id)
+                expect(succeededAttribute?.content.validTo?.toISOString()).to.equal(
+                    successorDate.subtract(1).toISOString()
+                )
+
+                const succeessorAttribute = await consumptionController.attributes.getConsumptionAttribute(successor.id)
+                expect(succeessorAttribute?.content.validFrom?.toISOString()).to.equal(successorDate.toISOString())
+
+                const allAttributes = await consumptionController.attributes.getConsumptionAttributes()
+                const allAttributesJSON = allAttributes.map((v) => v.id.toString())
+                expect(allAttributesJSON).to.include(succeededAttribute?.id.toString())
+
+                const currentAttributes = consumptionController.attributes.filterCurrent(allAttributes)
+                const currentAttributesJSON = currentAttributes.map((v) => v.id.toString())
+                expect(currentAttributesJSON).to.not.include(succeededAttribute?.id.toString())
+                expect(currentAttributesJSON).to.include(succeessorAttribute?.id.toString())
+            })
+
+            it("should allow to create a share attribute copy", async function () {
+                const nationalityParams: ICreateConsumptionAttributeParams = {
+                    content: IdentityAttribute.from({
+                        value: {
+                            "@type": "Nationality",
+                            value: "DE"
+                        },
+                        owner: CoreAddress.from("address")
+                    })
+                }
+                const nationalityAttribute = await consumptionController.attributes.createConsumptionAttribute(
+                    nationalityParams
+                )
+
+                const peer = CoreAddress.from("address")
+                const createSharedAttributesParams: ICreateSharedConsumptionAttributeCopyParams = {
+                    attributeId: nationalityAttribute.id,
+                    peer: peer,
+                    requestReference: CoreId.from("requestId")
+                }
+
+                const sharedNationalityAttribute =
+                    await consumptionController.attributes.createSharedConsumptionAttributeCopy(
+                        createSharedAttributesParams
+                    )
+                expect(sharedNationalityAttribute).instanceOf(ConsumptionAttribute)
+                expect(sharedNationalityAttribute.shareInfo?.peer).to.deep.equal(peer)
+            })
+
+            it("should allow to query relationship attributes", async function () {
+                const identityAttributeParams: ICreateConsumptionAttributeParams = {
+                    content: IdentityAttribute.from({
+                        value: {
+                            "@type": "Nationality",
+                            value: "DE"
+                        },
+                        owner: CoreAddress.from("address")
+                    })
+                }
+                const identityAttribute = await consumptionController.attributes.createConsumptionAttribute(
+                    identityAttributeParams
+                )
+
+                const relationshipAttributeParams: ICreateConsumptionAttributeParams = {
+                    content: RelationshipAttribute.from({
+                        key: "nationality",
+                        value: {
+                            "@type": "Nationality",
+                            value: "DE"
+                        },
+                        owner: CoreAddress.from("address"),
+                        confidentiality: "public" as RelationshipAttributeConfidentiality
+                    })
+                }
+                const relationshipAttribute = await consumptionController.attributes.createConsumptionAttribute(
+                    relationshipAttributeParams
+                )
+
+                const query: IGetRelationshipAttributesParams = {
+                    query: {
+                        key: "nationality",
+                        owner: CoreAddress.from("address"),
+                        attributeHints: {
+                            title: "someHintTitle",
+                            confidentiality: "public" as RelationshipAttributeConfidentiality
+                        }
+                    }
+                }
+
+                const attributes = await consumptionController.attributes.executeRelationshipAttributeQuery(query)
+                const attributesId = attributes.map((v) => v.id.toString())
+                expect(attributesId).to.not.include(identityAttribute.id.toString())
+                expect(attributesId).to.include(relationshipAttribute.id.toString())
+            })
+
+            it("should allow to query identity attributes", async function () {
+                const identityAttributeParams: ICreateConsumptionAttributeParams = {
+                    content: IdentityAttribute.from({
+                        value: {
+                            "@type": "Nationality",
+                            value: "DE"
+                        },
+                        owner: CoreAddress.from("address")
+                    })
+                }
+                const identityAttribute = await consumptionController.attributes.createConsumptionAttribute(
+                    identityAttributeParams
+                )
+
+                const relationshipAttributeParams: ICreateConsumptionAttributeParams = {
+                    content: RelationshipAttribute.from({
+                        key: "nationality",
+                        value: {
+                            "@type": "Nationality",
+                            value: "DE"
+                        },
+                        owner: CoreAddress.from("address"),
+                        confidentiality: "public" as RelationshipAttributeConfidentiality
+                    })
+                }
+                const relationshipAttribute = await consumptionController.attributes.createConsumptionAttribute(
+                    relationshipAttributeParams
+                )
+
+                const query: IGetIdentityAttributesParams = {
+                    query: {
+                        valueType: "Nationality"
+                    }
+                }
+
+                const attributes = await consumptionController.attributes.executeIdentityAttributeQuery(query)
+                const attributesId = attributes.map((v) => v.id.toString())
+                expect(attributesId).to.not.include(relationshipAttribute.id.toString())
+                expect(attributesId).to.include(identityAttribute.id.toString())
+            })
+
+            it("should allow to create an attribute shared by a peer", async function () {
+                const attribute: ICreateConsumptionAttributeParams = {
+                    content: IdentityAttribute.from({
+                        value: {
+                            "@type": "Nationality",
+                            value: "DE"
+                        },
+                        owner: CoreAddress.from("address")
+                    })
+                }
+                const consumptionAttribute = await consumptionController.attributes.createConsumptionAttribute(
+                    attribute
+                )
+                const createPeerAttributeParams: ICreatePeerConsumptionAttributeParams = {
+                    id: consumptionAttribute.id,
+                    content: attribute.content,
+                    requestReference: CoreId.from("requestId"),
+                    peer: CoreAddress.from("address")
+                }
+                const peerConsumptionAttribute = await consumptionController.attributes.createPeerConsumptionAttribute(
+                    createPeerAttributeParams
+                )
+                expect(peerConsumptionAttribute.content.toJSON()).deep.equals(consumptionAttribute.content.toJSON())
+                expect(peerConsumptionAttribute.content.value).instanceOf(Nationality)
+                expect(createPeerAttributeParams.id).equals(consumptionAttribute.id)
+                expect(createPeerAttributeParams.peer.address).equals(CoreAddress.from("address").toString())
+                expect(createPeerAttributeParams.requestReference.toString()).equals(
+                    CoreId.from("requestId").toString()
+                )
+            })
+
+            afterEach(async function () {
+                const attributes = await consumptionController.attributes.getConsumptionAttributes()
+                attributes.forEach(async (attribute) => {
+                    await consumptionController.attributes.deleteAttribute(attribute)
+                })
+            })
 
             after(async function () {
                 await testAccount.close()
