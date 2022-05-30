@@ -16,7 +16,7 @@ import { identityQueryTranslator, relationshipQueryTranslator } from "./local/Qu
 import {
     ISucceedConsumptionAttributeParams,
     SucceedConsumptionAttributeParams
-} from "./SuccedConsumptionAttributeParams"
+} from "./SucceedConsumptionAttributeParams"
 import { IUpdateConsumptionAttributeParams } from "./UpdateConsumptionAttributeParams"
 
 export class ConsumptionAttributesController extends ConsumptionBaseController {
