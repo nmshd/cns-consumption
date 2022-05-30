@@ -4,9 +4,16 @@ import {
     ICreateConsumptionAttributeParams,
     ICreatePeerConsumptionAttributeParams,
     ICreateSharedConsumptionAttributeCopyParams,
+    IGetIdentityAttributesParams,
+    IGetRelationshipAttributesParams,
     ISucceedConsumptionAttributeParams
 } from "@nmshd/consumption"
-import { IdentityAttribute, Nationality } from "@nmshd/content"
+import {
+    IdentityAttribute,
+    Nationality,
+    RelationshipAttribute,
+    RelationshipAttributeConfidentiality
+} from "@nmshd/content"
 import { AccountController, CoreAddress, CoreDate, CoreId, Transport } from "@nmshd/transport"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
@@ -193,6 +200,93 @@ export class AttributeTest extends IntegrationTest {
                     )
                 expect(sharedNationalityAttribute).instanceOf(ConsumptionAttribute)
                 expect(sharedNationalityAttribute.shareInfo?.peer).to.deep.equal(peer)
+            })
+
+            it("should allow to query relationship attributes", async function () {
+                const identityAttributeParams: ICreateConsumptionAttributeParams = {
+                    content: IdentityAttribute.from({
+                        value: {
+                            "@type": "Nationality",
+                            value: "DE"
+                        },
+                        owner: CoreAddress.from("address")
+                    })
+                }
+                const identityAttribute = await consumptionController.attributes.createConsumptionAttribute(
+                    identityAttributeParams
+                )
+
+                const relationshipAttributeParams: ICreateConsumptionAttributeParams = {
+                    content: RelationshipAttribute.from({
+                        key: "nationality",
+                        value: {
+                            "@type": "Nationality",
+                            value: "DE"
+                        },
+                        owner: CoreAddress.from("address"),
+                        confidentiality: "public" as RelationshipAttributeConfidentiality
+                    })
+                }
+                const relationshipAttribute = await consumptionController.attributes.createConsumptionAttribute(
+                    relationshipAttributeParams
+                )
+
+                const query: IGetRelationshipAttributesParams = {
+                    query: {
+                        key: "nationality",
+                        owner: CoreAddress.from("address"),
+                        attributeHints: {
+                            title: "someHintTitle",
+                            confidentiality: "public" as RelationshipAttributeConfidentiality
+                        }
+                    }
+                }
+
+                const attributes = await consumptionController.attributes.executeRelationshipAttributeQuery(query)
+                const attributesId = attributes.map((v) => v.id.toString())
+                expect(attributesId).to.not.include(identityAttribute.id.toString())
+                expect(attributesId).to.include(relationshipAttribute.id.toString())
+            })
+
+            it("should allow to query identity attributes", async function () {
+                const identityAttributeParams: ICreateConsumptionAttributeParams = {
+                    content: IdentityAttribute.from({
+                        value: {
+                            "@type": "Nationality",
+                            value: "DE"
+                        },
+                        owner: CoreAddress.from("address")
+                    })
+                }
+                const identityAttribute = await consumptionController.attributes.createConsumptionAttribute(
+                    identityAttributeParams
+                )
+
+                const relationshipAttributeParams: ICreateConsumptionAttributeParams = {
+                    content: RelationshipAttribute.from({
+                        key: "nationality",
+                        value: {
+                            "@type": "Nationality",
+                            value: "DE"
+                        },
+                        owner: CoreAddress.from("address"),
+                        confidentiality: "public" as RelationshipAttributeConfidentiality
+                    })
+                }
+                const relationshipAttribute = await consumptionController.attributes.createConsumptionAttribute(
+                    relationshipAttributeParams
+                )
+
+                const query: IGetIdentityAttributesParams = {
+                    query: {
+                        valueType: "Nationality"
+                    }
+                }
+
+                const attributes = await consumptionController.attributes.executeIdentityAttributeQuery(query)
+                const attributesId = attributes.map((v) => v.id.toString())
+                expect(attributesId).to.not.include(relationshipAttribute.id.toString())
+                expect(attributesId).to.include(identityAttribute.id.toString())
             })
 
             it("should allow to create an attribute shared by a peer", async function () {

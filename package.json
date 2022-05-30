@@ -1,6 +1,6 @@
 {
     "name": "@nmshd/consumption",
-    "version": "2.0.0-alpha.15",
+    "version": "2.0.0-alpha.16",
     "description": "The consumption library extends the transport library.",
     "homepage": "https://enmeshed.eu",
     "repository": "github:nmshd/cns-consumption",
@@ -17,10 +17,6 @@
         "ui5.yaml"
     ],
     "scripts": {
-        "lint": "npm run lint:prettier && npm run lint:eslint && npm run lint:tsc",
-        "lint:prettier": "prettier --check .",
-        "lint:eslint": "eslint --ext ts ./src ./test",
-        "lint:tsc": "tsc --noEmit && tsc -p test/tsconfig.json --noEmit",
         "bt": "npm run test:node && npm run build:node && npm run build:test && npm run bundle && npm run test:web",
         "build": "npm run build:node && npm run build:test && npm run bundle",
         "build:ci": "npm run build:node && .ci/writeBuildInformation.sh && npm run build:test && npm run bundle",
@@ -31,18 +27,25 @@
         "bundle:min": "webpack --stats-all --config webpack.min.config.js",
         "bundle:test": "webpack --stats-all --config webpack.test.config.js",
         "cdep": "tsc && madge --circular dist",
+        "lint": "npm run lint:prettier && npm run lint:eslint && npm run lint:tsc",
+        "lint:eslint": "eslint --ext ts ./src ./test",
+        "lint:prettier": "prettier --check .",
+        "lint:tsc": "tsc --noEmit && tsc -p test/tsconfig.json --noEmit",
         "test": "npm run test:node && npm run test:web",
         "test:ci": "npm run test",
         "test:local": "npm run build && npm run test:local:node && npm run test:web",
         "test:local:node": ". ./scripts/testSetup.sh && npm run test:node",
-        "test:local:node:mongodb": ". ./scripts/testSetup.sh && npm run test:node:mongodb",
         "test:local:node:lokijs": "npm run test:node:lokijs",
+        "test:local:node:mongodb": ". ./scripts/testSetup.sh && npm run test:node:mongodb",
         "test:local:teardown": "docker-compose -f test/docker-compose.yml rm -fsv",
         "test:node": "mocha -r ts-node/register -r tsconfig-paths/register ./test/index.node.ts --project ./test/tsconfig.json --exit",
-        "test:node:mongodb": "mocha -r ts-node/register -r tsconfig-paths/register ./test/index.node.mongo.ts --project ./test/tsconfig.json --exit",
         "test:node:lokijs": "mocha -r ts-node/register -r tsconfig-paths/register ./test/index.node.loki.ts --project ./test/tsconfig.json --exit",
+        "test:node:mongodb": "mocha -r ts-node/register -r tsconfig-paths/register ./test/index.node.mongo.ts --project ./test/tsconfig.json --exit",
         "test:web": "browsertest-runner",
         "test:web:debug": "browsertest-runner-debug"
+    },
+    "dependencies": {
+        "@js-soft/docdb-querytranslator": "^1.0.1"
     },
     "devDependencies": {
         "@js-soft/docdb-access-loki": "1.0.2",
@@ -53,7 +56,7 @@
         "@js-soft/ts-serval": "2.0.3",
         "@js-soft/ts-utils": "1.1.2",
         "@js-soft/web-logger": "1.0.1",
-        "@nmshd/content": "2.0.0-alpha.20",
+        "@nmshd/content": "2.0.0-alpha.23",
         "@nmshd/crypto": "2.0.1",
         "@nmshd/transport": "2.0.0-alpha.1",
         "@types/chai": "^4.3.1",
