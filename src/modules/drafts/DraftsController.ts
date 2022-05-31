@@ -25,7 +25,7 @@ export class DraftsController extends ConsumptionBaseController {
 
     public async getDrafts(query?: any): Promise<Draft[]> {
         const items = await this.drafts.find(query)
-        return await this.parseArray<Draft>(items, Draft)
+        return await this.parseArray(items, Draft)
     }
 
     public async createDraft(content: Serializable, type = ""): Promise<Draft> {
