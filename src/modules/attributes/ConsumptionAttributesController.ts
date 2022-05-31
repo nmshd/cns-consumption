@@ -115,7 +115,7 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         queryWithType["attributeType"] = "RelationshipAttribute"
         const dbQuery = relationshipQueryTranslator.parse(queryWithType)
         const attributes = await this.attributes.find(dbQuery)
-        return attributes
+        return await this.parseArray<ConsumptionAttribute>(attributes, ConsumptionAttribute)
     }
 
     public async executeIdentityAttributeQuery(params: IGetIdentityAttributesParams): Promise<ConsumptionAttribute[]> {
@@ -123,7 +123,7 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         queryWithType["attributeType"] = "IdentityAttribute"
         const dbQuery = identityQueryTranslator.parse(queryWithType)
         const attributes = await this.attributes.find(dbQuery)
-        return attributes
+        return await this.parseArray<ConsumptionAttribute>(attributes, ConsumptionAttribute)
     }
 
     public async createConsumptionAttribute(params: ICreateConsumptionAttributeParams): Promise<ConsumptionAttribute> {
