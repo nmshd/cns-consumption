@@ -1,6 +1,18 @@
 import { ISerializable, Serializable, serialize, validate } from "@js-soft/ts-serval"
-import { IdentityAttribute, IIdentityAttribute, IRelationshipAttribute, RelationshipAttribute } from "@nmshd/content"
+import {
+    IdentityAttribute,
+    IdentityAttributeJSON,
+    IIdentityAttribute,
+    IRelationshipAttribute,
+    RelationshipAttribute,
+    RelationshipAttributeJSON
+} from "@nmshd/content"
 import { CoreId, ICoreId } from "@nmshd/transport"
+
+export interface SucceedConsumptionAttributeParamsJSON {
+    successorContent: IdentityAttributeJSON | RelationshipAttributeJSON
+    succeeds: string
+}
 
 export interface ISucceedConsumptionAttributeParams extends ISerializable {
     successorContent: IIdentityAttribute | IRelationshipAttribute
@@ -16,7 +28,9 @@ export class SucceedConsumptionAttributeParams extends Serializable implements I
     @validate()
     public succeeds: CoreId
 
-    public static from(value: ISucceedConsumptionAttributeParams): SucceedConsumptionAttributeParams {
+    public static from(
+        value: ISucceedConsumptionAttributeParams | SucceedConsumptionAttributeParamsJSON
+    ): SucceedConsumptionAttributeParams {
         return this.fromAny(value)
     }
 }
