@@ -15,6 +15,7 @@ export interface CreatePeerConsumptionAttributeParamsJSON {
     requestReferece: string
     peer: string
 }
+
 export interface ICreatePeerConsumptionAttributeParams extends ISerializable {
     id: ICoreId
     content: IIdentityAttribute | IRelationshipAttribute
