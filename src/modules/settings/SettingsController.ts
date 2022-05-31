@@ -25,7 +25,7 @@ export class SettingsController extends ConsumptionBaseController {
 
     public async getSettings(query?: any): Promise<Setting[]> {
         const items = await this.settings.find(query)
-        return await this.parseArray<Setting>(items, Setting)
+        return await this.parseArray(items, Setting)
     }
 
     public async createSetting(parameters: ICreateSettingParameters): Promise<Setting> {
