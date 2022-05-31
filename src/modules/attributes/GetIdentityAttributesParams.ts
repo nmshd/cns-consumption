@@ -1,5 +1,9 @@
 import { ISerializable, Serializable, serialize, validate } from "@js-soft/ts-serval"
-import { IdentityAttributeQuery, IIdentityAttributeQuery } from "@nmshd/content"
+import { IdentityAttributeQuery, IdentityAttributeQueryJSON, IIdentityAttributeQuery } from "@nmshd/content"
+
+export interface GetIdentityAttributesParamsJSON {
+    query: IdentityAttributeQueryJSON
+}
 
 export interface IGetIdentityAttributesParams extends ISerializable {
     query: IIdentityAttributeQuery
@@ -10,7 +14,9 @@ export class GetIdentityAttributesParams extends Serializable implements IGetIde
     @validate()
     public query: IdentityAttributeQuery
 
-    public static from(value: IGetIdentityAttributesParams): GetIdentityAttributesParams {
+    public static from(
+        value: IGetIdentityAttributesParams | GetIdentityAttributesParamsJSON
+    ): GetIdentityAttributesParams {
         return this.fromAny(value)
     }
 }

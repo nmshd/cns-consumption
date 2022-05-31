@@ -1,6 +1,18 @@
 import { ISerializable, Serializable, serialize, validate } from "@js-soft/ts-serval"
-import { IdentityAttribute, IIdentityAttribute, IRelationshipAttribute, RelationshipAttribute } from "@nmshd/content"
+import {
+    IdentityAttribute,
+    IdentityAttributeJSON,
+    IIdentityAttribute,
+    IRelationshipAttribute,
+    RelationshipAttribute,
+    RelationshipAttributeJSON
+} from "@nmshd/content"
 import { CoreId, ICoreId } from "@nmshd/transport"
+
+export interface UpdateConsumptionAttributeParamsJSON extends ISerializable {
+    id: string
+    content: IdentityAttributeJSON | RelationshipAttributeJSON
+}
 
 export interface IUpdateConsumptionAttributeParams extends ISerializable {
     id: ICoreId
@@ -16,7 +28,9 @@ export class UpdateConsumptionAttributeParams extends Serializable implements IU
     @validate()
     public content: IdentityAttribute | RelationshipAttribute
 
-    public static from(value: IUpdateConsumptionAttributeParams): UpdateConsumptionAttributeParams {
+    public static from(
+        value: IUpdateConsumptionAttributeParams | UpdateConsumptionAttributeParamsJSON
+    ): UpdateConsumptionAttributeParams {
         return this.fromAny(value)
     }
 }

@@ -1,7 +1,20 @@
 import { ISerializable, Serializable, serialize, validate } from "@js-soft/ts-serval"
-import { IdentityAttribute, IIdentityAttribute, IRelationshipAttribute, RelationshipAttribute } from "@nmshd/content"
+import {
+    IdentityAttribute,
+    IdentityAttributeJSON,
+    IIdentityAttribute,
+    IRelationshipAttribute,
+    RelationshipAttribute,
+    RelationshipAttributeJSON
+} from "@nmshd/content"
 import { CoreAddress, CoreId, ICoreAddress, ICoreId } from "@nmshd/transport"
 
+export interface CreatePeerConsumptionAttributeParamsJSON {
+    id: string
+    content: IdentityAttributeJSON | RelationshipAttributeJSON
+    requestReferece: string
+    peer: string
+}
 export interface ICreatePeerConsumptionAttributeParams extends ISerializable {
     id: ICoreId
     content: IIdentityAttribute | IRelationshipAttribute
@@ -29,7 +42,9 @@ export class CreatePeerConsumptionAttributeParams
     @validate()
     public peer: CoreAddress
 
-    public static from(value: ICreatePeerConsumptionAttributeParams): CreatePeerConsumptionAttributeParams {
+    public static from(
+        value: ICreatePeerConsumptionAttributeParams | CreatePeerConsumptionAttributeParamsJSON
+    ): CreatePeerConsumptionAttributeParams {
         return this.fromAny(value)
     }
 }
