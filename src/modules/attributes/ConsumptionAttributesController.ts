@@ -99,12 +99,12 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
 
     public async getConsumptionAttributes(query?: any): Promise<ConsumptionAttribute[]> {
         const attributes = await this.attributes.find(query)
-        return await this.parseArray(attributes, ConsumptionAttribute)
+        return await this.parseArray<ConsumptionAttribute>(attributes, ConsumptionAttribute)
     }
 
     public async getValidConsumptionAttributes(query?: any): Promise<ConsumptionAttribute[]> {
         const attributes = await this.attributes.find(query)
-        const items = await this.parseArray(attributes, ConsumptionAttribute)
+        const items = await this.parseArray<ConsumptionAttribute>(attributes, ConsumptionAttribute)
         return this.filterCurrent(items)
     }
 
@@ -115,7 +115,7 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         queryWithType["attributeType"] = "RelationshipAttribute"
         const dbQuery = relationshipQueryTranslator.parse(queryWithType)
         const attributes = await this.attributes.find(dbQuery)
-        return await this.parseArray(attributes, ConsumptionAttribute)
+        return await this.parseArray<ConsumptionAttribute>(attributes, ConsumptionAttribute)
     }
 
     public async executeIdentityAttributeQuery(params: IGetIdentityAttributesParams): Promise<ConsumptionAttribute[]> {
@@ -123,7 +123,7 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         queryWithType["attributeType"] = "IdentityAttribute"
         const dbQuery = identityQueryTranslator.parse(queryWithType)
         const attributes = await this.attributes.find(dbQuery)
-        return await this.parseArray(attributes, ConsumptionAttribute)
+        return await this.parseArray<ConsumptionAttribute>(attributes, ConsumptionAttribute)
     }
 
     public async createConsumptionAttribute(params: ICreateConsumptionAttributeParams): Promise<ConsumptionAttribute> {
