@@ -236,7 +236,7 @@ export class AttributeTest extends IntegrationTest {
                         valueType: "Nationality",
                         key: "nationality",
                         owner: CoreAddress.from("address"),
-                        attributeHints: {
+                        attributeCreationHints: {
                             title: "someHintTitle",
                             confidentiality: "public" as RelationshipAttributeConfidentiality
                         }
