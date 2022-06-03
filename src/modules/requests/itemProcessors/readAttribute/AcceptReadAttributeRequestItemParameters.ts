@@ -1,4 +1,4 @@
-import { Serializable, serialize, type, validate } from "@js-soft/ts-serval"
+import { Serializable, serialize, type, validate, ValidationError } from "@js-soft/ts-serval"
 import {
     IdentityAttribute,
     IdentityAttributeJSON,
@@ -6,6 +6,7 @@ import {
     RelationshipAttributeJSON
 } from "@nmshd/content"
 import { CoreId } from "@nmshd/transport"
+import { nameof } from "ts-simple-nameof"
 import { AcceptRequestItemParametersJSON } from "../../incoming/decide/AcceptRequestItemParameters"
 
 export interface AcceptReadAttributeRequestItemParametersJSON extends AcceptRequestItemParametersJSON {
@@ -25,5 +26,31 @@ export class AcceptReadAttributeRequestItemParameters extends Serializable {
 
     public static from(value: AcceptReadAttributeRequestItemParametersJSON): AcceptReadAttributeRequestItemParameters {
         return this.fromAny(value)
+    }
+
+    protected static override postFrom<T extends Serializable>(value: T): T {
+        const typedValue = value as AcceptReadAttributeRequestItemParameters
+
+        if (typedValue.attributeId && typedValue.attribute) {
+            throw new ValidationError(
+                AcceptReadAttributeRequestItemParameters.name,
+                nameof<AcceptReadAttributeRequestItemParameters>((x) => x.attribute),
+                `You cannot specify both ${nameof<AcceptReadAttributeRequestItemParameters>(
+                    (x) => x.attribute
+                )} and ${nameof<AcceptReadAttributeRequestItemParameters>((x) => x.attributeId)}.`
+            )
+        }
+
+        if (!typedValue.attributeId && !typedValue.attribute) {
+            throw new ValidationError(
+                AcceptReadAttributeRequestItemParameters.name,
+                nameof<AcceptReadAttributeRequestItemParameters>((x) => x.attribute),
+                `You have to specify either ${nameof<AcceptReadAttributeRequestItemParameters>(
+                    (x) => x.attribute
+                )} or ${nameof<AcceptReadAttributeRequestItemParameters>((x) => x.attributeId)}.`
+            )
+        }
+
+        return value
     }
 }
