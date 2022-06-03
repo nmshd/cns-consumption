@@ -92,44 +92,6 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
             })
 
             describe("accept", function () {
-                // TODO: remove the following if we for sure only allow RelationshipAttributes in a RequestItem
-                // it("in case of an IdentityAttribute, creates a Repository Attribute as well as a copy of it for the peer of the Request", async function () {
-                //     const attribute = await consumptionController.attributes.createConsumptionAttribute({
-                //         content: IdentityAttribute.from({
-                //             value: GivenName.fromAny({ value: "AGivenName" }),
-                //             owner: CoreAddress.from(testAccount.identity.address)
-                //         })
-                //     })
-                //     const requestItem = CreateAttributeRequestItem.from({
-                //         mustBeAccepted: true,
-                //         query: IdentityAttributeQuery.from({ valueType: "GivenName" })
-                //     })
-                //     const requestId = await ConsumptionIds.request.generate()
-                //     const incomingRequest = ConsumptionRequest.from({
-                //         id: requestId,
-                //         createdAt: CoreDate.utc(),
-                //         isOwn: false,
-                //         peer: CoreAddress.from("id1"),
-                //         status: ConsumptionRequestStatus.DecisionRequired,
-                //         content: Request.from({
-                //             id: requestId,
-                //             items: [requestItem]
-                //         }),
-                //         statusLog: []
-                //     })
-                //     const acceptParams: AcceptReadAttributeRequestItemParametersJSON = {
-                //         accept: true,
-                //         attributeId: attribute.id.toString()
-                //     }
-                //     const result = await processor.accept(requestItem, acceptParams, incomingRequest)
-                //     const createdAttribute = await consumptionController.attributes.getConsumptionAttribute(
-                //         result.attributeId
-                //     )
-                //     expect(createdAttribute).to.exist
-                //     expect(createdAttribute!.shareInfo).to.exist
-                //     expect(createdAttribute!.shareInfo!.peer.toString()).to.equal(incomingRequest.peer.toString())
-                // })
-
                 it("in case of a RelationshipAttribute, creates a ConsumptionAttribute for the peer of the Request", async function () {
                     const requestItem = CreateAttributeRequestItem.from({
                         mustBeAccepted: true,
