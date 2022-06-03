@@ -3,6 +3,7 @@ import {
     ReadAttributeAcceptResponseItem,
     ReadAttributeRequestItem,
     RejectResponseItem,
+    RelationshipAttribute,
     ResponseItemResult
 } from "@nmshd/content"
 import { CoreAddress, CoreId, TransportErrors } from "@nmshd/transport"
@@ -27,14 +28,6 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
     ): Promise<ValidationResult> {
         const parsedParams: AcceptReadAttributeRequestItemParameters =
             AcceptReadAttributeRequestItemParameters.from(params)
-
-        if (params.attribute && params.attributeId) {
-            throw new Error("You cannot specify both attribute and attributeId.")
-        }
-
-        if (!params.attribute && !params.attributeId) {
-            throw new Error("Either attribute or attributeId must be provided")
-        }
 
         if (parsedParams.attributeId) {
             const foundAttribute = await this.consumptionController.attributes.getConsumptionAttribute(
@@ -65,39 +58,47 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
 
         let sharedConsumptionAttribute: ConsumptionAttribute
         if (parsedParams.attributeId) {
-            sharedConsumptionAttribute =
-                await this.consumptionController.attributes.createSharedConsumptionAttributeCopy({
-                    attributeId: CoreId.from(parsedParams.attributeId),
-                    peer: CoreAddress.from(request.peer),
-                    requestReference: CoreId.from(request.id)
-                })
+            sharedConsumptionAttribute = await this.copyExistingAttribute(parsedParams.attributeId, request)
         } else {
-            // eslint-disable-next-line no-lonely-if
-            if (parsedParams.attribute instanceof IdentityAttribute) {
-                const repositoryConsumptionAttribute =
-                    await this.consumptionController.attributes.createConsumptionAttribute({
-                        content: parsedParams.attribute
-                    })
-
-                sharedConsumptionAttribute =
-                    await this.consumptionController.attributes.createSharedConsumptionAttributeCopy({
-                        attributeId: CoreId.from(repositoryConsumptionAttribute.id),
-                        peer: CoreAddress.from(request.peer),
-                        requestReference: CoreId.from(request.id)
-                    })
-            } else {
-                sharedConsumptionAttribute = await this.consumptionController.attributes.createRelationshipAttribute({
-                    content: parsedParams.attribute!,
-                    peer: request.peer,
-                    requestReference: CoreId.from(request.id)
-                })
-            }
+            sharedConsumptionAttribute = await this.createNewAttribute(parsedParams.attribute!, request)
         }
 
         return ReadAttributeAcceptResponseItem.from({
             result: ResponseItemResult.Accepted,
             attributeId: sharedConsumptionAttribute.id,
             attribute: sharedConsumptionAttribute.content
+        })
+    }
+
+    private async copyExistingAttribute(attributeId: CoreId, request: ConsumptionRequest) {
+        return await this.consumptionController.attributes.createSharedConsumptionAttributeCopy({
+            attributeId: CoreId.from(attributeId),
+            peer: CoreAddress.from(request.peer),
+            requestReference: CoreId.from(request.id)
+        })
+    }
+
+    private async createNewAttribute(
+        attribute: IdentityAttribute | RelationshipAttribute,
+        request: ConsumptionRequest
+    ) {
+        if (attribute instanceof IdentityAttribute) {
+            const repositoryConsumptionAttribute =
+                await this.consumptionController.attributes.createConsumptionAttribute({
+                    content: attribute
+                })
+
+            return await this.consumptionController.attributes.createSharedConsumptionAttributeCopy({
+                attributeId: CoreId.from(repositoryConsumptionAttribute.id),
+                peer: CoreAddress.from(request.peer),
+                requestReference: CoreId.from(request.id)
+            })
+        }
+
+        return await this.consumptionController.attributes.createRelationshipAttribute({
+            content: attribute,
+            peer: request.peer,
+            requestReference: CoreId.from(request.id)
         })
     }
 
