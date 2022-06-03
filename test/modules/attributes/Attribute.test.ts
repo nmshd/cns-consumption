@@ -233,9 +233,10 @@ export class AttributeTest extends IntegrationTest {
 
                 const query: IGetRelationshipAttributesParams = {
                     query: {
+                        valueType: "Nationality",
                         key: "nationality",
                         owner: CoreAddress.from("address"),
-                        attributeHints: {
+                        attributeCreationHints: {
                             title: "someHintTitle",
                             confidentiality: "public" as RelationshipAttributeConfidentiality
                         }
