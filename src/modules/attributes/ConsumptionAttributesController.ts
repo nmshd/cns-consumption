@@ -5,6 +5,10 @@ import { ConsumptionController } from "../../consumption/ConsumptionController"
 import { ICreateConsumptionAttributeParams } from "./CreateConsumptionAttributeParams"
 import { ICreatePeerConsumptionAttributeParams } from "./CreatePeerConsumptionAttributeParams"
 import {
+    CreateRelationshipAttributeParams,
+    ICreateRelationshipAttributeParams
+} from "./CreateRelationshipAttributeParams"
+import {
     CreateSharedConsumptionAttributeCopyParams,
     ICreateSharedConsumptionAttributeCopyParams
 } from "./CreateSharedConsumptionAttributeCopyParams"
@@ -153,6 +157,26 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         const successor = await ConsumptionAttribute.fromAttribute(parsedParams.successorContent, parsedParams.succeeds)
         await this.attributes.create(successor)
         return successor
+    }
+
+    public async createRelationshipAttribute(
+        params: ICreateRelationshipAttributeParams
+    ): Promise<ConsumptionAttribute> {
+        const parsedParams = CreateRelationshipAttributeParams.from(params)
+
+        const shareInfo = ConsumptionAttributeShareInfo.from({
+            peer: parsedParams.peer,
+            requestReference: parsedParams.requestReference
+        })
+
+        const sharedConsumptionAttribute = await ConsumptionAttribute.fromAttribute(
+            params.content,
+            undefined,
+            shareInfo
+        )
+        await this.attributes.create(sharedConsumptionAttribute)
+
+        return sharedConsumptionAttribute
     }
 
     public async createSharedConsumptionAttributeCopy(
