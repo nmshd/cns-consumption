@@ -11,6 +11,7 @@ import { ConsumptionRequestTest } from "./modules/requests/local/ConsumptionRequ
 import { OutgoingRequestControllerTests } from "./modules/requests/OutgoingRequestsController.test"
 import { RequestEnd2EndTests } from "./modules/requests/RequestEnd2End.test"
 import { RequestItemProcessorRegistryTests } from "./modules/requests/RequestItemProcessorRegistry.test"
+import setup from "./setup"
 
 export enum BackboneEnvironment {
     Local = "http://enmeshed.local",
@@ -33,6 +34,7 @@ export class Test {
         databaseConnection: IDatabaseConnection,
         logger: ILoggerFactory
     ): void {
+        setup()
         new AttributeTest(config, databaseConnection, logger).run()
         new RequestEnd2EndTests(config, databaseConnection, logger).run()
         new OutgoingRequestControllerTests(config, databaseConnection, logger).run()
@@ -44,6 +46,7 @@ export class Test {
     }
 
     public static runUnitTests(logger: ILoggerFactory): void {
+        setup() // eslint-disable-line mocha/no-sibling-hooks
         new ConsumptionRequestTest(logger).run()
         new DecideRequestParametersValidatorTests(logger).run()
     }
