@@ -97,7 +97,9 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                     const processor = new GenericRequestItemProcessor(undefined!)
 
                     const actual = await processor.canCreateOutgoingRequestItem(
-                        TestRequestItem.from({ mustBeAccepted: false })
+                        TestRequestItem.from({ mustBeAccepted: false }),
+                        undefined!,
+                        undefined!
                     )
 
                     expect(actual.isSuccess()).to.be.true

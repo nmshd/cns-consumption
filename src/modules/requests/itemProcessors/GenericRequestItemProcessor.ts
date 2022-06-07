@@ -1,5 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { AcceptResponseItem, RejectResponseItem, RequestItem, ResponseItem, ResponseItemResult } from "@nmshd/content"
+import {
+    AcceptResponseItem,
+    RejectResponseItem,
+    Request,
+    RequestItem,
+    ResponseItem,
+    ResponseItemResult
+} from "@nmshd/content"
+import { CoreAddress } from "@nmshd/transport"
 import { AcceptRequestItemParametersJSON } from "../incoming/decide/AcceptRequestItemParameters"
 import { RejectRequestItemParametersJSON } from "../incoming/decide/RejectRequestItemParameters"
 import { ConsumptionRequest } from "../local/ConsumptionRequest"
@@ -53,7 +61,11 @@ export class GenericRequestItemProcessor<
         })
     }
 
-    public canCreateOutgoingRequestItem(requestItem: TRequestItem): Promise<ValidationResult> | ValidationResult {
+    public canCreateOutgoingRequestItem(
+        requestItem: TRequestItem,
+        request: Request,
+        recipient: CoreAddress
+    ): Promise<ValidationResult> | ValidationResult {
         return ValidationResult.success()
     }
 

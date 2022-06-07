@@ -1,4 +1,5 @@
-import { AcceptResponseItem, RejectResponseItem, RequestItem, ResponseItem } from "@nmshd/content"
+import { AcceptResponseItem, RejectResponseItem, Request, RequestItem, ResponseItem } from "@nmshd/content"
+import { CoreAddress } from "@nmshd/transport"
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
 import { AcceptRequestItemParametersJSON } from "../incoming/decide/AcceptRequestItemParameters"
 import { RejectRequestItemParametersJSON } from "../incoming/decide/RejectRequestItemParameters"
@@ -36,7 +37,9 @@ export abstract class AbstractRequestItemProcessor<
         request: ConsumptionRequest
     ): RejectResponseItem | Promise<RejectResponseItem>
     public abstract canCreateOutgoingRequestItem(
-        requestItem: TRequestItem
+        requestItem: TRequestItem,
+        request: Request,
+        recipient: CoreAddress
     ): ValidationResult | Promise<ValidationResult>
     public abstract canApplyIncomingResponseItem(
         responseItem: ResponseItem,
