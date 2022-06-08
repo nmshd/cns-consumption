@@ -210,7 +210,7 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
             requestReference: params.requestReference
         })
         const peerConsumptionAttribute = ConsumptionAttribute.from({
-            id: params.id,
+            id: params.id ?? (await ConsumptionIds.attribute.generate()),
             content: params.content,
             shareInfo: shareInfo,
             createdAt: CoreDate.utc()

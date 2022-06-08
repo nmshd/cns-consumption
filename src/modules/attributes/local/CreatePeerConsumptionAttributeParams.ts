@@ -17,7 +17,7 @@ export interface CreatePeerConsumptionAttributeParamsJSON {
 }
 
 export interface ICreatePeerConsumptionAttributeParams extends ISerializable {
-    id: ICoreId
+    id?: ICoreId // needs to be optional because sometimes (e.g. when accepting a CreateAttributeRequestItem) the id is not known yet
     content: IIdentityAttribute | IRelationshipAttribute
     requestReference: ICoreId
     peer: ICoreAddress
