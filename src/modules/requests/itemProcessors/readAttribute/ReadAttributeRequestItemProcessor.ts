@@ -4,6 +4,8 @@ import {
     ReadAttributeRequestItem,
     RejectResponseItem,
     RelationshipAttribute,
+    RelationshipAttributeQuery,
+    Request,
     ResponseItemResult
 } from "@nmshd/content"
 import { CoreAddress, CoreId, TransportErrors } from "@nmshd/transport"
@@ -21,6 +23,41 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
     ReadAttributeRequestItem,
     AcceptReadAttributeRequestItemParametersJSON
 > {
+    public override canCreateOutgoingRequestItem(
+        requestItem: ReadAttributeRequestItem,
+        _request: Request,
+        recipient: CoreAddress
+    ): Promise<ValidationResult> | ValidationResult {
+        const ownAddress = this.consumptionController.accountController.identity.address
+        if (requestItem.query instanceof RelationshipAttributeQuery) {
+            if (requestItem.query.thirdParty?.equals(ownAddress)) {
+                return ValidationResult.error(
+                    ConsumptionErrors.requests.invalidRequestItem(
+                        "Cannot query an Attribute with the own address as third party."
+                    )
+                )
+            }
+
+            if (requestItem.query.thirdParty?.equals(recipient)) {
+                return ValidationResult.error(
+                    ConsumptionErrors.requests.invalidRequestItem(
+                        "Cannot query an Attribute with the recipient's address as third party."
+                    )
+                )
+            }
+
+            if (requestItem.query.owner.equals(ownAddress) && requestItem.query.thirdParty !== undefined) {
+                return ValidationResult.error(
+                    ConsumptionErrors.requests.invalidRequestItem(
+                        "Cannot query query own Attributes from a third party."
+                    )
+                )
+            }
+        }
+
+        return ValidationResult.success()
+    }
+
     public override async canAccept(
         _requestItem: ReadAttributeRequestItem,
         params: AcceptReadAttributeRequestItemParametersJSON,
@@ -41,7 +78,11 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
             }
 
             if (!this.consumptionController.accountController.identity.isMe(foundAttribute.content.owner)) {
-                return ValidationResult.error(ConsumptionErrors.requests.canOnlyShareOwnAttributes())
+                return ValidationResult.error(
+                    ConsumptionErrors.requests.invalidRequestItem(
+                        "The given Attribute belongs to someone else. You can only share own Attributes."
+                    )
+                )
             }
         }
 
@@ -95,7 +136,7 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
             })
         }
 
-        return await this.consumptionController.attributes.createRelationshipAttribute({
+        return await this.consumptionController.attributes.createPeerConsumptionAttribute({
             content: attribute,
             peer: request.peer,
             requestReference: CoreId.from(request.id)

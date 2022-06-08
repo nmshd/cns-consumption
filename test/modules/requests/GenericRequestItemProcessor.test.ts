@@ -33,7 +33,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                         consumptionRequest
                     )
 
-                    expect(result.isSuccess()).to.be.true
+                    expect(result).to.be.a.successfulValidationResult
                 })
             })
 
@@ -51,7 +51,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                         consumptionRequest
                     )
 
-                    expect(result.isSuccess()).to.be.true
+                    expect(result).to.be.a.successfulValidationResult
                 })
             })
 
