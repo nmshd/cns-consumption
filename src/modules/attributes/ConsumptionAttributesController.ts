@@ -1,27 +1,28 @@
 import { CoreDate, CoreId, SynchronizedCollection, TransportErrors } from "@nmshd/transport"
 import { nameof } from "ts-simple-nameof"
-import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionErrors } from "../../consumption"
-import { ConsumptionController } from "../../consumption/ConsumptionController"
-import { ICreateConsumptionAttributeParams } from "./CreateConsumptionAttributeParams"
-import { ICreatePeerConsumptionAttributeParams } from "./CreatePeerConsumptionAttributeParams"
 import {
-    CreateRelationshipAttributeParams,
-    ICreateRelationshipAttributeParams
-} from "./CreateRelationshipAttributeParams"
+    ConsumptionBaseController,
+    ConsumptionControllerName,
+    ConsumptionErrors,
+    ConsumptionIds
+} from "../../consumption"
+import { ConsumptionController } from "../../consumption/ConsumptionController"
+import { ConsumptionAttribute } from "./local/ConsumptionAttribute"
+import { ConsumptionAttributeShareInfo } from "./local/ConsumptionAttributeShareInfo"
+import { ICreateConsumptionAttributeParams } from "./local/CreateConsumptionAttributeParams"
+import { ICreatePeerConsumptionAttributeParams } from "./local/CreatePeerConsumptionAttributeParams"
 import {
     CreateSharedConsumptionAttributeCopyParams,
     ICreateSharedConsumptionAttributeCopyParams
-} from "./CreateSharedConsumptionAttributeCopyParams"
-import { IGetIdentityAttributesParams } from "./GetIdentityAttributesParams"
-import { IGetRelationshipAttributesParams } from "./GetRelationshipAttributesParams"
-import { ConsumptionAttribute } from "./local/ConsumptionAttribute"
-import { ConsumptionAttributeShareInfo } from "./local/ConsumptionAttributeShareInfo"
+} from "./local/CreateSharedConsumptionAttributeCopyParams"
+import { IGetIdentityAttributesParams } from "./local/GetIdentityAttributesParams"
+import { IGetRelationshipAttributesParams } from "./local/GetRelationshipAttributesParams"
 import { identityQueryTranslator, relationshipQueryTranslator } from "./local/QueryTranslator"
 import {
     ISucceedConsumptionAttributeParams,
     SucceedConsumptionAttributeParams
-} from "./SucceedConsumptionAttributeParams"
-import { IUpdateConsumptionAttributeParams } from "./UpdateConsumptionAttributeParams"
+} from "./local/SucceedConsumptionAttributeParams"
+import { IUpdateConsumptionAttributeParams } from "./local/UpdateConsumptionAttributeParams"
 
 export class ConsumptionAttributesController extends ConsumptionBaseController {
     private attributes: SynchronizedCollection
@@ -157,26 +158,6 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         const successor = await ConsumptionAttribute.fromAttribute(parsedParams.successorContent, parsedParams.succeeds)
         await this.attributes.create(successor)
         return successor
-    }
-
-    public async createRelationshipAttribute(
-        params: ICreateRelationshipAttributeParams
-    ): Promise<ConsumptionAttribute> {
-        const parsedParams = CreateRelationshipAttributeParams.from(params)
-
-        const shareInfo = ConsumptionAttributeShareInfo.from({
-            peer: parsedParams.peer,
-            requestReference: parsedParams.requestReference
-        })
-
-        const sharedConsumptionAttribute = await ConsumptionAttribute.fromAttribute(
-            params.content,
-            undefined,
-            shareInfo
-        )
-        await this.attributes.create(sharedConsumptionAttribute)
-
-        return sharedConsumptionAttribute
     }
 
     public async createSharedConsumptionAttributeCopy(
