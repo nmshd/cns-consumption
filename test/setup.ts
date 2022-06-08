@@ -16,7 +16,7 @@ export default function setup(): void {
         )
     })
 
-    Assertion.addMethod("errorValidationResult", function (error: { code?: string; message?: string }) {
+    Assertion.addMethod("errorValidationResult", function (error: { code?: string; message?: string | RegExp }) {
         const obj = this._obj as ValidationResult
 
         this.assert(
@@ -43,9 +43,9 @@ export default function setup(): void {
 
         if (error.message !== undefined) {
             this.assert(
-                errorValidationResult.error.message === error.message,
-                `expected the error message of the result to be '${error.message}', but received '${errorValidationResult.error.message}'.`,
-                `expected the error message of the result to not be '${error.message}', but it is.`,
+                errorValidationResult.error.message.match(error.message) !== null,
+                `expected the error message of the result to match '${error.message}', but received '${errorValidationResult.error.message}'.`,
+                `expected the error message of the result to not match '${error.message}', but it is.`,
                 error.message,
                 errorValidationResult.error.message
             )
@@ -56,7 +56,7 @@ declare global {
     namespace Chai {
         interface Assertion {
             successfulValidationResult(): Assertion
-            errorValidationResult(error?: { code?: string; message?: string }): Assertion
+            errorValidationResult(error?: { code?: string; message?: string | RegExp }): Assertion
         }
     }
 }
