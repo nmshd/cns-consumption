@@ -6,6 +6,7 @@ import { DecideRequestParametersValidatorTests } from "./modules/requests/Decide
 import { GenericRequestItemProcessorTests } from "./modules/requests/GenericRequestItemProcessor.test"
 import { IncomingRequestControllerTests } from "./modules/requests/IncomingRequestsController.test"
 import { CreateAttributeRequestItemProcessorTests } from "./modules/requests/itemProcessors/createAttribute/CreateAttributeRequestItemProcessor.test"
+import { ProposeAttributeRequestItemProcessorTests } from "./modules/requests/itemProcessors/proposeAttribute/ProposeAttributeRequestItemProcessor.test"
 import { ReadAttributeRequestItemProcessorTests } from "./modules/requests/itemProcessors/readAttribute/ReadAttributeRequestItemProcessor.test"
 import { ConsumptionRequestTest } from "./modules/requests/local/ConsumptionRequest.test"
 import { OutgoingRequestControllerTests } from "./modules/requests/OutgoingRequestsController.test"
@@ -41,6 +42,7 @@ export class Test {
         new IncomingRequestControllerTests(config, databaseConnection, logger).run()
         new ReadAttributeRequestItemProcessorTests(config, databaseConnection, logger).run()
         new CreateAttributeRequestItemProcessorTests(config, databaseConnection, logger).run()
+        new ProposeAttributeRequestItemProcessorTests(config, databaseConnection, logger).run()
         new RequestItemProcessorRegistryTests(config, databaseConnection, logger).run()
         new GenericRequestItemProcessorTests(config, databaseConnection, logger).run()
     }

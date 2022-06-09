@@ -1,9 +1,18 @@
 import {
     AcceptResponseItem,
+    GivenName,
+    IdentityAttribute,
+    IdentityAttributeQuery,
+    IIdentityAttribute,
+    IRelationshipAttribute,
+    IRelationshipAttributeQuery,
     IRelationshipCreationChangeRequestBody,
     IRelationshipTemplateBody,
     IRequest,
     IResponse,
+    RelationshipAttribute,
+    RelationshipAttributeConfidentiality,
+    RelationshipAttributeQuery,
     Request,
     RequestItemGroup,
     ResponseItemResult,
@@ -36,6 +45,40 @@ import {
 import { TestRequestItem } from "./TestRequestItem"
 
 export class TestObjectFactory {
+    public static createIdentityAttributeQuery(
+        properties: Partial<IRelationshipAttributeQuery>
+    ): IdentityAttributeQuery {
+        return RelationshipAttributeQuery.from({
+            key: properties.key ?? "aKey",
+            owner: properties.owner ?? CoreAddress.from("id1"),
+            valueType: properties.valueType ?? "ProprietaryString",
+            thirdParty: properties.thirdParty ?? CoreAddress.from("idThirdParty"),
+            validFrom: properties.validFrom ?? CoreDate.utc(),
+            validTo: properties.validTo ?? CoreDate.utc(),
+            attributeCreationHints: {
+                title: "ATitle",
+                confidentiality: RelationshipAttributeConfidentiality.Public
+            }
+        })
+    }
+
+    public static createIdentityAttribute(properties?: Partial<IIdentityAttribute>): IdentityAttribute {
+        return IdentityAttribute.from({
+            value: properties?.value ?? GivenName.fromAny({ value: "AGivenName" }),
+            owner: properties?.owner ?? CoreAddress.from("id1")
+        })
+    }
+
+    public static createRelationshipAttribute(properties?: Partial<IRelationshipAttribute>): RelationshipAttribute {
+        return RelationshipAttribute.from({
+            value: properties?.value ?? GivenName.fromAny({ value: "AGivenName" }),
+            confidentiality: RelationshipAttributeConfidentiality.Public,
+            key: "aKey",
+            isTechnical: false,
+            owner: properties?.owner ?? CoreAddress.from("id1")
+        })
+    }
+
     public static createRequest(): IRequest {
         return this.createRequestWithOneItem()
     }
