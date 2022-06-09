@@ -1,5 +1,5 @@
+import { ErrorValidationResult, SuccessfulValidationResult, ValidationResult } from "@nmshd/consumption"
 import { Assertion } from "chai"
-import { ErrorValidationResult, SuccessfulValidationResult, ValidationResult } from "../src"
 
 export default function setup(): void {
     Assertion.addMethod("successfulValidationResult", function () {
