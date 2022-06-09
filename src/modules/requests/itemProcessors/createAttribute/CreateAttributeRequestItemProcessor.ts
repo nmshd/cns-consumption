@@ -20,21 +20,22 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
 > {
     public override canCreateOutgoingRequestItem(
         requestItem: CreateAttributeRequestItem,
-        request: Request,
-        recipient: CoreAddress
+        _request: Request,
+        _recipient: CoreAddress
     ): ValidationResult | Promise<ValidationResult> {
         if (requestItem.attribute instanceof IdentityAttribute) {
-            return this.canCreateRequestItemWithIdentityAttribute(requestItem, recipient)
+            return this.canCreateRequestItemWithIdentityAttribute(requestItem)
         }
 
         return this.canCreateRequestItemWithRelationshipAttribute(requestItem)
     }
 
-    private canCreateRequestItemWithIdentityAttribute(
-        requestItem: CreateAttributeRequestItem,
-        recipient: CoreAddress
-    ): ValidationResult {
-        if (requestItem.attribute.owner === recipient) {
+    private canCreateRequestItemWithIdentityAttribute(requestItem: CreateAttributeRequestItem): ValidationResult {
+        const iAmOwnerOfTheAttribute = this.consumptionController.accountController.identity.isMe(
+            requestItem.attribute.owner
+        )
+
+        if (!iAmOwnerOfTheAttribute) {
             return ValidationResult.error(
                 ConsumptionErrors.requests.invalidRequestItem(
                     `Cannot send Identity Attributes where you are not the owner via ${CreateAttributeRequestItem.name}. Consider using a ${ProposeAttributeRequestItem.name} instead.`

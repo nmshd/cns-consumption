@@ -9,8 +9,6 @@ import {
 import {
     CreateAttributeAcceptResponseItem,
     CreateAttributeRequestItem,
-    GivenName,
-    IdentityAttribute,
     ProprietaryString,
     RelationshipAttribute,
     RelationshipAttributeConfidentiality,
@@ -21,6 +19,7 @@ import { AccountController, CoreAddress, CoreDate, Transport } from "@nmshd/tran
 import { expect } from "chai"
 import { IntegrationTest } from "../../../../core/IntegrationTest"
 import { TestUtil } from "../../../../core/TestUtil"
+import { TestObjectFactory } from "../../testHelpers/TestObjectFactory"
 
 export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
     public run(): void {
@@ -68,7 +67,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const result = await processor.canCreateOutgoingRequestItem(requestItem, request, recipientAddress)
 
-                    expect(result).to.be.a.successfulValidationResult
+                    expect(result).to.be.a.successfulValidationResult()
                 })
 
                 it("returns an error when passing a Relationship Attribute with 'owner!=sender&owner!=recipient'", async function () {
@@ -98,8 +97,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                 it("returns an error when passing an Identity Attribute with 'owner!=sender' (Identity Attributes for the recipient should always be created via ProposeAttributeRequestItem)", async function () {
                     const recipientAddress = CoreAddress.from("recipientAddress")
                     const attribute = await consumptionController.attributes.createConsumptionAttribute({
-                        content: IdentityAttribute.from({
-                            value: GivenName.fromAny({ value: "AGivenName" }),
+                        content: TestObjectFactory.createIdentityAttribute({
                             owner: recipientAddress
                         })
                     })
@@ -120,12 +118,11 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
 
             describe("accept", function () {
                 it("in case of an IdentityAttribute with 'owner=sender', creates a Consumption Attribute for the peer of the Request", async function () {
-                    const senderAddress = CoreAddress.from("CoreAddress")
+                    const senderAddress = CoreAddress.from("SenderAddress")
                     const requestItem = CreateAttributeRequestItem.from({
                         mustBeAccepted: true,
-                        attribute: IdentityAttribute.from({
-                            owner: senderAddress,
-                            value: GivenName.fromAny({ value: "aGivenName" })
+                        attribute: TestObjectFactory.createIdentityAttribute({
+                            owner: senderAddress
                         })
                     })
                     const incomingRequest = ConsumptionRequest.from({

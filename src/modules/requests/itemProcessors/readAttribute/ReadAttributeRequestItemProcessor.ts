@@ -4,7 +4,6 @@ import {
     ReadAttributeRequestItem,
     RejectResponseItem,
     RelationshipAttribute,
-    RelationshipAttributeQuery,
     Request,
     ResponseItemResult
 } from "@nmshd/content"
@@ -13,6 +12,7 @@ import { ConsumptionErrors } from "../../../../consumption"
 import { ConsumptionAttribute } from "../../../attributes/local/ConsumptionAttribute"
 import { ConsumptionRequest } from "../../local/ConsumptionRequest"
 import { GenericRequestItemProcessor } from "../GenericRequestItemProcessor"
+import validateQuery from "../utility/validateQuery"
 import { ValidationResult } from "../ValidationResult"
 import {
     AcceptReadAttributeRequestItemParameters,
@@ -27,32 +27,14 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
         requestItem: ReadAttributeRequestItem,
         _request: Request,
         recipient: CoreAddress
-    ): Promise<ValidationResult> | ValidationResult {
-        const ownAddress = this.consumptionController.accountController.identity.address
-        if (requestItem.query instanceof RelationshipAttributeQuery) {
-            if (requestItem.query.thirdParty?.equals(ownAddress)) {
-                return ValidationResult.error(
-                    ConsumptionErrors.requests.invalidRequestItem(
-                        "Cannot query an Attribute with the own address as third party."
-                    )
-                )
-            }
-
-            if (requestItem.query.thirdParty?.equals(recipient)) {
-                return ValidationResult.error(
-                    ConsumptionErrors.requests.invalidRequestItem(
-                        "Cannot query an Attribute with the recipient's address as third party."
-                    )
-                )
-            }
-
-            if (requestItem.query.owner.equals(ownAddress) && requestItem.query.thirdParty !== undefined) {
-                return ValidationResult.error(
-                    ConsumptionErrors.requests.invalidRequestItem(
-                        "Cannot query query own Attributes from a third party."
-                    )
-                )
-            }
+    ): ValidationResult {
+        const queryValidationResult = validateQuery(
+            requestItem.query,
+            this.consumptionController.accountController.identity.address,
+            recipient
+        )
+        if (queryValidationResult.isError()) {
+            return queryValidationResult
         }
 
         return ValidationResult.success()

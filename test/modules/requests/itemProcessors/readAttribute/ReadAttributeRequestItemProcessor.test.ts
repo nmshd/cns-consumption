@@ -8,9 +8,7 @@ import {
 } from "@nmshd/consumption"
 import {
     AbstractStringJSON,
-    GivenName,
     IAbstractStringJSON,
-    IdentityAttribute,
     IdentityAttributeJSON,
     IdentityAttributeQuery,
     ReadAttributeAcceptResponseItem,
@@ -26,6 +24,7 @@ import { expect } from "chai"
 import itParam from "mocha-param"
 import { IntegrationTest } from "../../../../core/IntegrationTest"
 import { TestUtil } from "../../../../core/TestUtil"
+import { TestObjectFactory } from "../../testHelpers/TestObjectFactory"
 
 export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
     public run(): void {
@@ -34,8 +33,8 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
         describe("ReadAttributeRequestItemProcessor", function () {
             const transport = new Transport(that.connection, that.config, that.loggerFactory)
 
-            let senderConsumptionController: ConsumptionController
-            let senderAccountController: AccountController
+            let consumptionController: ConsumptionController
+            let accountController: AccountController
 
             let processor: ReadAttributeRequestItemProcessor
 
@@ -47,17 +46,16 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                 await transport.init()
 
                 const accounts = await TestUtil.provideAccounts(transport, 2)
-                ;({ accountController: senderAccountController, consumptionController: senderConsumptionController } =
-                    accounts[0])
+                ;({ accountController, consumptionController } = accounts[0])
             })
 
             this.beforeEach(function () {
-                processor = new ReadAttributeRequestItemProcessor(senderConsumptionController)
+                processor = new ReadAttributeRequestItemProcessor(consumptionController)
             })
 
             describe("canCreateOutgoingRequestItem", function () {
                 describe("IdentityAttributeQuery", function () {
-                    it("simple query", async function () {
+                    it("simple query", function () {
                         const query = IdentityAttributeQuery.from({
                             "@type": "IdentityAttributeQuery",
                             valueType: "GivenName"
@@ -68,13 +66,13 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                             query: query
                         })
 
-                        const result = await processor.canCreateOutgoingRequestItem(
+                        const result = processor.canCreateOutgoingRequestItem(
                             requestItem,
                             Request.from({ items: [requestItem] }),
                             CoreAddress.from("recipientAddress")
                         )
 
-                        expect(result).to.be.a.successfulValidationResult
+                        expect(result).to.be.a.successfulValidationResult()
                     })
                 })
 
@@ -129,7 +127,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                             },
                             expectedOutput: {
                                 errorCode: "error.consumption.requests.invalidRequestItem",
-                                errorMessage: "Cannot query query own Attributes from a third party."
+                                errorMessage: "Cannot query own Attributes from a third party."
                             }
                         },
                         {
@@ -155,13 +153,13 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                             }
                         }
                     ]
-                    itParam("${value.description}", testParams, async function (testParams: TestParams) {
+                    itParam("${value.description}", testParams, function (testParams: TestParams) {
                         function translateTestIdentityToAddress(testIdentity?: TestIdentity) {
                             if (testIdentity === undefined) return undefined
 
                             switch (testIdentity) {
                                 case TestIdentity.Self:
-                                    return senderAccountController.identity.address.toString()
+                                    return accountController.identity.address.toString()
                                 case TestIdentity.Recipient:
                                     return CoreAddress.from("recipientAddress").toString()
                                 case TestIdentity.OtherWithRelationship:
@@ -193,14 +191,14 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                             query: query
                         })
 
-                        const result = await processor.canCreateOutgoingRequestItem(
+                        const result = processor.canCreateOutgoingRequestItem(
                             requestItem,
                             Request.from({ items: [requestItem] }),
                             CoreAddress.from("recipientAddress")
                         )
 
                         if (testParams.expectedOutput.hasOwnProperty("success")) {
-                            expect(result).to.be.a.successfulValidationResult
+                            expect(result).to.be.a.successfulValidationResult()
                         } else {
                             const error = testParams.expectedOutput as { errorCode?: string; errorMessage?: string }
                             expect(result).to.be.an.errorValidationResult({
@@ -213,11 +211,10 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
             })
 
             describe("canAccept", function () {
-                it("can be called with the id of an existing ConsumptionAttribute", async function () {
-                    const attribute = await senderConsumptionController.attributes.createConsumptionAttribute({
-                        content: IdentityAttribute.from({
-                            value: GivenName.fromAny({ value: "AGivenName" }),
-                            owner: CoreAddress.from(senderAccountController.identity.address)
+                it("can be called with the id of an existing own ConsumptionAttribute", async function () {
+                    const attribute = await consumptionController.attributes.createConsumptionAttribute({
+                        content: TestObjectFactory.createIdentityAttribute({
+                            owner: CoreAddress.from(accountController.identity.address)
                         })
                     })
 
@@ -246,7 +243,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const result = await processor.canAccept(requestItem, acceptParams, request)
 
-                    expect(result).to.be.a.successfulValidationResult
+                    expect(result).to.be.a.successfulValidationResult()
                 })
 
                 it("can be called with a new Attribute", async function () {
@@ -272,7 +269,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         accept: true,
                         attribute: {
                             "@type": "IdentityAttribute",
-                            owner: senderAccountController.identity.address.toString(),
+                            owner: accountController.identity.address.toString(),
                             value: {
                                 "@type": "GivenName",
                                 value: "AGivenName"
@@ -282,7 +279,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const result = await processor.canAccept(requestItem, acceptParams, request)
 
-                    expect(result).to.be.a.successfulValidationResult
+                    expect(result).to.be.a.successfulValidationResult()
                 })
 
                 it("returns an error when the given Attribute id does not exist", async function () {
@@ -321,11 +318,10 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const peerAttributeId = await ConsumptionIds.attribute.generate()
 
-                    await senderConsumptionController.attributes.createPeerConsumptionAttribute({
+                    await consumptionController.attributes.createPeerConsumptionAttribute({
                         id: peerAttributeId,
-                        content: IdentityAttribute.from({
-                            value: GivenName.fromAny({ value: "AGivenName" }),
-                            owner: CoreAddress.from(peer)
+                        content: TestObjectFactory.createIdentityAttribute({
+                            owner: peer
                         }),
                         peer: peer,
                         requestReference: await ConsumptionIds.request.generate()
@@ -364,11 +360,10 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
             })
 
             describe("accept", function () {
-                it("in case of a given attributeId, creates a copy of the Consumption Attribute with the given id with share info for the peer of the Request", async function () {
-                    const attribute = await senderConsumptionController.attributes.createConsumptionAttribute({
-                        content: IdentityAttribute.from({
-                            value: GivenName.fromAny({ value: "AGivenName" }),
-                            owner: CoreAddress.from(senderAccountController.identity.address)
+                it("in case of a given attributeId of an own Consumption Attribute, creates a copy of the Consumption Attribute with the given id with share info for the peer of the Request", async function () {
+                    const attribute = await consumptionController.attributes.createConsumptionAttribute({
+                        content: TestObjectFactory.createIdentityAttribute({
+                            owner: CoreAddress.from(accountController.identity.address)
                         })
                     })
 
@@ -397,7 +392,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const result = await processor.accept(requestItem, acceptParams, incomingRequest)
 
-                    const createdAttribute = await senderConsumptionController.attributes.getConsumptionAttribute(
+                    const createdAttribute = await consumptionController.attributes.getConsumptionAttribute(
                         result.attributeId
                     )
                     expect(createdAttribute).to.exist
@@ -405,7 +400,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                     expect(createdAttribute!.shareInfo!.peer.toString()).to.equal(incomingRequest.peer.toString())
                 })
 
-                it("in case of a given IdentityAttribute, creates a new Repository Attribute as well as a copy of it for the peer", async function () {
+                it("in case of a given own IdentityAttribute, creates a new Repository Attribute as well as a copy of it for the peer", async function () {
                     const requestItem = ReadAttributeRequestItem.from({
                         mustBeAccepted: true,
                         query: IdentityAttributeQuery.from({ valueType: "GivenName" })
@@ -428,7 +423,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         accept: true,
                         attribute: {
                             "@type": "IdentityAttribute",
-                            owner: senderAccountController.identity.address.toString(),
+                            owner: accountController.identity.address.toString(),
                             value: {
                                 "@type": "GivenName",
                                 value: "AGivenName"
@@ -437,7 +432,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                     }
 
                     const result = await processor.accept(requestItem, acceptParams, incomingRequest)
-                    const createdSharedAttribute = await senderConsumptionController.attributes.getConsumptionAttribute(
+                    const createdSharedAttribute = await consumptionController.attributes.getConsumptionAttribute(
                         result.attributeId
                     )
 
@@ -446,24 +441,32 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                     expect(createdSharedAttribute!.shareInfo!.peer.toString()).to.equal(incomingRequest.peer.toString())
                     expect(createdSharedAttribute!.shareInfo!.sourceAttribute).to.exist
 
-                    const createdRepositoryAttribute =
-                        await senderConsumptionController.attributes.getConsumptionAttribute(
-                            createdSharedAttribute!.shareInfo!.sourceAttribute!
-                        )
+                    const createdRepositoryAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                        createdSharedAttribute!.shareInfo!.sourceAttribute!
+                    )
                     expect(createdRepositoryAttribute).to.exist
                 })
 
-                it("in case of a given RelationshipAttribute, creates a new Consumption Attribute with share info for the peer of the Request - but no Repository Attribute", async function () {
+                it("in case of a given peer RelationshipAttribute, creates a new Consumption Attribute with share info for the peer of the Request - but no Repository Attribute", async function () {
+                    const senderAddress = accountController.identity.address
                     const requestItem = ReadAttributeRequestItem.from({
                         mustBeAccepted: true,
-                        query: IdentityAttributeQuery.from({ valueType: "GivenName" })
+                        query: RelationshipAttributeQuery.from({
+                            key: "aKey",
+                            owner: senderAddress,
+                            valueType: "ProprietaryString",
+                            attributeCreationHints: {
+                                title: "ATitle",
+                                confidentiality: RelationshipAttributeConfidentiality.Public
+                            }
+                        })
                     })
                     const requestId = await ConsumptionIds.request.generate()
                     const incomingRequest = ConsumptionRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
-                        peer: CoreAddress.from("id1"),
+                        peer: senderAddress,
                         status: ConsumptionRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
@@ -478,7 +481,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                             "@type": "RelationshipAttribute",
                             key: "AKey",
                             confidentiality: RelationshipAttributeConfidentiality.Public,
-                            owner: senderAccountController.identity.address.toString(),
+                            owner: senderAddress.toString(),
                             value: {
                                 "@type": "ProprietaryString",
                                 value: "AStringValue"
@@ -487,7 +490,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                     }
 
                     const result = await processor.accept(requestItem, acceptParams, incomingRequest)
-                    const createdSharedAttribute = await senderConsumptionController.attributes.getConsumptionAttribute(
+                    const createdSharedAttribute = await consumptionController.attributes.getConsumptionAttribute(
                         result.attributeId
                     )
 
@@ -524,19 +527,18 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                     const responseItem = ReadAttributeAcceptResponseItem.from({
                         result: ResponseItemResult.Accepted,
                         attributeId: attributeId,
-                        attribute: IdentityAttribute.from({
-                            value: GivenName.fromAny({ value: "AGivenName" }),
+                        attribute: TestObjectFactory.createIdentityAttribute({
                             owner: peer
                         })
                     })
 
                     await processor.applyIncomingResponseItem(responseItem, requestItem, incomingRequest)
-                    const createdAttribute = await senderConsumptionController.attributes.getConsumptionAttribute(
-                        attributeId
-                    )
+
+                    const createdAttribute = await consumptionController.attributes.getConsumptionAttribute(attributeId)
                     expect(createdAttribute).to.exist
                     expect(createdAttribute!.shareInfo).to.exist
                     expect(createdAttribute!.shareInfo!.peer.toString()).to.equal(incomingRequest.peer.toString())
+                    expect(createdAttribute!.shareInfo!.sourceAttribute).to.be.undefined
                 })
             })
         })
