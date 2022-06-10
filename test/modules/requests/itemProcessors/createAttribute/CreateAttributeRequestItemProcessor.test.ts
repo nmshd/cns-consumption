@@ -93,7 +93,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                             key: "aKey",
                             confidentiality: RelationshipAttributeConfidentiality.Public,
                             value: ProprietaryString.fromAny({ value: "aString" }),
-                            owner: CoreAddress.from("someOtherAddress")
+                            owner: CoreAddress.from("ownerAddress")
                         })
                     })
                     const requestItem = CreateAttributeRequestItem.from({
