@@ -90,7 +90,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     expect(result).to.be.an.errorValidationResult({
                         code: "error.consumption.requests.invalidRequestItem",
-                        message: "Cannot send Relationship Attributes where you are not the owner."
+                        message: /Cannot send Relationship Attributes of which you are not the owner./
                     })
                 })
 
@@ -111,7 +111,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     expect(result).to.be.an.errorValidationResult({
                         code: "error.consumption.requests.invalidRequestItem",
-                        message: /Cannot send Identity Attributes where you are not the owner.*/
+                        message: /Cannot send Identity Attributes of which you are not the owner.*/
                     })
                 })
             })

@@ -38,7 +38,7 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
         if (!iAmOwnerOfTheAttribute) {
             return ValidationResult.error(
                 ConsumptionErrors.requests.invalidRequestItem(
-                    `Cannot send Identity Attributes where you are not the owner via ${CreateAttributeRequestItem.name}. Consider using a ${ProposeAttributeRequestItem.name} instead.`
+                    `Cannot send Identity Attributes of which you are not the owner via ${CreateAttributeRequestItem.name}. Consider using a ${ProposeAttributeRequestItem.name} instead.`
                 )
             )
         }
@@ -54,7 +54,7 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
         if (!iAmOwnerOfTheAttribute) {
             return ValidationResult.error(
                 ConsumptionErrors.requests.invalidRequestItem(
-                    "Cannot send Relationship Attributes where you are not the owner."
+                    "Cannot send Relationship Attributes of which you are not the owner."
                 )
             )
         }
