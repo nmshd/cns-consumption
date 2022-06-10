@@ -70,7 +70,23 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                     expect(result).to.be.a.successfulValidationResult()
                 })
 
-                it("returns an error when passing a Relationship Attribute with 'owner!=sender&owner!=recipient'", async function () {
+                it("returns success when passing an Identity Attribute with 'owner=sender'", async function () {
+                    const recipientAddress = CoreAddress.from("recipientAddress")
+                    const attribute = await consumptionController.attributes.createConsumptionAttribute({
+                        content: TestObjectFactory.createIdentityAttribute({ owner: testAccount.identity.address })
+                    })
+                    const requestItem = CreateAttributeRequestItem.from({
+                        mustBeAccepted: false,
+                        attribute: attribute.content
+                    })
+                    const request = Request.from({ items: [requestItem] })
+
+                    const result = await processor.canCreateOutgoingRequestItem(requestItem, request, recipientAddress)
+
+                    expect(result).to.be.a.successfulValidationResult()
+                })
+
+                it("returns an error when passing a Relationship Attribute with 'owner!=sender'", async function () {
                     const recipientAddress = CoreAddress.from("recipientAddress")
                     const attribute = await consumptionController.attributes.createConsumptionAttribute({
                         content: RelationshipAttribute.from({
