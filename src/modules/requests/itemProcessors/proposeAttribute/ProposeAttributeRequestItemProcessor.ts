@@ -1,11 +1,9 @@
 import {
     IdentityAttribute,
-    IdentityAttributeQuery,
     ProposeAttributeAcceptResponseItem,
     ProposeAttributeRequestItem,
     RejectResponseItem,
     RelationshipAttribute,
-    RelationshipAttributeQuery,
     Request,
     ResponseItemResult
 } from "@nmshd/content"
@@ -30,11 +28,6 @@ export class ProposeAttributeRequestItemProcessor extends GenericRequestItemProc
         _request: Request,
         recipient: CoreAddress
     ): ValidationResult {
-        const combinationsValidationResult = this.validateCombinations(requestItem)
-        if (combinationsValidationResult.isError()) {
-            return combinationsValidationResult
-        }
-
         const queryValidationResult = validateQuery(
             requestItem.query,
             this.consumptionController.accountController.identity.address,
@@ -42,40 +35,6 @@ export class ProposeAttributeRequestItemProcessor extends GenericRequestItemProc
         )
         if (queryValidationResult.isError()) {
             return queryValidationResult
-        }
-
-        return ValidationResult.success()
-    }
-
-    private validateCombinations(requestItem: ProposeAttributeRequestItem) {
-        if ((requestItem.attribute.value.toJSON() as any)["@type"] !== requestItem.query.valueType) {
-            return ValidationResult.error(
-                ConsumptionErrors.requests.invalidRequestItem(
-                    "You cannot propose a Relationship Attribute whose value's type is different from the value type of the query."
-                )
-            )
-        }
-
-        if (
-            requestItem.attribute instanceof RelationshipAttribute &&
-            !(requestItem.query instanceof RelationshipAttributeQuery)
-        ) {
-            return ValidationResult.error(
-                ConsumptionErrors.requests.invalidRequestItem(
-                    "When proposing a RelationshipAttribute, the corresponding query has to be a RelationshipAttributeQuery."
-                )
-            )
-        }
-
-        if (
-            requestItem.attribute instanceof IdentityAttribute &&
-            !(requestItem.query instanceof IdentityAttributeQuery)
-        ) {
-            return ValidationResult.error(
-                ConsumptionErrors.requests.invalidRequestItem(
-                    "When proposing a RelationshipAttribute, the corresponding query has to be a RelationshipAttributeQuery."
-                )
-            )
         }
 
         return ValidationResult.success()
