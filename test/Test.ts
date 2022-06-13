@@ -30,12 +30,20 @@ export class Test {
         platformClientSecret: "a6owPRo8c98Ue8Z6mHoNgg5viF5teD"
     }
 
+    private static setupDone = false
+    private static doSetup(): void {
+        if (this.setupDone) return
+
+        setup()
+        this.setupDone = true
+    }
+
     public static runIntegrationTests(
         config: IConfigOverwrite,
         databaseConnection: IDatabaseConnection,
         logger: ILoggerFactory
     ): void {
-        setup()
+        this.doSetup()
         new AttributeTest(config, databaseConnection, logger).run()
         new RequestEnd2EndTests(config, databaseConnection, logger).run()
         new OutgoingRequestsControllerTests(config, databaseConnection, logger).run()
@@ -48,7 +56,7 @@ export class Test {
     }
 
     public static runUnitTests(logger: ILoggerFactory): void {
-        setup() // eslint-disable-line mocha/no-sibling-hooks
+        this.doSetup()
         new ConsumptionRequestTest(logger).run()
         new DecideRequestParametersValidatorTests(logger).run()
     }
