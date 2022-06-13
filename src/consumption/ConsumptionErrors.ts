@@ -30,18 +30,8 @@ class Requests {
         )
     }
 
-    public cannotSendCreateAttributeRequestItemsWithIdentityAttributes() {
-        return new CoreError(
-            "error.consumption.requests.cannotSendCreateAttributeRequestItemsWithIdentityAttributes",
-            "You cannot send a CreateAttributeRequestItem with an Identity Attribute. Consider using a ProposeAttributeRequestItem instead."
-        )
-    }
-
-    public canOnlyShareOwnAttributes() {
-        return new CoreError(
-            "error.consumption.requests.canOnlyShareOwnAttributes",
-            "The given Attribute belongs to someone else. You can only share own Attributes."
-        )
+    public invalidRequestItem(message: string) {
+        return new CoreError("error.consumption.requests.invalidRequestItem", message)
     }
 }
 

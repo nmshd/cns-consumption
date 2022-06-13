@@ -33,7 +33,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                         consumptionRequest
                     )
 
-                    expect(result.isSuccess()).to.be.true
+                    expect(result).to.be.a.successfulValidationResult()
                 })
             })
 
@@ -51,7 +51,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                         consumptionRequest
                     )
 
-                    expect(result.isSuccess()).to.be.true
+                    expect(result).to.be.a.successfulValidationResult()
                 })
             })
 
@@ -97,7 +97,9 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                     const processor = new GenericRequestItemProcessor(undefined!)
 
                     const actual = await processor.canCreateOutgoingRequestItem(
-                        TestRequestItem.from({ mustBeAccepted: false })
+                        TestRequestItem.from({ mustBeAccepted: false }),
+                        undefined!,
+                        undefined!
                     )
 
                     expect(actual.isSuccess()).to.be.true

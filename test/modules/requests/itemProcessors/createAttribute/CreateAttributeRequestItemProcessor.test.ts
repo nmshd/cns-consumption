@@ -4,14 +4,11 @@ import {
     ConsumptionIds,
     ConsumptionRequest,
     ConsumptionRequestStatus,
-    CreateAttributeRequestItemProcessor,
-    ErrorValidationResult
+    CreateAttributeRequestItemProcessor
 } from "@nmshd/consumption"
 import {
     CreateAttributeAcceptResponseItem,
     CreateAttributeRequestItem,
-    GivenName,
-    IdentityAttribute,
     ProprietaryString,
     RelationshipAttribute,
     RelationshipAttributeConfidentiality,
@@ -22,6 +19,7 @@ import { AccountController, CoreAddress, CoreDate, Transport } from "@nmshd/tran
 import { expect } from "chai"
 import { IntegrationTest } from "../../../../core/IntegrationTest"
 import { TestUtil } from "../../../../core/TestUtil"
+import { TestObjectFactory } from "../../testHelpers/TestObjectFactory"
 
 export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
     public run(): void {
@@ -51,7 +49,8 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
             })
 
             describe("canCreateOutgoingRequestItem", function () {
-                it("returns success when passing a Relationship Attribute", async function () {
+                it("returns success when passing a Relationship Attribute with 'owner=sender'", async function () {
+                    const recipientAddress = CoreAddress.from("recipientAddress")
                     const attribute = await consumptionController.attributes.createConsumptionAttribute({
                         content: RelationshipAttribute.from({
                             key: "aKey",
@@ -64,34 +63,111 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                         mustBeAccepted: false,
                         attribute: attribute.content
                     })
+                    const request = Request.from({ items: [requestItem] })
 
-                    const result = await processor.canCreateOutgoingRequestItem(requestItem)
+                    const result = await processor.canCreateOutgoingRequestItem(requestItem, request, recipientAddress)
 
-                    expect(result.isSuccess()).to.be.true
+                    expect(result).to.be.a.successfulValidationResult()
                 })
 
-                it("returns an error when passing an Identity Attribute", async function () {
+                it("returns success when passing an Identity Attribute with 'owner=sender'", async function () {
+                    const recipientAddress = CoreAddress.from("recipientAddress")
                     const attribute = await consumptionController.attributes.createConsumptionAttribute({
-                        content: IdentityAttribute.from({
-                            value: GivenName.fromAny({ value: "AGivenName" }),
-                            owner: testAccount.identity.address
+                        content: TestObjectFactory.createIdentityAttribute({ owner: testAccount.identity.address })
+                    })
+                    const requestItem = CreateAttributeRequestItem.from({
+                        mustBeAccepted: false,
+                        attribute: attribute.content
+                    })
+                    const request = Request.from({ items: [requestItem] })
+
+                    const result = await processor.canCreateOutgoingRequestItem(requestItem, request, recipientAddress)
+
+                    expect(result).to.be.a.successfulValidationResult()
+                })
+
+                it("returns an error when passing a Relationship Attribute with 'owner!=sender'", async function () {
+                    const recipientAddress = CoreAddress.from("recipientAddress")
+                    const attribute = await consumptionController.attributes.createConsumptionAttribute({
+                        content: RelationshipAttribute.from({
+                            key: "aKey",
+                            confidentiality: RelationshipAttributeConfidentiality.Public,
+                            value: ProprietaryString.fromAny({ value: "aString" }),
+                            owner: CoreAddress.from("ownerAddress")
                         })
                     })
                     const requestItem = CreateAttributeRequestItem.from({
                         mustBeAccepted: false,
                         attribute: attribute.content
                     })
+                    const request = Request.from({ items: [requestItem] })
 
-                    const result = await processor.canCreateOutgoingRequestItem(requestItem)
+                    const result = await processor.canCreateOutgoingRequestItem(requestItem, request, recipientAddress)
 
-                    expect(result.isError()).to.be.true
-                    expect((result as ErrorValidationResult).error.code).to.equal(
-                        "error.consumption.requests.cannotSendCreateAttributeRequestItemsWithIdentityAttributes"
-                    )
+                    expect(result).to.be.an.errorValidationResult({
+                        code: "error.consumption.requests.invalidRequestItem",
+                        message: /Cannot send Relationship Attributes of which you are not the owner./
+                    })
+                })
+
+                it("returns an error when passing an Identity Attribute with 'owner!=sender' (Identity Attributes for the recipient should always be created via ProposeAttributeRequestItem)", async function () {
+                    const recipientAddress = CoreAddress.from("recipientAddress")
+                    const attribute = await consumptionController.attributes.createConsumptionAttribute({
+                        content: TestObjectFactory.createIdentityAttribute({
+                            owner: recipientAddress
+                        })
+                    })
+                    const requestItem = CreateAttributeRequestItem.from({
+                        mustBeAccepted: false,
+                        attribute: attribute.content
+                    })
+                    const request = Request.from({ items: [requestItem] })
+
+                    const result = await processor.canCreateOutgoingRequestItem(requestItem, request, recipientAddress)
+
+                    expect(result).to.be.an.errorValidationResult({
+                        code: "error.consumption.requests.invalidRequestItem",
+                        message: /Cannot send Identity Attributes of which you are not the owner.*/
+                    })
                 })
             })
 
             describe("accept", function () {
+                it("in case of an IdentityAttribute with 'owner=sender', creates a Consumption Attribute for the peer of the Request", async function () {
+                    const senderAddress = CoreAddress.from("SenderAddress")
+                    const requestItem = CreateAttributeRequestItem.from({
+                        mustBeAccepted: true,
+                        attribute: TestObjectFactory.createIdentityAttribute({
+                            owner: senderAddress
+                        })
+                    })
+                    const incomingRequest = ConsumptionRequest.from({
+                        id: await ConsumptionIds.request.generate(),
+                        createdAt: CoreDate.utc(),
+                        isOwn: false,
+                        peer: senderAddress,
+                        status: ConsumptionRequestStatus.DecisionRequired,
+                        content: Request.from({
+                            items: [requestItem]
+                        }),
+                        statusLog: []
+                    })
+                    const result = await processor.accept(
+                        requestItem,
+                        {
+                            accept: true
+                        },
+                        incomingRequest
+                    )
+                    const createdAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                        result.attributeId
+                    )
+                    expect(createdAttribute).to.exist
+                    expect(createdAttribute!.shareInfo).to.exist
+                    expect(createdAttribute!.shareInfo!.peer.toString()).to.equal(senderAddress.toString())
+                    expect(createdAttribute!.shareInfo!.sourceAttribute).to.be.undefined
+                })
+
                 it("in case of a RelationshipAttribute, creates a ConsumptionAttribute for the peer of the Request", async function () {
                     const requestItem = CreateAttributeRequestItem.from({
                         mustBeAccepted: true,

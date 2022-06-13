@@ -55,22 +55,22 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     public async canCreate(params: ICreateOutgoingRequestParameters): Promise<ValidationResult> {
         const parsedParams = CreateOutgoingRequestParameters.from(params)
 
-        const innerResults = await this.canCreateItems(parsedParams.content.items)
+        const innerResults = await this.canCreateItems(parsedParams.content, parsedParams.peer)
 
         const result = ValidationResult.fromItems(innerResults)
 
         return result
     }
 
-    private async canCreateItems(items: (RequestItemGroup | RequestItem)[]) {
+    private async canCreateItems(request: Request, recipient: CoreAddress) {
         const results: ValidationResult[] = []
 
-        for (const requestItem of items) {
+        for (const requestItem of request.items) {
             if (requestItem instanceof RequestItem) {
-                const canCreateItem = await this.canCreateItem(requestItem)
+                const canCreateItem = await this.canCreateItem(requestItem, request, recipient)
                 results.push(canCreateItem)
             } else {
-                const result = await this.canCreateItemGroup(requestItem)
+                const result = await this.canCreateItemGroup(requestItem, request, recipient)
                 results.push(result)
             }
         }
@@ -78,16 +78,16 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         return results
     }
 
-    private async canCreateItem(requestItem: RequestItem) {
+    private async canCreateItem(requestItem: RequestItem, request: Request, recipient: CoreAddress) {
         const processor = this.processorRegistry.getProcessorForItem(requestItem)
-        return await processor.canCreateOutgoingRequestItem(requestItem)
+        return await processor.canCreateOutgoingRequestItem(requestItem, request, recipient)
     }
 
-    private async canCreateItemGroup(requestItem: RequestItemGroup) {
+    private async canCreateItemGroup(requestItem: RequestItemGroup, request: Request, recipient: CoreAddress) {
         const innerResults: ValidationResult[] = []
 
         for (const innerRequestItem of requestItem.items) {
-            const canCreateItem = await this.canCreateItem(innerRequestItem)
+            const canCreateItem = await this.canCreateItem(innerRequestItem, request, recipient)
             innerResults.push(canCreateItem)
         }
 

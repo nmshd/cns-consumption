@@ -3,16 +3,16 @@ import { ApplicationError } from "@js-soft/ts-utils"
 export abstract class ValidationResult {
     protected constructor(public readonly items: ValidationResult[]) {}
 
-    public isSuccess(): this is SuccessfulValidatonResult {
-        return this instanceof SuccessfulValidatonResult
+    public isSuccess(): this is SuccessfulValidationResult {
+        return this instanceof SuccessfulValidationResult
     }
 
     public isError(): this is ErrorValidationResult {
         return this instanceof ErrorValidationResult
     }
 
-    public static success(items: ValidationResult[] = []): SuccessfulValidatonResult {
-        return new SuccessfulValidatonResult(items)
+    public static success(items: ValidationResult[] = []): SuccessfulValidationResult {
+        return new SuccessfulValidationResult(items)
     }
 
     public static error(error: ApplicationError, items: ValidationResult[] = []): ErrorValidationResult {
@@ -26,7 +26,7 @@ export abstract class ValidationResult {
     }
 }
 
-export class SuccessfulValidatonResult extends ValidationResult {
+export class SuccessfulValidationResult extends ValidationResult {
     public constructor(items: ValidationResult[]) {
         super(items)
     }

@@ -39,12 +39,12 @@ export class AlwaysTrueDecideRequestParamsValidator extends DecideRequestParamet
     }
 }
 
-export class OutgoingRequestControllerTests extends RequestsIntegrationTest {
+export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
     public run(): void {
         const that = this
         let context: RequestsTestsContext
 
-        describe("OutgoingRequestController", function () {
+        describe("OutgoingRequestsController", function () {
             let Given: RequestsGiven // eslint-disable-line @typescript-eslint/naming-convention
             let When: RequestsWhen // eslint-disable-line @typescript-eslint/naming-convention
             let Then: RequestsThen // eslint-disable-line @typescript-eslint/naming-convention

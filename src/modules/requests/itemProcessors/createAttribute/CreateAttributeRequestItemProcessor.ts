@@ -2,9 +2,12 @@ import {
     CreateAttributeAcceptResponseItem,
     CreateAttributeRequestItem,
     IdentityAttribute,
+    ProposeAttributeRequestItem,
     RejectResponseItem,
+    Request,
     ResponseItemResult
 } from "@nmshd/content"
+import { CoreAddress } from "@nmshd/transport"
 import { ConsumptionErrors } from "../../../../consumption"
 import { ConsumptionRequest } from "../../local/ConsumptionRequest"
 import { GenericRequestItemProcessor } from "../GenericRequestItemProcessor"
@@ -16,17 +19,43 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
     AcceptCreateAttributeRequestItemParametersJSON
 > {
     public override canCreateOutgoingRequestItem(
-        requestItem: CreateAttributeRequestItem
+        requestItem: CreateAttributeRequestItem,
+        _request: Request,
+        _recipient: CoreAddress
     ): ValidationResult | Promise<ValidationResult> {
-        // TODO: remove the following if we for sure only allow RelationshipAttributes in a RequestItem
         if (requestItem.attribute instanceof IdentityAttribute) {
-            // It doesn't make sense to send a CreateAttributeRequestItem with an IdentityAttribute. E.g. the following cases would have to be handled:
-            // - The RequestItem contains an Attribute (e.g. GivenName) with the same value as an already existing Attribute
-            //  => Should the user reject the request? If not, do we save a new Attribute with the same value?
-            // - The RequestItem contains an Attribute (e.g. GivenName) with the a different value than an already existing Attribute
-            // - ...
+            return this.canCreateRequestItemWithIdentityAttribute(requestItem)
+        }
+
+        return this.canCreateRequestItemWithRelationshipAttribute(requestItem)
+    }
+
+    private canCreateRequestItemWithIdentityAttribute(requestItem: CreateAttributeRequestItem): ValidationResult {
+        const iAmOwnerOfTheAttribute = this.consumptionController.accountController.identity.isMe(
+            requestItem.attribute.owner
+        )
+
+        if (!iAmOwnerOfTheAttribute) {
             return ValidationResult.error(
-                ConsumptionErrors.requests.cannotSendCreateAttributeRequestItemsWithIdentityAttributes()
+                ConsumptionErrors.requests.invalidRequestItem(
+                    `Cannot send Identity Attributes of which you are not the owner via ${CreateAttributeRequestItem.name}. Consider using a ${ProposeAttributeRequestItem.name} instead.`
+                )
+            )
+        }
+
+        return ValidationResult.success()
+    }
+
+    private canCreateRequestItemWithRelationshipAttribute(requestItem: CreateAttributeRequestItem) {
+        const iAmOwnerOfTheAttribute = this.consumptionController.accountController.identity.isMe(
+            requestItem.attribute.owner
+        )
+
+        if (!iAmOwnerOfTheAttribute) {
+            return ValidationResult.error(
+                ConsumptionErrors.requests.invalidRequestItem(
+                    "Cannot send Relationship Attributes of which you are not the owner."
+                )
             )
         }
 
@@ -38,19 +67,16 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
         _params: AcceptCreateAttributeRequestItemParametersJSON,
         request: ConsumptionRequest
     ): Promise<CreateAttributeAcceptResponseItem> {
-        if (requestItem.attribute instanceof IdentityAttribute) {
-            throw new Error("IdentityAttribute not supported") // TODO: allow only Relationship Attributes in RequestItem?
-        }
-
-        const result = await this.consumptionController.attributes.createRelationshipAttribute({
+        const peerConsumptionAttribute = await this.consumptionController.attributes.createPeerConsumptionAttribute({
             content: requestItem.attribute,
             peer: request.peer,
             requestReference: request.id
         })
 
         return CreateAttributeAcceptResponseItem.from({
+            attributeId: peerConsumptionAttribute.id,
             result: ResponseItemResult.Accepted,
-            attributeId: result.id
+            metadata: requestItem.responseMetadata
         })
     }
 

@@ -1,4 +1,5 @@
-import { AcceptResponseItem, RejectResponseItem, RequestItem, ResponseItem } from "@nmshd/content"
+import { AcceptResponseItem, RejectResponseItem, Request, RequestItem, ResponseItem } from "@nmshd/content"
+import { CoreAddress } from "@nmshd/transport"
 import { AcceptRequestItemParametersJSON } from "../incoming/decide/AcceptRequestItemParameters"
 import { RejectRequestItemParametersJSON } from "../incoming/decide/RejectRequestItemParameters"
 import { ConsumptionRequest } from "../local/ConsumptionRequest"
@@ -31,7 +32,11 @@ export interface IRequestItemProcessor<
         request: ConsumptionRequest
     ): Promise<RejectResponseItem> | RejectResponseItem
 
-    canCreateOutgoingRequestItem(requestItem: TRequestItem): Promise<ValidationResult> | ValidationResult
+    canCreateOutgoingRequestItem(
+        requestItem: TRequestItem,
+        request: Request,
+        recipient: CoreAddress
+    ): Promise<ValidationResult> | ValidationResult
     canApplyIncomingResponseItem(
         responseItem: ResponseItem,
         requestItem: TRequestItem,

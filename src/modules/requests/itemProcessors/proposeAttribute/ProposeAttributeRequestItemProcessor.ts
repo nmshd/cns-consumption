@@ -1,7 +1,7 @@
 import {
     IdentityAttribute,
-    ReadAttributeAcceptResponseItem,
-    ReadAttributeRequestItem,
+    ProposeAttributeAcceptResponseItem,
+    ProposeAttributeRequestItem,
     RejectResponseItem,
     RelationshipAttribute,
     Request,
@@ -15,16 +15,16 @@ import { GenericRequestItemProcessor } from "../GenericRequestItemProcessor"
 import validateQuery from "../utility/validateQuery"
 import { ValidationResult } from "../ValidationResult"
 import {
-    AcceptReadAttributeRequestItemParameters,
-    AcceptReadAttributeRequestItemParametersJSON
-} from "./AcceptReadAttributeRequestItemParameters"
+    AcceptProposeAttributeRequestItemParameters,
+    AcceptProposeAttributeRequestItemParametersJSON
+} from "./AcceptProposeAttributeRequestItemParameters"
 
-export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcessor<
-    ReadAttributeRequestItem,
-    AcceptReadAttributeRequestItemParametersJSON
+export class ProposeAttributeRequestItemProcessor extends GenericRequestItemProcessor<
+    ProposeAttributeRequestItem,
+    AcceptProposeAttributeRequestItemParametersJSON
 > {
     public override canCreateOutgoingRequestItem(
-        requestItem: ReadAttributeRequestItem,
+        requestItem: ProposeAttributeRequestItem,
         _request: Request,
         recipient: CoreAddress
     ): ValidationResult {
@@ -41,12 +41,12 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
     }
 
     public override async canAccept(
-        _requestItem: ReadAttributeRequestItem,
-        params: AcceptReadAttributeRequestItemParametersJSON,
+        _requestItem: ProposeAttributeRequestItem,
+        params: AcceptProposeAttributeRequestItemParametersJSON,
         request: ConsumptionRequest
     ): Promise<ValidationResult> {
-        const parsedParams: AcceptReadAttributeRequestItemParameters =
-            AcceptReadAttributeRequestItemParameters.from(params)
+        const parsedParams: AcceptProposeAttributeRequestItemParameters =
+            AcceptProposeAttributeRequestItemParameters.from(params)
 
         if (parsedParams.attributeId) {
             const foundAttribute = await this.consumptionController.attributes.getConsumptionAttribute(
@@ -72,12 +72,12 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
     }
 
     public override async accept(
-        _requestItem: ReadAttributeRequestItem,
-        params: AcceptReadAttributeRequestItemParametersJSON,
+        _requestItem: ProposeAttributeRequestItem,
+        params: AcceptProposeAttributeRequestItemParametersJSON,
         request: ConsumptionRequest
-    ): Promise<ReadAttributeAcceptResponseItem> {
-        const parsedParams: AcceptReadAttributeRequestItemParameters =
-            AcceptReadAttributeRequestItemParameters.from(params)
+    ): Promise<ProposeAttributeAcceptResponseItem> {
+        const parsedParams: AcceptProposeAttributeRequestItemParameters =
+            AcceptProposeAttributeRequestItemParameters.from(params)
 
         let sharedConsumptionAttribute: ConsumptionAttribute
         if (parsedParams.attributeId) {
@@ -86,7 +86,7 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
             sharedConsumptionAttribute = await this.createNewAttribute(parsedParams.attribute!, request)
         }
 
-        return ReadAttributeAcceptResponseItem.from({
+        return ProposeAttributeAcceptResponseItem.from({
             result: ResponseItemResult.Accepted,
             attributeId: sharedConsumptionAttribute.id,
             attribute: sharedConsumptionAttribute.content
@@ -126,11 +126,11 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
     }
 
     public override async applyIncomingResponseItem(
-        responseItem: ReadAttributeAcceptResponseItem | RejectResponseItem,
-        _requestItem: ReadAttributeRequestItem,
+        responseItem: ProposeAttributeAcceptResponseItem | RejectResponseItem,
+        _requestItem: ProposeAttributeRequestItem,
         request: ConsumptionRequest
     ): Promise<void> {
-        if (!(responseItem instanceof ReadAttributeAcceptResponseItem)) {
+        if (!(responseItem instanceof ProposeAttributeAcceptResponseItem)) {
             return
         }
 
