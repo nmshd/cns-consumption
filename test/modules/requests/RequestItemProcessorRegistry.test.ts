@@ -1,5 +1,6 @@
-import { GenericRequestItemProcessor, RequestItemProcessorRegistry } from "@nmshd/consumption"
+import { ConsumptionController, GenericRequestItemProcessor, RequestItemProcessorRegistry } from "@nmshd/consumption"
 import { AcceptResponseItem, IRequestItem, RejectResponseItem, RequestItem } from "@nmshd/content"
+import { AccountController, CoreAddress, IdentityController } from "@nmshd/transport"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
@@ -37,13 +38,19 @@ export class RequestItemProcessorRegistryTests extends IntegrationTest {
     public run(): void {
         let registry: RequestItemProcessorRegistry
 
+        const fakeConsumptionController = {
+            accountController: {
+                identity: { address: CoreAddress.from("anAddress") } as IdentityController
+            } as AccountController
+        } as ConsumptionController
+
         beforeEach(function () {
-            registry = new RequestItemProcessorRegistry(undefined!)
+            registry = new RequestItemProcessorRegistry(fakeConsumptionController)
         })
 
         describe("RequestItemProcessorRegistry", function () {
             it("can be created with a map of processors", function () {
-                const registry = new RequestItemProcessorRegistry(undefined!, [
+                const registry = new RequestItemProcessorRegistry(fakeConsumptionController, [
                     {
                         itemConstructor: TestRequestItem,
                         processorConstructor: TestRequestItemProcessor
