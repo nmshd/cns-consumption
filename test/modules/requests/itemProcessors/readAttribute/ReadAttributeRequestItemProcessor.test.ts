@@ -45,7 +45,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
                 await transport.init()
 
-                const accounts = await TestUtil.provideAccounts(transport, 2)
+                const accounts = await TestUtil.provideAccounts(transport, 1)
                 ;({ accountController, consumptionController } = accounts[0])
             })
 
