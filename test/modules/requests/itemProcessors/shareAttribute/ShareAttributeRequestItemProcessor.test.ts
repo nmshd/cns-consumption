@@ -145,7 +145,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                             content: TestObjectFactory.createIdentityAttribute({
                                 owner: attributeOwner
                             }),
-                            peer: rAccountController.identity.address,
+                            peer: CoreAddress.from("doesntMatter"),
                             requestReference: CoreId.from("requestReference")
                         })
                         const requestItem = ShareAttributeRequestItem.from({
@@ -211,7 +211,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                             content: TestObjectFactory.createRelationshipAttribute({
                                 owner: attributeOwner
                             }),
-                            peer: rAccountController.identity.address,
+                            peer: CoreAddress.from("doesntMatter"),
                             requestReference: CoreId.from("requestReference")
                         })
                         const requestItem = ShareAttributeRequestItem.from({
@@ -301,7 +301,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                             content: TestObjectFactory.createIdentityAttribute({
                                 owner: attributeOwner
                             }),
-                            peer: senderAddress, // TODO: not correctXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                            peer: CoreAddress.from("doesntMatter"),
                             requestReference: CoreId.from("requestReference")
                         })
                         const requestItem = ShareAttributeRequestItem.from({
@@ -366,7 +366,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                             content: TestObjectFactory.createRelationshipAttribute({
                                 owner: attributeOwner
                             }),
-                            peer: senderAddress,
+                            peer: CoreAddress.from("doesntMatter"),
                             requestReference: CoreId.from("requestReference")
                         })
                         const requestItem = ShareAttributeRequestItem.from({
