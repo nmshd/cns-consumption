@@ -49,18 +49,17 @@ export class ConsumptionController {
     }
 
     public async init(
-        requestItemProcessors: {
-            processorConstructor: ProcessorConstructor
-            itemConstructor: RequestItemConstructor
-        }[] = []
+        requestItemProcessorOverrides = new Map<RequestItemConstructor, ProcessorConstructor>()
     ): Promise<ConsumptionController> {
         this._attributes = await new ConsumptionAttributesController(this).init()
         this._drafts = await new DraftsController(this).init()
 
-        const processorRegistry = new RequestItemProcessorRegistry(
-            this,
-            requestItemProcessors.length === 0 ? this.getDefaultProcessors() : requestItemProcessors
-        )
+        const processorRegistry = new RequestItemProcessorRegistry(this, this.getDefaultProcessors())
+
+        for (const [itemConstructor, processorConstructor] of requestItemProcessorOverrides) {
+            processorRegistry.registerOrReplaceProcessor(processorConstructor, itemConstructor)
+        }
+
         this._outgoingRequests = await new OutgoingRequestsController(
             await this.accountController.getSynchronizedCollection("Requests"),
             processorRegistry,
@@ -76,23 +75,11 @@ export class ConsumptionController {
     }
 
     private getDefaultProcessors() {
-        return [
-            {
-                itemConstructor: CreateAttributeRequestItem,
-                processorConstructor: CreateAttributeRequestItemProcessor
-            },
-            {
-                itemConstructor: ReadAttributeRequestItem,
-                processorConstructor: ReadAttributeRequestItemProcessor
-            },
-            {
-                itemConstructor: ProposeAttributeRequestItem,
-                processorConstructor: ProposeAttributeRequestItemProcessor
-            },
-            {
-                itemConstructor: ShareAttributeRequestItem,
-                processorConstructor: ShareAttributeRequestItemProcessor
-            }
-        ]
+        return new Map<RequestItemConstructor, ProcessorConstructor>([
+            [CreateAttributeRequestItem, CreateAttributeRequestItemProcessor],
+            [ReadAttributeRequestItem, ReadAttributeRequestItemProcessor],
+            [ProposeAttributeRequestItem, ProposeAttributeRequestItemProcessor],
+            [ShareAttributeRequestItem, ShareAttributeRequestItemProcessor]
+        ])
     }
 }

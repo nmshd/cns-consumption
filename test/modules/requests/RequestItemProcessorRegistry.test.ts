@@ -50,12 +50,10 @@ export class RequestItemProcessorRegistryTests extends IntegrationTest {
 
         describe("RequestItemProcessorRegistry", function () {
             it("can be created with a map of processors", function () {
-                const registry = new RequestItemProcessorRegistry(fakeConsumptionController, [
-                    {
-                        itemConstructor: TestRequestItem,
-                        processorConstructor: TestRequestItemProcessor
-                    }
-                ])
+                const registry = new RequestItemProcessorRegistry(
+                    fakeConsumptionController,
+                    new Map([[TestRequestItem, TestRequestItemProcessor]])
+                )
 
                 const processor = registry.getProcessorForItem(TestRequestItem.from({ mustBeAccepted: false }))
                 expect(processor).to.exist
@@ -63,7 +61,7 @@ export class RequestItemProcessorRegistryTests extends IntegrationTest {
 
             // The following test is considered as passed when no exception occurs
             // eslint-disable-next-line jest/expect-expect
-            it("registerProcessorForType can register processors", function () {
+            it("registerProcessor can register processors", function () {
                 registry.registerProcessor(TestRequestItemProcessor, TestRequestItem)
             })
 
@@ -75,9 +73,9 @@ export class RequestItemProcessorRegistryTests extends IntegrationTest {
                 )
             })
 
-            it("replaceProcessorForType allows replacing registered processors", function () {
+            it("registerOrReplaceProcessor allows replacing registered processors", function () {
                 registry.registerProcessor(TestRequestItemProcessor, TestRequestItem)
-                registry.replaceProcessor(TestRequestItemProcessor2, TestRequestItem)
+                registry.registerOrReplaceProcessor(TestRequestItemProcessor2, TestRequestItem)
 
                 const processor = registry.getProcessorForItem(new TestRequestItem())
 

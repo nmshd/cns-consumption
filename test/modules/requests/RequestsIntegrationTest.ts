@@ -90,9 +90,10 @@ export class RequestsTestsContext {
                 identity: { address: CoreAddress.from("anAddress") } as IdentityController
             } as AccountController
         } as ConsumptionController
-        const processorRegistry = new RequestItemProcessorRegistry(fakeConsumptionController, [
-            { itemConstructor: TestRequestItem, processorConstructor: TestRequestItemProcessor }
-        ])
+        const processorRegistry = new RequestItemProcessorRegistry(
+            fakeConsumptionController,
+            new Map([[TestRequestItem, TestRequestItemProcessor]])
+        )
 
         context.currentIdentity = CoreAddress.from("id12345")
 

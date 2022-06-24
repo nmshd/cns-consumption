@@ -171,10 +171,7 @@ export class TestUtil {
     public static async provideAccounts(
         transport: Transport,
         count: number,
-        requestItemProcessors: {
-            processorConstructor: ProcessorConstructor
-            itemConstructor: RequestItemConstructor
-        }[] = []
+        requestItemProcessors = new Map<RequestItemConstructor, ProcessorConstructor>()
     ): Promise<{ accountController: AccountController; consumptionController: ConsumptionController }[]> {
         const accounts = []
 
@@ -187,10 +184,7 @@ export class TestUtil {
 
     private static async createAccount(
         transport: Transport,
-        requestItemProcessors: {
-            processorConstructor: ProcessorConstructor
-            itemConstructor: RequestItemConstructor
-        }[]
+        requestItemProcessors = new Map<RequestItemConstructor, ProcessorConstructor>()
     ): Promise<{ accountController: AccountController; consumptionController: ConsumptionController }> {
         const randomId = Math.random().toString(36).substring(7)
         const db: IDatabaseCollectionProvider = await transport.createDatabase(`acc-${randomId}`)
