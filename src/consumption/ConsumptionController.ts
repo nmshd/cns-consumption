@@ -57,7 +57,7 @@ export class ConsumptionController {
         const processorRegistry = new RequestItemProcessorRegistry(this, this.getDefaultProcessors())
 
         for (const [itemConstructor, processorConstructor] of requestItemProcessorOverrides) {
-            processorRegistry.registerOrReplaceProcessor(processorConstructor, itemConstructor)
+            processorRegistry.registerOrReplaceProcessor(itemConstructor, processorConstructor)
         }
 
         this._outgoingRequests = await new OutgoingRequestsController(

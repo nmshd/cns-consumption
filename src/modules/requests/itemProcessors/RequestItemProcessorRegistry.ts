@@ -11,8 +11,8 @@ export class RequestItemProcessorRegistry {
     ) {}
 
     public registerProcessor(
+        itemConstructor: RequestItemConstructor,
         processorConstructor: ProcessorConstructor,
-        itemConstructor: RequestItemConstructor
     ): void {
         if (this.processors.has(itemConstructor)) {
             throw new Error(
@@ -23,8 +23,8 @@ export class RequestItemProcessorRegistry {
     }
 
     public registerOrReplaceProcessor(
+        itemConstructor: RequestItemConstructor,
         processorConstructor: ProcessorConstructor,
-        itemConstructor: RequestItemConstructor
     ): void {
         this.processors.set(itemConstructor, processorConstructor)
     }
