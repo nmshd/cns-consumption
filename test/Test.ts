@@ -8,6 +8,7 @@ import { IncomingRequestControllerTests } from "./modules/requests/IncomingReque
 import { CreateAttributeRequestItemProcessorTests } from "./modules/requests/itemProcessors/createAttribute/CreateAttributeRequestItemProcessor.test"
 import { ProposeAttributeRequestItemProcessorTests } from "./modules/requests/itemProcessors/proposeAttribute/ProposeAttributeRequestItemProcessor.test"
 import { ReadAttributeRequestItemProcessorTests } from "./modules/requests/itemProcessors/readAttribute/ReadAttributeRequestItemProcessor.test"
+import { ShareAttributeRequestItemProcessorTests } from "./modules/requests/itemProcessors/shareAttribute/ShareAttributeRequestItemProcessor.test"
 import { ConsumptionRequestTest } from "./modules/requests/local/ConsumptionRequest.test"
 import { OutgoingRequestsControllerTests } from "./modules/requests/OutgoingRequestsController.test"
 import { RequestEnd2EndTests } from "./modules/requests/RequestEnd2End.test"
@@ -49,6 +50,7 @@ export class Test {
         new OutgoingRequestsControllerTests(config, databaseConnection, logger).run()
         new IncomingRequestControllerTests(config, databaseConnection, logger).run()
         new ReadAttributeRequestItemProcessorTests(config, databaseConnection, logger).run()
+        new ShareAttributeRequestItemProcessorTests(config, databaseConnection, logger).run()
         new CreateAttributeRequestItemProcessorTests(config, databaseConnection, logger).run()
         new ProposeAttributeRequestItemProcessorTests(config, databaseConnection, logger).run()
         new RequestItemProcessorRegistryTests(config, databaseConnection, logger).run()
