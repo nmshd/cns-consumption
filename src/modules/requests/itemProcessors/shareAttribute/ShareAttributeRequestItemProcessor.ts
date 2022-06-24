@@ -45,7 +45,7 @@ export class ShareAttributeRequestItemProcessor extends GenericRequestItemProces
 
     public override async checkPrerequisitesOfIncomingRequestItem(
         requestItem: ShareAttributeRequestItem,
-        request: ConsumptionRequestInfo
+        requestInfo: ConsumptionRequestInfo
     ): Promise<boolean> {
         const relationshipToShareWith = await this.accountController.relationships.getRelationshipToIdentity(
             requestItem.shareWith
@@ -61,7 +61,7 @@ export class ShareAttributeRequestItemProcessor extends GenericRequestItemProces
             return false // Should the containing Request move to Error state?
         }
 
-        if (this.validateAttributeOwner(attribute.content, request.peer, this.currentIdentityAddress).isError()) {
+        if (this.validateAttributeOwner(attribute.content, requestInfo.peer, this.currentIdentityAddress).isError()) {
             return false
         }
 
@@ -100,7 +100,7 @@ export class ShareAttributeRequestItemProcessor extends GenericRequestItemProces
     public override canAccept(
         _requestItem: ShareAttributeRequestItem,
         _params: AcceptShareAttributeRequestItemParametersJSON,
-        _request: ConsumptionRequestInfo
+        _requestInfo: ConsumptionRequestInfo
     ): ValidationResult {
         return ValidationResult.success()
     }
@@ -108,7 +108,7 @@ export class ShareAttributeRequestItemProcessor extends GenericRequestItemProces
     public override async accept(
         requestItem: ShareAttributeRequestItem,
         _params: AcceptShareAttributeRequestItemParametersJSON,
-        _request: ConsumptionRequestInfo
+        _requestInfo: ConsumptionRequestInfo
     ): Promise<AcceptResponseItem> {
         const attribute = await this.consumptionController.attributes.getConsumptionAttribute(requestItem.attributeId)
 

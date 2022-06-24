@@ -10,8 +10,8 @@ import {
 import { CoreAddress, CoreId, TransportErrors } from "@nmshd/transport"
 import { ConsumptionErrors } from "../../../../consumption"
 import { ConsumptionAttribute } from "../../../attributes/local/ConsumptionAttribute"
-import { ConsumptionRequest } from "../../local/ConsumptionRequest"
 import { GenericRequestItemProcessor } from "../GenericRequestItemProcessor"
+import { ConsumptionRequestInfo } from "../IRequestItemProcessor"
 import validateQuery from "../utility/validateQuery"
 import { ValidationResult } from "../ValidationResult"
 import {
@@ -28,11 +28,7 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
         _request: Request,
         recipient: CoreAddress
     ): ValidationResult {
-        const queryValidationResult = validateQuery(
-            requestItem.query,
-            this.consumptionController.accountController.identity.address,
-            recipient
-        )
+        const queryValidationResult = validateQuery(requestItem.query, this.currentIdentityAddress, recipient)
         if (queryValidationResult.isError()) {
             return queryValidationResult
         }
@@ -43,7 +39,7 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
     public override async canAccept(
         _requestItem: ReadAttributeRequestItem,
         params: AcceptReadAttributeRequestItemParametersJSON,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): Promise<ValidationResult> {
         const parsedParams: AcceptReadAttributeRequestItemParameters =
             AcceptReadAttributeRequestItemParameters.from(params)
@@ -55,11 +51,11 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
 
             if (!foundAttribute) {
                 return ValidationResult.error(
-                    TransportErrors.general.recordNotFound(ConsumptionAttribute, request.id.toString())
+                    TransportErrors.general.recordNotFound(ConsumptionAttribute, requestInfo.id.toString())
                 )
             }
 
-            if (!this.consumptionController.accountController.identity.isMe(foundAttribute.content.owner)) {
+            if (!this.accountController.identity.isMe(foundAttribute.content.owner)) {
                 return ValidationResult.error(
                     ConsumptionErrors.requests.invalidRequestItem(
                         "The given Attribute belongs to someone else. You can only share own Attributes."
@@ -74,16 +70,16 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
     public override async accept(
         _requestItem: ReadAttributeRequestItem,
         params: AcceptReadAttributeRequestItemParametersJSON,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): Promise<ReadAttributeAcceptResponseItem> {
         const parsedParams: AcceptReadAttributeRequestItemParameters =
             AcceptReadAttributeRequestItemParameters.from(params)
 
         let sharedConsumptionAttribute: ConsumptionAttribute
         if (parsedParams.attributeId) {
-            sharedConsumptionAttribute = await this.copyExistingAttribute(parsedParams.attributeId, request)
+            sharedConsumptionAttribute = await this.copyExistingAttribute(parsedParams.attributeId, requestInfo)
         } else {
-            sharedConsumptionAttribute = await this.createNewAttribute(parsedParams.attribute!, request)
+            sharedConsumptionAttribute = await this.createNewAttribute(parsedParams.attribute!, requestInfo)
         }
 
         return ReadAttributeAcceptResponseItem.from({
@@ -93,17 +89,17 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
         })
     }
 
-    private async copyExistingAttribute(attributeId: CoreId, request: ConsumptionRequest) {
+    private async copyExistingAttribute(attributeId: CoreId, requestInfo: ConsumptionRequestInfo) {
         return await this.consumptionController.attributes.createSharedConsumptionAttributeCopy({
             attributeId: CoreId.from(attributeId),
-            peer: CoreAddress.from(request.peer),
-            requestReference: CoreId.from(request.id)
+            peer: CoreAddress.from(requestInfo.peer),
+            requestReference: CoreId.from(requestInfo.id)
         })
     }
 
     private async createNewAttribute(
         attribute: IdentityAttribute | RelationshipAttribute,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ) {
         if (attribute instanceof IdentityAttribute) {
             const repositoryConsumptionAttribute =
@@ -113,22 +109,22 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
 
             return await this.consumptionController.attributes.createSharedConsumptionAttributeCopy({
                 attributeId: CoreId.from(repositoryConsumptionAttribute.id),
-                peer: CoreAddress.from(request.peer),
-                requestReference: CoreId.from(request.id)
+                peer: CoreAddress.from(requestInfo.peer),
+                requestReference: CoreId.from(requestInfo.id)
             })
         }
 
         return await this.consumptionController.attributes.createPeerConsumptionAttribute({
             content: attribute,
-            peer: request.peer,
-            requestReference: CoreId.from(request.id)
+            peer: requestInfo.peer,
+            requestReference: CoreId.from(requestInfo.id)
         })
     }
 
     public override async applyIncomingResponseItem(
         responseItem: ReadAttributeAcceptResponseItem | RejectResponseItem,
         _requestItem: ReadAttributeRequestItem,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): Promise<void> {
         if (!(responseItem instanceof ReadAttributeAcceptResponseItem)) {
             return
@@ -137,8 +133,8 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
         await this.consumptionController.attributes.createPeerConsumptionAttribute({
             id: responseItem.attributeId,
             content: responseItem.attribute,
-            peer: request.peer,
-            requestReference: request.id
+            peer: requestInfo.peer,
+            requestReference: requestInfo.id
         })
     }
 }

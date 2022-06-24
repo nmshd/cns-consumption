@@ -1,35 +1,42 @@
 import { AcceptResponseItem, RejectResponseItem, Request, RequestItem, ResponseItem } from "@nmshd/content"
-import { CoreAddress } from "@nmshd/transport"
+import { CoreAddress, CoreId } from "@nmshd/transport"
 import { AcceptRequestItemParametersJSON } from "../incoming/decide/AcceptRequestItemParameters"
 import { RejectRequestItemParametersJSON } from "../incoming/decide/RejectRequestItemParameters"
-import { ConsumptionRequest } from "../local/ConsumptionRequest"
 import { ValidationResult } from "./ValidationResult"
+
+export interface ConsumptionRequestInfo {
+    id: CoreId
+    peer: CoreAddress
+}
 
 export interface IRequestItemProcessor<
     TRequestItem extends RequestItem = RequestItem,
     TAcceptParams extends AcceptRequestItemParametersJSON = AcceptRequestItemParametersJSON,
     TRejectParams extends RejectRequestItemParametersJSON = RejectRequestItemParametersJSON
 > {
-    checkPrerequisitesOfIncomingRequestItem(requestItem: TRequestItem): Promise<boolean> | boolean
+    checkPrerequisitesOfIncomingRequestItem(
+        requestItem: TRequestItem,
+        requestInfo: ConsumptionRequestInfo
+    ): Promise<boolean> | boolean
     canAccept(
         requestItem: TRequestItem,
         params: TAcceptParams,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): Promise<ValidationResult> | ValidationResult
     canReject(
         requestItem: TRequestItem,
         params: TRejectParams,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): Promise<ValidationResult> | ValidationResult
     accept(
         requestItem: TRequestItem,
         params: TAcceptParams,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): Promise<AcceptResponseItem> | AcceptResponseItem
     reject(
         requestItem: TRequestItem,
         params: TRejectParams,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): Promise<RejectResponseItem> | RejectResponseItem
 
     canCreateOutgoingRequestItem(
@@ -40,11 +47,11 @@ export interface IRequestItemProcessor<
     canApplyIncomingResponseItem(
         responseItem: ResponseItem,
         requestItem: TRequestItem,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): Promise<ValidationResult> | ValidationResult
     applyIncomingResponseItem(
         responseItem: ResponseItem,
         requestItem: TRequestItem,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): Promise<void> | void
 }

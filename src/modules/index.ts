@@ -33,6 +33,8 @@ export * from "./requests/itemProcessors/readAttribute/AcceptReadAttributeReques
 export * from "./requests/itemProcessors/readAttribute/ReadAttributeRequestItemProcessor"
 export * from "./requests/itemProcessors/RequestItemConstructor"
 export * from "./requests/itemProcessors/RequestItemProcessorRegistry"
+export * from "./requests/itemProcessors/shareAttribute/AcceptShareAttributeRequestItemParameters"
+export * from "./requests/itemProcessors/shareAttribute/ShareAttributeRequestItemProcessor"
 export * from "./requests/itemProcessors/ValidationResult"
 export * from "./requests/local/ConsumptionRequest"
 export * from "./requests/local/ConsumptionRequestStatus"
