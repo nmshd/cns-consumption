@@ -27,7 +27,7 @@ import { TestObjectFactory } from "../../testHelpers/TestObjectFactory"
 
 class MockOutgoingRequestsController extends OutgoingRequestsController {
     public createWasCalledWith?: ICreateOutgoingRequestParameters
-    public sentWasCalled: boolean
+    public sentWasCalled = false
     public sentWasCalledWith?: ISentOutgoingRequestParameters
 
     public constructor(
@@ -501,6 +501,84 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     // ensure the correct attribute was sent
                     expect(sentAttribute.toJSON()).to.deep.equal(attribute.content.toJSON())
+                })
+
+                it("does not send a request to shareWith when the identity attribute is already shared", async function () {
+                    const shareWithAccountController = accountController1
+                    const rConsumptionController = consumptionController2
+                    const rProcessor = processor2
+
+                    const sourceAttribute = await rConsumptionController.attributes.createConsumptionAttribute({
+                        content: TestObjectFactory.createIdentityAttribute({
+                            owner: rConsumptionController.accountController.identity.address
+                        })
+                    })
+
+                    const attributeToShare =
+                        await rConsumptionController.attributes.createSharedConsumptionAttributeCopy({
+                            attributeId: sourceAttribute.id,
+                            peer: CoreAddress.from("senderAddress"),
+                            requestReference: CoreId.from("aRequestReference")
+                        })
+
+                    await rConsumptionController.attributes.createSharedConsumptionAttributeCopy({
+                        attributeId: sourceAttribute.id,
+                        peer: shareWithAccountController.identity.address,
+                        requestReference: CoreId.from("aRequestReference")
+                    })
+
+                    const requestItem = ShareAttributeRequestItem.from({
+                        attributeId: attributeToShare.id,
+                        mustBeAccepted: false,
+                        shareWith: shareWithAccountController.identity.address
+                    })
+                    const request: ConsumptionRequest = undefined! // is not used in accept anyway
+                    const acceptParams: AcceptShareAttributeRequestItemParametersJSON = { accept: true }
+
+                    await rProcessor.accept(requestItem, acceptParams, request)
+
+                    // ensure no request was sent
+                    expect(mockOutgoingRequestsController2.sentWasCalled).to.be.false
+                })
+
+                it.only("does not send a request to shareWith when the relationship attribute is already shared", async function () {
+                    const shareWithAccountController = accountController1
+                    const rConsumptionController = consumptionController2
+                    const rProcessor = processor2
+
+                    const attributeToShare = await rConsumptionController.attributes.createPeerConsumptionAttribute({
+                        content: TestObjectFactory.createRelationshipAttribute({
+                            owner: rConsumptionController.accountController.identity.address
+                        }),
+                        peer: CoreAddress.from("senderAddress"),
+                        requestReference: CoreId.from("aRequestReference")
+                    })
+
+                    // const attributeToShare =
+                    //     await rConsumptionController.attributes.createSharedConsumptionAttributeCopy({
+                    //         attributeId: sourceAttribute.id,
+                    //         peer: CoreAddress.from("senderAddress"),
+                    //         requestReference: CoreId.from("aRequestReference")
+                    //     })
+
+                    await rConsumptionController.attributes.createSharedConsumptionAttributeCopy({
+                        attributeId: attributeToShare.id,
+                        peer: shareWithAccountController.identity.address,
+                        requestReference: CoreId.from("aRequestReference")
+                    })
+
+                    const requestItem = ShareAttributeRequestItem.from({
+                        attributeId: attributeToShare.id,
+                        mustBeAccepted: false,
+                        shareWith: shareWithAccountController.identity.address
+                    })
+                    const request: ConsumptionRequest = undefined! // is not used in accept anyway
+                    const acceptParams: AcceptShareAttributeRequestItemParametersJSON = { accept: true }
+
+                    await rProcessor.accept(requestItem, acceptParams, request)
+
+                    // ensure no request was sent
+                    expect(mockOutgoingRequestsController2.sentWasCalled).to.be.false
                 })
             })
         })

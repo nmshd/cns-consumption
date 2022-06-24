@@ -10,6 +10,7 @@ import {
 } from "@nmshd/content"
 import { CoreAddress, TransportErrors } from "@nmshd/transport"
 import { ConsumptionErrors } from "../../../../consumption"
+import { ConsumptionAttribute } from "../../../attributes/local/ConsumptionAttribute"
 import { GenericRequestItemProcessor } from "../GenericRequestItemProcessor"
 import { ConsumptionRequestInfo } from "../IRequestItemProcessor"
 import { ValidationResult } from "../ValidationResult"
@@ -112,28 +113,55 @@ export class ShareAttributeRequestItemProcessor extends GenericRequestItemProces
     ): Promise<AcceptResponseItem> {
         const attribute = await this.consumptionController.attributes.getConsumptionAttribute(requestItem.attributeId)
 
+        if (!(await this.isAttributeAlreadyShared(attribute!, requestItem.shareWith))) {
+            await this.shareAttribute(attribute, requestItem.shareWith)
+        }
+
+        return AcceptResponseItem.from({ result: ResponseItemResult.Accepted })
+    }
+
+    private async isAttributeAlreadyShared(attribute: ConsumptionAttribute, shareWith: CoreAddress) {
+        if (attribute.content instanceof IdentityAttribute) {
+            return (
+                (
+                    await this.consumptionController.attributes.getConsumptionAttributes({
+                        "shareInfo.sourceAttribute": attribute.shareInfo!.sourceAttribute!.toString(), // eslint-disable-line @typescript-eslint/naming-convention
+                        "shareInfo.peer": shareWith.toString() // eslint-disable-line @typescript-eslint/naming-convention
+                    })
+                ).length > 0
+            )
+        }
+        return (
+            (
+                await this.consumptionController.attributes.getConsumptionAttributes({
+                    "shareInfo.sourceAttribute": attribute.id.toString(), // eslint-disable-line @typescript-eslint/naming-convention
+                    "shareInfo.peer": shareWith.toString() // eslint-disable-line @typescript-eslint/naming-convention
+                })
+            ).length > 0
+        )
+    }
+
+    private async shareAttribute(attribute: ConsumptionAttribute | undefined, shareWith: CoreAddress) {
         const createAttributeRequestItem = CreateAttributeRequestItem.from({
             attribute: attribute!.content,
             mustBeAccepted: true
         })
 
-        let createAttributeRequest = await this.consumptionController.outgoingRequests.create({
-            peer: requestItem.shareWith,
+        const createAttributeRequest = await this.consumptionController.outgoingRequests.create({
+            peer: shareWith,
             content: Request.from({
                 items: [createAttributeRequestItem]
             })
         })
 
         const message = await this.accountController.messages.sendMessage({
-            recipients: [requestItem.shareWith],
+            recipients: [shareWith],
             content: createAttributeRequest.content
         })
 
-        createAttributeRequest = await this.consumptionController.outgoingRequests.sent({
+        await this.consumptionController.outgoingRequests.sent({
             requestId: createAttributeRequest.id,
             requestSourceObject: message
         })
-
-        return AcceptResponseItem.from({ result: ResponseItemResult.Accepted })
     }
 }
