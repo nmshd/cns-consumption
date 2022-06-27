@@ -28,6 +28,7 @@ import { TestObjectFactory } from "../../testHelpers/TestObjectFactory"
 class MockOutgoingRequestsController extends OutgoingRequestsController {
     public createWasCalledWith?: ICreateOutgoingRequestParameters
     public sentWasCalled = false
+    public createWasCalled = false
     public sentWasCalledWith?: ISentOutgoingRequestParameters
 
     public constructor(
@@ -40,6 +41,7 @@ class MockOutgoingRequestsController extends OutgoingRequestsController {
 
     public override async create(params: ICreateOutgoingRequestParameters): Promise<ConsumptionRequest> {
         this.createWasCalledWith = params
+        this.createWasCalled = true
         return await super.create(params)
     }
 
@@ -47,6 +49,13 @@ class MockOutgoingRequestsController extends OutgoingRequestsController {
         this.sentWasCalledWith = params
         this.sentWasCalled = true
         return await super.sent(params)
+    }
+
+    public reset() {
+        this.sentWasCalled = false
+        this.sentWasCalledWith = undefined
+        this.createWasCalled = false
+        this.createWasCalledWith = undefined
     }
 }
 
@@ -99,6 +108,11 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
             this.beforeEach(function () {
                 processor1 = new ShareAttributeRequestItemProcessor(consumptionController1)
                 processor2 = new ShareAttributeRequestItemProcessor(consumptionController2)
+            })
+
+            this.afterEach(function () {
+                mockOutgoingRequestsController1.reset()
+                mockOutgoingRequestsController2.reset()
             })
 
             describe("canCreateOutgoingRequestItem", function () {
@@ -457,14 +471,21 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                     const recipientConsumptionController = consumptionController2
                     const recipientProcessor = processor2
 
-                    const attribute = await recipientConsumptionController.attributes.createConsumptionAttribute({
-                        content: TestObjectFactory.createIdentityAttribute({
-                            owner: recipientConsumptionController.accountController.identity.address
+                    const repositoryAttribute =
+                        await recipientConsumptionController.attributes.createConsumptionAttribute({
+                            content: TestObjectFactory.createIdentityAttribute({
+                                owner: recipientConsumptionController.accountController.identity.address
+                            })
                         })
-                    })
+                    const attributeToShare =
+                        await recipientConsumptionController.attributes.createSharedConsumptionAttributeCopy({
+                            attributeId: repositoryAttribute.id,
+                            peer: CoreAddress.from("senderAddress"),
+                            requestReference: CoreId.from("requestReference")
+                        })
 
                     const requestItem = ShareAttributeRequestItem.from({
-                        attributeId: attribute.id,
+                        attributeId: attributeToShare.id,
                         mustBeAccepted: false,
                         shareWith: shareWithAccountController.identity.address
                     })
@@ -500,7 +521,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                     const sentAttribute = sentRequestItem.attribute
 
                     // ensure the correct attribute was sent
-                    expect(sentAttribute.toJSON()).to.deep.equal(attribute.content.toJSON())
+                    expect(sentAttribute.toJSON()).to.deep.equal(repositoryAttribute.content.toJSON())
                 })
 
                 it("does not send a request to shareWith when the identity attribute is already shared", async function () {
@@ -508,21 +529,20 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                     const rConsumptionController = consumptionController2
                     const rProcessor = processor2
 
-                    const sourceAttribute = await rConsumptionController.attributes.createConsumptionAttribute({
+                    const repositoryAttribute = await rConsumptionController.attributes.createConsumptionAttribute({
                         content: TestObjectFactory.createIdentityAttribute({
                             owner: rConsumptionController.accountController.identity.address
                         })
                     })
-
                     const attributeToShare =
                         await rConsumptionController.attributes.createSharedConsumptionAttributeCopy({
-                            attributeId: sourceAttribute.id,
+                            attributeId: repositoryAttribute.id,
                             peer: CoreAddress.from("senderAddress"),
                             requestReference: CoreId.from("aRequestReference")
                         })
 
                     await rConsumptionController.attributes.createSharedConsumptionAttributeCopy({
-                        attributeId: sourceAttribute.id,
+                        attributeId: repositoryAttribute.id,
                         peer: shareWithAccountController.identity.address,
                         requestReference: CoreId.from("aRequestReference")
                     })
@@ -538,6 +558,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                     await rProcessor.accept(requestItem, acceptParams, request)
 
                     // ensure no request was sent
+                    expect(mockOutgoingRequestsController2.createWasCalled).to.be.false
                     expect(mockOutgoingRequestsController2.sentWasCalled).to.be.false
                 })
 
@@ -571,6 +592,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                     await rProcessor.accept(requestItem, acceptParams, request)
 
                     // ensure no request was sent
+                    expect(mockOutgoingRequestsController2.createWasCalled).to.be.false
                     expect(mockOutgoingRequestsController2.sentWasCalled).to.be.false
                 })
             })
