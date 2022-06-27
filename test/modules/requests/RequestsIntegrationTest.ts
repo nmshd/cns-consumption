@@ -1,7 +1,7 @@
 import { IDatabaseCollection, IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
-import { LokiJsConnection } from "@js-soft/docdb-access-loki"
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import {
+    ConsumptionController,
     ConsumptionIds,
     ConsumptionRequest,
     ConsumptionRequestSource,
@@ -35,10 +35,12 @@ import {
     ResponseResult
 } from "@nmshd/content"
 import {
+    AccountController,
     CoreAddress,
     CoreId,
     IConfigOverwrite,
     ICoreId,
+    IdentityController,
     IMessage,
     Message,
     RelationshipChangeType,
@@ -78,15 +80,20 @@ export class RequestsTestsContext {
         // hide constructor
     }
 
-    public static async create(): Promise<RequestsTestsContext> {
+    public static async create(dbConnection: IDatabaseConnection): Promise<RequestsTestsContext> {
         const context = new RequestsTestsContext()
 
-        const dbConnection = new LokiJsConnection(".")
         const database = await dbConnection.getDatabase(Math.random().toString(36).substring(7))
         const collection = new SynchronizedCollection(await database.getCollection("Requests"), 0)
-        const processorRegistry = new RequestItemProcessorRegistry(undefined!, [
-            { itemConstructor: TestRequestItem, processorConstructor: TestRequestItemProcessor }
-        ])
+        const fakeConsumptionController = {
+            accountController: {
+                identity: { address: CoreAddress.from("anAddress") } as IdentityController
+            } as AccountController
+        } as ConsumptionController
+        const processorRegistry = new RequestItemProcessorRegistry(
+            fakeConsumptionController,
+            new Map([[TestRequestItem, TestRequestItemProcessor]])
+        )
 
         context.currentIdentity = CoreAddress.from("id12345")
 

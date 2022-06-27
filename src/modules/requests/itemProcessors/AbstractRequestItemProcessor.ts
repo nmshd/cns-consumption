@@ -1,10 +1,9 @@
 import { AcceptResponseItem, RejectResponseItem, Request, RequestItem, ResponseItem } from "@nmshd/content"
-import { CoreAddress } from "@nmshd/transport"
+import { AccountController, CoreAddress } from "@nmshd/transport"
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
 import { AcceptRequestItemParametersJSON } from "../incoming/decide/AcceptRequestItemParameters"
 import { RejectRequestItemParametersJSON } from "../incoming/decide/RejectRequestItemParameters"
-import { ConsumptionRequest } from "../local/ConsumptionRequest"
-import { IRequestItemProcessor } from "./IRequestItemProcessor"
+import { ConsumptionRequestInfo, IRequestItemProcessor } from "./IRequestItemProcessor"
 import { ValidationResult } from "./ValidationResult"
 
 export abstract class AbstractRequestItemProcessor<
@@ -13,28 +12,37 @@ export abstract class AbstractRequestItemProcessor<
     TRejectParams extends RejectRequestItemParametersJSON = RejectRequestItemParametersJSON
 > implements IRequestItemProcessor<TRequestItem, TAcceptParams, TRejectParams>
 {
-    public constructor(protected readonly consumptionController: ConsumptionController) {}
+    protected accountController: AccountController
+    protected currentIdentityAddress: CoreAddress
 
-    public abstract checkPrerequisitesOfIncomingRequestItem(requestItem: TRequestItem): boolean | Promise<boolean>
+    public constructor(protected readonly consumptionController: ConsumptionController) {
+        this.accountController = this.consumptionController.accountController
+        this.currentIdentityAddress = this.accountController.identity.address
+    }
+
+    public abstract checkPrerequisitesOfIncomingRequestItem(
+        requestItem: TRequestItem,
+        requestInfo: ConsumptionRequestInfo
+    ): boolean | Promise<boolean>
     public abstract canAccept(
         requestItem: TRequestItem,
         params: TAcceptParams,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): ValidationResult | Promise<ValidationResult>
     public abstract canReject(
         requestItem: TRequestItem,
         params: TRejectParams,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): ValidationResult | Promise<ValidationResult>
     public abstract accept(
         requestItem: TRequestItem,
         params: TAcceptParams,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): AcceptResponseItem | Promise<AcceptResponseItem>
     public abstract reject(
         requestItem: TRequestItem,
         params: TRejectParams,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): RejectResponseItem | Promise<RejectResponseItem>
     public abstract canCreateOutgoingRequestItem(
         requestItem: TRequestItem,
@@ -44,11 +52,11 @@ export abstract class AbstractRequestItemProcessor<
     public abstract canApplyIncomingResponseItem(
         responseItem: ResponseItem,
         requestItem: TRequestItem,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): ValidationResult | Promise<ValidationResult>
     public abstract applyIncomingResponseItem(
         responseItem: ResponseItem,
         requestItem: TRequestItem,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): void | Promise<void>
 }

@@ -5,35 +5,32 @@ import { ProcessorConstructor } from "./ProcessorConstructor"
 import { RequestItemConstructor } from "./RequestItemConstructor"
 
 export class RequestItemProcessorRegistry {
-    private readonly registry: Record<string, ProcessorConstructor | undefined> = {}
-
     public constructor(
         private readonly consumptionController: ConsumptionController,
-        processors: { processorConstructor: ProcessorConstructor; itemConstructor: RequestItemConstructor }[] = []
-    ) {
-        for (const { itemConstructor, processorConstructor } of processors) {
-            this.registerProcessor(processorConstructor, itemConstructor)
-        }
-    }
+        private readonly processors = new Map<RequestItemConstructor, ProcessorConstructor | undefined>()
+    ) {}
 
     public registerProcessor(
-        processorConstructor: ProcessorConstructor,
-        itemConstructor: RequestItemConstructor
+        itemConstructor: RequestItemConstructor,
+        processorConstructor: ProcessorConstructor
     ): void {
-        if (this.registry.hasOwnProperty(itemConstructor.name)) {
+        if (this.processors.has(itemConstructor)) {
             throw new Error(
                 `There is already a processor registered for '${itemConstructor.name}''. Use 'replaceProcessorForType' if you want to replace it.`
             )
         }
-        this.registry[itemConstructor.name] = processorConstructor
+        this.processors.set(itemConstructor, processorConstructor)
     }
 
-    public replaceProcessor(processorConstructor: ProcessorConstructor, itemConstructor: RequestItemConstructor): void {
-        this.registry[itemConstructor.name] = processorConstructor
+    public registerOrReplaceProcessor(
+        itemConstructor: RequestItemConstructor,
+        processorConstructor: ProcessorConstructor
+    ): void {
+        this.processors.set(itemConstructor, processorConstructor)
     }
 
     public getProcessorForItem(item: RequestItem): IRequestItemProcessor {
-        const constructor = this.registry[item.constructor.name]
+        const constructor = this.processors.get(item.constructor as RequestItemConstructor)
         if (!constructor) {
             throw new Error(`There was no processor registered for '${item.constructor.name}'.`)
         }

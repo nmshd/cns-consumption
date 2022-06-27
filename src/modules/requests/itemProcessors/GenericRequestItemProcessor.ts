@@ -10,8 +10,8 @@ import {
 import { CoreAddress } from "@nmshd/transport"
 import { AcceptRequestItemParametersJSON } from "../incoming/decide/AcceptRequestItemParameters"
 import { RejectRequestItemParametersJSON } from "../incoming/decide/RejectRequestItemParameters"
-import { ConsumptionRequest } from "../local/ConsumptionRequest"
 import { AbstractRequestItemProcessor } from "./AbstractRequestItemProcessor"
+import { ConsumptionRequestInfo } from "./IRequestItemProcessor"
 import { ValidationResult } from "./ValidationResult"
 
 export class GenericRequestItemProcessor<
@@ -19,14 +19,17 @@ export class GenericRequestItemProcessor<
     TAcceptParams extends AcceptRequestItemParametersJSON = AcceptRequestItemParametersJSON,
     TRejectParams extends RejectRequestItemParametersJSON = RejectRequestItemParametersJSON
 > extends AbstractRequestItemProcessor<TRequestItem, TAcceptParams, TRejectParams> {
-    public checkPrerequisitesOfIncomingRequestItem(_requestItem: TRequestItem): Promise<boolean> | boolean {
+    public checkPrerequisitesOfIncomingRequestItem(
+        requestItem: TRequestItem,
+        requestInfo: ConsumptionRequestInfo
+    ): Promise<boolean> | boolean {
         return true
     }
 
     public canAccept(
         requestItem: TRequestItem,
         params: TAcceptParams,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): Promise<ValidationResult> | ValidationResult {
         return ValidationResult.success()
     }
@@ -34,7 +37,7 @@ export class GenericRequestItemProcessor<
     public canReject(
         requestItem: TRequestItem,
         params: TRejectParams,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): Promise<ValidationResult> | ValidationResult {
         return ValidationResult.success()
     }
@@ -42,7 +45,7 @@ export class GenericRequestItemProcessor<
     public accept(
         requestItem: TRequestItem,
         params: TAcceptParams,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): AcceptResponseItem | Promise<AcceptResponseItem> {
         return AcceptResponseItem.from({
             result: ResponseItemResult.Accepted,
@@ -53,7 +56,7 @@ export class GenericRequestItemProcessor<
     public reject(
         requestItem: TRequestItem,
         params: TRejectParams,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): RejectResponseItem | Promise<RejectResponseItem> {
         return RejectResponseItem.from({
             result: ResponseItemResult.Rejected,
@@ -72,7 +75,7 @@ export class GenericRequestItemProcessor<
     public canApplyIncomingResponseItem(
         responseItem: AcceptResponseItem,
         requestItem: TRequestItem,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): Promise<ValidationResult> | ValidationResult {
         return ValidationResult.success()
     }
@@ -80,7 +83,7 @@ export class GenericRequestItemProcessor<
     public applyIncomingResponseItem(
         responseItem: ResponseItem,
         requestItem: TRequestItem,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): Promise<void> | void {
         // do nothing
     }

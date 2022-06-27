@@ -130,14 +130,17 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         for (const item of request.content.items) {
             if (item instanceof RequestItem) {
                 const processor = this.processorRegistry.getProcessorForItem(item)
-                const prerequisitesFulfilled = await processor.checkPrerequisitesOfIncomingRequestItem(item)
+                const prerequisitesFulfilled = await processor.checkPrerequisitesOfIncomingRequestItem(item, request)
                 if (!prerequisitesFulfilled) {
                     return request
                 }
             } else {
                 for (const childItem of item.items) {
                     const processor = this.processorRegistry.getProcessorForItem(childItem)
-                    const prerequisitesFulfilled = await processor.checkPrerequisitesOfIncomingRequestItem(childItem)
+                    const prerequisitesFulfilled = await processor.checkPrerequisitesOfIncomingRequestItem(
+                        childItem,
+                        request
+                    )
                     if (!prerequisitesFulfilled) {
                         return request
                     }

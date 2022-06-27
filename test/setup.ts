@@ -21,10 +21,8 @@ export default function setup(): void {
 
         this.assert(
             obj instanceof ErrorValidationResult,
-            `expected ${JSON.stringify(obj)} to be an ${ErrorValidationResult.name}, but it is a ${
-                SuccessfulValidationResult.name
-            }`,
-            `expected ${JSON.stringify(obj)} to not be an ${ErrorValidationResult.name}, but it is.`,
+            `expected an ${ErrorValidationResult.name}, but received a ${SuccessfulValidationResult.name}`,
+            `expected no ${ErrorValidationResult.name}, but received one.`,
             ErrorValidationResult,
             obj
         )

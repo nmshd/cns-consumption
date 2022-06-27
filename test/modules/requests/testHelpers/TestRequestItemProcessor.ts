@@ -1,7 +1,7 @@
 import { ApplicationError } from "@js-soft/ts-utils"
 import {
     AcceptRequestItemParametersJSON,
-    ConsumptionRequest,
+    ConsumptionRequestInfo,
     GenericRequestItemProcessor,
     RejectRequestItemParametersJSON,
     ValidationResult
@@ -61,22 +61,22 @@ export class TestRequestItemProcessor extends GenericRequestItemProcessor<TestRe
     public override accept(
         requestItem: TestRequestItem,
         params: AcceptRequestItemParametersJSON,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): AcceptResponseItem | Promise<AcceptResponseItem> {
         if (requestItem.shouldThrowOnAccept) {
             throw new Error("Accept failed for testing purposes.")
         }
-        return super.accept(requestItem, params, request)
+        return super.accept(requestItem, params, requestInfo)
     }
 
     public override reject(
         requestItem: TestRequestItem,
         params: RejectRequestItemParametersJSON,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): RejectResponseItem | Promise<RejectResponseItem> {
         if (requestItem.shouldThrowOnReject) {
             throw new Error("Reject failed for testing purposes.")
         }
-        return super.reject(requestItem, params, request)
+        return super.reject(requestItem, params, requestInfo)
     }
 }

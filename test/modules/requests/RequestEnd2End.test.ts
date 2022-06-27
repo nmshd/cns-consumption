@@ -46,14 +46,14 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                 ;({ accountController: sAccountController, consumptionController: sConsumptionController } =
                     accounts[0])
                 sConsumptionController.incomingRequests["processorRegistry"].registerProcessor(
-                    TestRequestItemProcessor,
-                    TestRequestItem
+                    TestRequestItem,
+                    TestRequestItemProcessor
                 )
                 ;({ accountController: rAccountController, consumptionController: rConsumptionController } =
                     accounts[1])
                 rConsumptionController.incomingRequests["processorRegistry"].registerProcessor(
-                    TestRequestItemProcessor,
-                    TestRequestItem
+                    TestRequestItem,
+                    TestRequestItemProcessor
                 )
             })
 
@@ -193,14 +193,14 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                 ;({ accountController: sAccountController, consumptionController: sConsumptionController } =
                     accounts[0])
                 sConsumptionController.incomingRequests["processorRegistry"].registerProcessor(
-                    TestRequestItemProcessor,
-                    TestRequestItem
+                    TestRequestItem,
+                    TestRequestItemProcessor
                 )
                 ;({ accountController: rAccountController, consumptionController: rConsumptionController } =
                     accounts[1])
                 rConsumptionController.incomingRequests["processorRegistry"].registerProcessor(
-                    TestRequestItemProcessor,
-                    TestRequestItem
+                    TestRequestItem,
+                    TestRequestItemProcessor
                 )
 
                 await TestUtil.addRelationship(sAccountController, rAccountController)

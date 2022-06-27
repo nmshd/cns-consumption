@@ -9,8 +9,8 @@ import {
 } from "@nmshd/content"
 import { CoreAddress } from "@nmshd/transport"
 import { ConsumptionErrors } from "../../../../consumption"
-import { ConsumptionRequest } from "../../local/ConsumptionRequest"
 import { GenericRequestItemProcessor } from "../GenericRequestItemProcessor"
+import { ConsumptionRequestInfo } from "../IRequestItemProcessor"
 import { ValidationResult } from "../ValidationResult"
 import { AcceptCreateAttributeRequestItemParametersJSON } from "./AcceptCreateAttributeRequestItemParameters"
 
@@ -31,9 +31,7 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
     }
 
     private canCreateRequestItemWithIdentityAttribute(requestItem: CreateAttributeRequestItem): ValidationResult {
-        const iAmOwnerOfTheAttribute = this.consumptionController.accountController.identity.isMe(
-            requestItem.attribute.owner
-        )
+        const iAmOwnerOfTheAttribute = this.accountController.identity.isMe(requestItem.attribute.owner)
 
         if (!iAmOwnerOfTheAttribute) {
             return ValidationResult.error(
@@ -47,9 +45,7 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
     }
 
     private canCreateRequestItemWithRelationshipAttribute(requestItem: CreateAttributeRequestItem) {
-        const iAmOwnerOfTheAttribute = this.consumptionController.accountController.identity.isMe(
-            requestItem.attribute.owner
-        )
+        const iAmOwnerOfTheAttribute = this.accountController.identity.isMe(requestItem.attribute.owner)
 
         if (!iAmOwnerOfTheAttribute) {
             return ValidationResult.error(
@@ -65,12 +61,12 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
     public override async accept(
         requestItem: CreateAttributeRequestItem,
         _params: AcceptCreateAttributeRequestItemParametersJSON,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): Promise<CreateAttributeAcceptResponseItem> {
         const peerConsumptionAttribute = await this.consumptionController.attributes.createPeerConsumptionAttribute({
             content: requestItem.attribute,
-            peer: request.peer,
-            requestReference: request.id
+            peer: requestInfo.peer,
+            requestReference: requestInfo.id
         })
 
         return CreateAttributeAcceptResponseItem.from({
@@ -83,17 +79,19 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
     public override async applyIncomingResponseItem(
         responseItem: CreateAttributeAcceptResponseItem | RejectResponseItem,
         requestItem: CreateAttributeRequestItem,
-        request: ConsumptionRequest
+        requestInfo: ConsumptionRequestInfo
     ): Promise<void> {
         if (!(responseItem instanceof CreateAttributeAcceptResponseItem)) {
             return
         }
 
+        /* TODO: in case of an own IdentityAttribute that was sent to the peer, we need to specify a source attribute; but currently we can't find the source attribute, because we don't know the id the user picked when sending the request */
+
         await this.consumptionController.attributes.createPeerConsumptionAttribute({
             id: responseItem.attributeId,
             content: requestItem.attribute,
-            peer: request.peer,
-            requestReference: request.id
+            peer: requestInfo.peer,
+            requestReference: requestInfo.id
         })
     }
 }

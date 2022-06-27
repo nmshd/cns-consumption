@@ -1,5 +1,6 @@
-import { GenericRequestItemProcessor } from "@nmshd/consumption"
+import { ConsumptionController, GenericRequestItemProcessor } from "@nmshd/consumption"
 import { AcceptResponseItem, RejectResponseItem, ResponseItemResult } from "@nmshd/content"
+import { AccountController, CoreAddress, IdentityController } from "@nmshd/transport"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestRequestItem } from "./testHelpers/TestRequestItem"
@@ -10,10 +11,10 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
             /* ****** Incoming RequestItems ******* */
             describe("CheckPrerequisitesOfIncomingRequestItem", function () {
                 it("returns true", async function () {
-                    const processor = new GenericRequestItemProcessor(undefined!)
+                    const processor = createProcessor()
                     const requestItem = new TestRequestItem()
 
-                    const actual = await processor.checkPrerequisitesOfIncomingRequestItem(requestItem)
+                    const actual = await processor.checkPrerequisitesOfIncomingRequestItem(requestItem, undefined!)
 
                     expect(actual).to.be.true
                 })
@@ -21,7 +22,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
 
             describe("CanAccept", function () {
                 it("returns 'success'", async function () {
-                    const processor = new GenericRequestItemProcessor(undefined!)
+                    const processor = createProcessor()
 
                     const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
 
@@ -39,7 +40,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
 
             describe("CanReject", function () {
                 it("returns 'success'", async function () {
-                    const processor = new GenericRequestItemProcessor(undefined!)
+                    const processor = createProcessor()
 
                     const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
 
@@ -57,7 +58,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
 
             describe("Accept", function () {
                 it("returns an AcceptResponseItem", function () {
-                    const processor = new GenericRequestItemProcessor(undefined!)
+                    const processor = createProcessor()
 
                     const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
 
@@ -75,7 +76,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
 
             describe("Reject", function () {
                 it("returns a RejectResponseItem", function () {
-                    const processor = new GenericRequestItemProcessor(undefined!)
+                    const processor = createProcessor()
 
                     const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
 
@@ -94,7 +95,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
             /* ****** Outgoing RequestItems ******* */
             describe("CanCreateOutgoingRequestItem", function () {
                 it("returns true", async function () {
-                    const processor = new GenericRequestItemProcessor(undefined!)
+                    const processor = createProcessor()
 
                     const actual = await processor.canCreateOutgoingRequestItem(
                         TestRequestItem.from({ mustBeAccepted: false }),
@@ -108,7 +109,7 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
 
             describe("CanApplyIncomingResponseItem", function () {
                 it("returns 'success'", async function () {
-                    const processor = new GenericRequestItemProcessor(undefined!)
+                    const processor = createProcessor()
 
                     const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
 
@@ -123,4 +124,14 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
             })
         })
     }
+}
+
+function createProcessor() {
+    const fakeConsumptionController = {
+        accountController: {
+            identity: { address: CoreAddress.from("anAddress") } as IdentityController
+        } as AccountController
+    } as ConsumptionController
+
+    return new GenericRequestItemProcessor(fakeConsumptionController)
 }
