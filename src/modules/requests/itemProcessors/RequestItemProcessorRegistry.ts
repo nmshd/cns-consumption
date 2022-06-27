@@ -7,12 +7,12 @@ import { RequestItemConstructor } from "./RequestItemConstructor"
 export class RequestItemProcessorRegistry {
     public constructor(
         private readonly consumptionController: ConsumptionController,
-        private readonly processors = new Map<RequestItemConstructor, ProcessorConstructor | undefined>
+        private readonly processors = new Map<RequestItemConstructor, ProcessorConstructor | undefined>()
     ) {}
 
     public registerProcessor(
         itemConstructor: RequestItemConstructor,
-        processorConstructor: ProcessorConstructor,
+        processorConstructor: ProcessorConstructor
     ): void {
         if (this.processors.has(itemConstructor)) {
             throw new Error(
@@ -24,7 +24,7 @@ export class RequestItemProcessorRegistry {
 
     public registerOrReplaceProcessor(
         itemConstructor: RequestItemConstructor,
-        processorConstructor: ProcessorConstructor,
+        processorConstructor: ProcessorConstructor
     ): void {
         this.processors.set(itemConstructor, processorConstructor)
     }
