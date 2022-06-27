@@ -2,8 +2,8 @@ import {
     AcceptReadAttributeRequestItemParametersJSON,
     ConsumptionController,
     ConsumptionIds,
-    ConsumptionRequest,
-    ConsumptionRequestStatus,
+    LocalRequest,
+    LocalRequestStatus,
     ReadAttributeRequestItemProcessor
 } from "@nmshd/consumption"
 import {
@@ -223,12 +223,12 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         query: IdentityAttributeQuery.from({ valueType: "GivenName" })
                     })
                     const requestId = await ConsumptionIds.request.generate()
-                    const request = ConsumptionRequest.from({
+                    const request = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: CoreAddress.from("id1"),
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -252,12 +252,12 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         query: IdentityAttributeQuery.from({ valueType: "GivenName" })
                     })
                     const requestId = await ConsumptionIds.request.generate()
-                    const request = ConsumptionRequest.from({
+                    const request = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: CoreAddress.from("id1"),
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -288,12 +288,12 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         query: IdentityAttributeQuery.from({ valueType: "GivenName" })
                     })
                     const requestId = await ConsumptionIds.request.generate()
-                    const request = ConsumptionRequest.from({
+                    const request = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: CoreAddress.from("id1"),
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -332,12 +332,12 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         query: IdentityAttributeQuery.from({ valueType: "GivenName" })
                     })
                     const requestId = await ConsumptionIds.request.generate()
-                    const request = ConsumptionRequest.from({
+                    const request = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: peer,
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -372,12 +372,12 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         query: IdentityAttributeQuery.from({ valueType: "GivenName" })
                     })
                     const requestId = await ConsumptionIds.request.generate()
-                    const incomingRequest = ConsumptionRequest.from({
+                    const incomingRequest = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: CoreAddress.from("id1"),
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -406,12 +406,12 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         query: IdentityAttributeQuery.from({ valueType: "GivenName" })
                     })
                     const requestId = await ConsumptionIds.request.generate()
-                    const incomingRequest = ConsumptionRequest.from({
+                    const incomingRequest = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: CoreAddress.from("id1"),
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -462,12 +462,12 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         })
                     })
                     const requestId = await ConsumptionIds.request.generate()
-                    const incomingRequest = ConsumptionRequest.from({
+                    const incomingRequest = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: senderAddress,
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -510,12 +510,12 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                     const requestId = await ConsumptionIds.request.generate()
                     const peer = CoreAddress.from("id1")
 
-                    const incomingRequest = ConsumptionRequest.from({
+                    const incomingRequest = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: peer,
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]

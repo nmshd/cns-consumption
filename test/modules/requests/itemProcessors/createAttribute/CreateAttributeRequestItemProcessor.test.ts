@@ -2,9 +2,9 @@ import {
     AcceptCreateAttributeRequestItemParametersJSON,
     ConsumptionController,
     ConsumptionIds,
-    ConsumptionRequest,
-    ConsumptionRequestStatus,
-    CreateAttributeRequestItemProcessor
+    CreateAttributeRequestItemProcessor,
+    LocalRequest,
+    LocalRequestStatus
 } from "@nmshd/consumption"
 import {
     CreateAttributeAcceptResponseItem,
@@ -141,12 +141,12 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                             owner: senderAddress
                         })
                     })
-                    const incomingRequest = ConsumptionRequest.from({
+                    const incomingRequest = LocalRequest.from({
                         id: await ConsumptionIds.request.generate(),
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: senderAddress,
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             items: [requestItem]
                         }),
@@ -180,12 +180,12 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                     })
 
                     const requestId = await ConsumptionIds.request.generate()
-                    const incomingRequest = ConsumptionRequest.from({
+                    const incomingRequest = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: CoreAddress.from("id1"),
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -219,12 +219,12 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                     })
                     const requestId = await ConsumptionIds.request.generate()
                     const peer = CoreAddress.from("id1")
-                    const incomingRequest = ConsumptionRequest.from({
+                    const incomingRequest = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: peer,
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]

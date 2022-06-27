@@ -1,7 +1,7 @@
 import { ApplicationError, Result } from "@js-soft/ts-utils"
 import { RequestItem, RequestItemGroup } from "@nmshd/content"
 import { CoreId } from "@nmshd/transport"
-import { ConsumptionRequest } from "../local/ConsumptionRequest"
+import { LocalRequest } from "../local/LocalRequest"
 import {
     DecideRequestItemGroupParametersJSON,
     isDecideRequestItemGroupParametersJSON
@@ -13,7 +13,7 @@ import {
 import { InternalDecideRequestParametersJSON } from "./decide/InternalDecideRequestParameters"
 
 export class DecideRequestParametersValidator {
-    public validate(params: InternalDecideRequestParametersJSON, request: ConsumptionRequest): Result<void> {
+    public validate(params: InternalDecideRequestParametersJSON, request: LocalRequest): Result<void> {
         if (!request.id.equals(CoreId.from(params.requestId))) {
             return Result.fail(
                 new ApplicationError(

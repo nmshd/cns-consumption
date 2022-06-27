@@ -12,17 +12,17 @@ import {
     ICoreSerializable,
     ICoreSynchronizable
 } from "@nmshd/transport"
-import { ConsumptionRequestStatus } from "./ConsumptionRequestStatus"
-import { ConsumptionRequestStatusLogEntry, IConsumptionRequestStatusLogEntry } from "./ConsumptionRequestStatusLogEntry"
-import { ConsumptionResponse, IConsumptionResponse } from "./ConsumptionResponse"
+import { LocalRequestStatus } from "./LocalRequestStatus"
+import { ILocalRequestStatusLogEntry, LocalRequestStatusLogEntry } from "./LocalRequestStatusLogEntry"
+import { ConsumptionResponse, IConsumptionResponse } from "./LocalResponse"
 
-export interface IConsumptionRequestSource extends ICoreSerializable {
+export interface ILocalRequestSource extends ICoreSerializable {
     type: "Message" | "RelationshipTemplate"
     reference: ICoreId
 }
 
-@type("ConsumptionRequestSource")
-export class ConsumptionRequestSource extends CoreSerializable implements IConsumptionRequestSource {
+@type("LocalRequestSource")
+export class LocalRequestSource extends CoreSerializable implements ILocalRequestSource {
     @serialize()
     @validate()
     public type: "Message" | "RelationshipTemplate"
@@ -31,24 +31,24 @@ export class ConsumptionRequestSource extends CoreSerializable implements IConsu
     @validate()
     public reference: CoreId
 
-    public static from(value: IConsumptionRequestSource): ConsumptionRequestSource {
+    public static from(value: ILocalRequestSource): LocalRequestSource {
         return this.fromAny(value)
     }
 }
 
-export interface IConsumptionRequest extends ICoreSynchronizable {
+export interface ILocalRequest extends ICoreSynchronizable {
     isOwn: boolean
     peer: ICoreAddress
     createdAt: ICoreDate
     content: IRequest
-    source?: IConsumptionRequestSource
+    source?: ILocalRequestSource
     response?: IConsumptionResponse
-    status: ConsumptionRequestStatus
-    statusLog: IConsumptionRequestStatusLogEntry[]
+    status: LocalRequestStatus
+    statusLog: ILocalRequestStatusLogEntry[]
 }
 
-@type("ConsumptionRequest")
-export class ConsumptionRequest extends CoreSynchronizable implements IConsumptionRequest {
+@type("LocalRequest")
+export class LocalRequest extends CoreSynchronizable implements ILocalRequest {
     @serialize()
     @validate()
     public isOwn: boolean
@@ -67,7 +67,7 @@ export class ConsumptionRequest extends CoreSynchronizable implements IConsumpti
 
     @serialize()
     @validate({ nullable: true })
-    public source?: ConsumptionRequestSource
+    public source?: LocalRequestSource
 
     @serialize()
     @validate({ nullable: true })
@@ -75,14 +75,14 @@ export class ConsumptionRequest extends CoreSynchronizable implements IConsumpti
 
     @serialize()
     @validate()
-    public status: ConsumptionRequestStatus
+    public status: LocalRequestStatus
 
-    @serialize({ type: ConsumptionRequestStatusLogEntry })
+    @serialize({ type: LocalRequestStatusLogEntry })
     @validate()
-    public statusLog: ConsumptionRequestStatusLogEntry[]
+    public statusLog: LocalRequestStatusLogEntry[]
 
-    public changeStatus(newStatus: ConsumptionRequestStatus): void {
-        const logEntry = ConsumptionRequestStatusLogEntry.from({
+    public changeStatus(newStatus: LocalRequestStatus): void {
+        const logEntry = LocalRequestStatusLogEntry.from({
             createdAt: CoreDate.utc(),
             oldStatus: this.status,
             newStatus
@@ -93,16 +93,16 @@ export class ConsumptionRequest extends CoreSynchronizable implements IConsumpti
         this.status = newStatus
     }
 
-    public sent(source: ConsumptionRequestSource): void {
-        if (this.status !== ConsumptionRequestStatus.Draft) {
+    public sent(source: LocalRequestSource): void {
+        if (this.status !== LocalRequestStatus.Draft) {
             throw new Error("Consumption Request has to be in status 'Draft'.")
         }
 
         this.source = source
-        this.changeStatus(ConsumptionRequestStatus.Open)
+        this.changeStatus(LocalRequestStatus.Open)
     }
 
-    public static from(value: IConsumptionRequest): ConsumptionRequest {
+    public static from(value: ILocalRequest): LocalRequest {
         return this.fromAny(value)
     }
 }

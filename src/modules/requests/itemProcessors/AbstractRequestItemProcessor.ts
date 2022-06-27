@@ -3,7 +3,7 @@ import { AccountController, CoreAddress } from "@nmshd/transport"
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
 import { AcceptRequestItemParametersJSON } from "../incoming/decide/AcceptRequestItemParameters"
 import { RejectRequestItemParametersJSON } from "../incoming/decide/RejectRequestItemParameters"
-import { ConsumptionRequestInfo, IRequestItemProcessor } from "./IRequestItemProcessor"
+import { IRequestItemProcessor, LocalRequestInfo } from "./IRequestItemProcessor"
 import { ValidationResult } from "./ValidationResult"
 
 export abstract class AbstractRequestItemProcessor<
@@ -22,27 +22,27 @@ export abstract class AbstractRequestItemProcessor<
 
     public abstract checkPrerequisitesOfIncomingRequestItem(
         requestItem: TRequestItem,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): boolean | Promise<boolean>
     public abstract canAccept(
         requestItem: TRequestItem,
         params: TAcceptParams,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): ValidationResult | Promise<ValidationResult>
     public abstract canReject(
         requestItem: TRequestItem,
         params: TRejectParams,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): ValidationResult | Promise<ValidationResult>
     public abstract accept(
         requestItem: TRequestItem,
         params: TAcceptParams,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): AcceptResponseItem | Promise<AcceptResponseItem>
     public abstract reject(
         requestItem: TRequestItem,
         params: TRejectParams,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): RejectResponseItem | Promise<RejectResponseItem>
     public abstract canCreateOutgoingRequestItem(
         requestItem: TRequestItem,
@@ -52,11 +52,11 @@ export abstract class AbstractRequestItemProcessor<
     public abstract canApplyIncomingResponseItem(
         responseItem: ResponseItem,
         requestItem: TRequestItem,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): ValidationResult | Promise<ValidationResult>
     public abstract applyIncomingResponseItem(
         responseItem: ResponseItem,
         requestItem: TRequestItem,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): void | Promise<void>
 }

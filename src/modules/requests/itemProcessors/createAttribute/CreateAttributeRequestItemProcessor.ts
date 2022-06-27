@@ -10,7 +10,7 @@ import {
 import { CoreAddress } from "@nmshd/transport"
 import { ConsumptionErrors } from "../../../../consumption"
 import { GenericRequestItemProcessor } from "../GenericRequestItemProcessor"
-import { ConsumptionRequestInfo } from "../IRequestItemProcessor"
+import { LocalRequestInfo } from "../IRequestItemProcessor"
 import { ValidationResult } from "../ValidationResult"
 import { AcceptCreateAttributeRequestItemParametersJSON } from "./AcceptCreateAttributeRequestItemParameters"
 
@@ -61,7 +61,7 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
     public override async accept(
         requestItem: CreateAttributeRequestItem,
         _params: AcceptCreateAttributeRequestItemParametersJSON,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): Promise<CreateAttributeAcceptResponseItem> {
         const peerLocalAttribute = await this.consumptionController.attributes.createPeerLocalAttribute({
             content: requestItem.attribute,
@@ -79,7 +79,7 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
     public override async applyIncomingResponseItem(
         responseItem: CreateAttributeAcceptResponseItem | RejectResponseItem,
         requestItem: CreateAttributeRequestItem,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): Promise<void> {
         if (!(responseItem instanceof CreateAttributeAcceptResponseItem)) {
             return

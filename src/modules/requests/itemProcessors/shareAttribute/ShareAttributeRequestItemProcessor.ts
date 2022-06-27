@@ -12,7 +12,7 @@ import { CoreAddress, TransportErrors } from "@nmshd/transport"
 import { ConsumptionErrors } from "../../../../consumption"
 import { LocalAttribute } from "../../../attributes/local/LocalAttribute"
 import { GenericRequestItemProcessor } from "../GenericRequestItemProcessor"
-import { ConsumptionRequestInfo } from "../IRequestItemProcessor"
+import { LocalRequestInfo } from "../IRequestItemProcessor"
 import { ValidationResult } from "../ValidationResult"
 import { AcceptShareAttributeRequestItemParametersJSON } from "./AcceptShareAttributeRequestItemParameters"
 
@@ -46,7 +46,7 @@ export class ShareAttributeRequestItemProcessor extends GenericRequestItemProces
 
     public override async checkPrerequisitesOfIncomingRequestItem(
         requestItem: ShareAttributeRequestItem,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): Promise<boolean> {
         const relationshipToShareWith = await this.accountController.relationships.getRelationshipToIdentity(
             requestItem.shareWith
@@ -101,7 +101,7 @@ export class ShareAttributeRequestItemProcessor extends GenericRequestItemProces
     public override canAccept(
         _requestItem: ShareAttributeRequestItem,
         _params: AcceptShareAttributeRequestItemParametersJSON,
-        _requestInfo: ConsumptionRequestInfo
+        _requestInfo: LocalRequestInfo
     ): ValidationResult {
         return ValidationResult.success()
     }
@@ -109,7 +109,7 @@ export class ShareAttributeRequestItemProcessor extends GenericRequestItemProces
     public override async accept(
         requestItem: ShareAttributeRequestItem,
         _params: AcceptShareAttributeRequestItemParametersJSON,
-        _requestInfo: ConsumptionRequestInfo
+        _requestInfo: LocalRequestInfo
     ): Promise<AcceptResponseItem> {
         const attribute = await this.consumptionController.attributes.getLocalAttribute(requestItem.attributeId)
 

@@ -26,9 +26,9 @@ import {
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
 import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProcessorRegistry"
 import { ValidationResult } from "../itemProcessors/ValidationResult"
-import { ConsumptionRequest, IConsumptionRequestSource } from "../local/ConsumptionRequest"
-import { ConsumptionRequestStatus } from "../local/ConsumptionRequestStatus"
-import { ConsumptionResponse, ConsumptionResponseSource } from "../local/ConsumptionResponse"
+import { ILocalRequestSource, LocalRequest } from "../local/LocalRequest"
+import { LocalRequestStatus } from "../local/LocalRequestStatus"
+import { ConsumptionResponse, ConsumptionResponseSource } from "../local/LocalResponse"
 import {
     CheckPrerequisitesOfIncomingRequestParameters,
     ICheckPrerequisitesOfIncomingRequestParameters
@@ -66,15 +66,15 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         super(ConsumptionControllerName.RequestsController, parent)
     }
 
-    public async received(params: IReceivedIncomingRequestParameters): Promise<ConsumptionRequest> {
+    public async received(params: IReceivedIncomingRequestParameters): Promise<LocalRequest> {
         const parsedParams = ReceivedIncomingRequestParameters.from(params)
 
         const infoFromSource = this.extractInfoFromSource(parsedParams.requestSourceObject)
 
-        const consumptionRequest = ConsumptionRequest.from({
+        const consumptionRequest = LocalRequest.from({
             id: parsedParams.receivedRequest.id ?? (await ConsumptionIds.request.generate()),
             createdAt: CoreDate.utc(),
-            status: ConsumptionRequestStatus.Open,
+            status: LocalRequestStatus.Open,
             content: parsedParams.receivedRequest,
             isOwn: false,
             peer: infoFromSource.peer,
@@ -119,13 +119,11 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         }
     }
 
-    public async checkPrerequisites(
-        params: ICheckPrerequisitesOfIncomingRequestParameters
-    ): Promise<ConsumptionRequest> {
+    public async checkPrerequisites(params: ICheckPrerequisitesOfIncomingRequestParameters): Promise<LocalRequest> {
         const parsedParams = CheckPrerequisitesOfIncomingRequestParameters.from(params)
         const request = await this.getOrThrow(parsedParams.requestId)
 
-        this.assertRequestStatus(request, ConsumptionRequestStatus.Open)
+        this.assertRequestStatus(request, LocalRequestStatus.Open)
 
         for (const item of request.content.items) {
             if (item instanceof RequestItem) {
@@ -148,7 +146,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             }
         }
 
-        request.changeStatus(ConsumptionRequestStatus.DecisionRequired)
+        request.changeStatus(LocalRequestStatus.DecisionRequired)
 
         await this.update(request)
 
@@ -157,13 +155,13 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
     public async requireManualDecision(
         params: IRequireManualDecisionOfIncomingRequestParameters
-    ): Promise<ConsumptionRequest> {
+    ): Promise<LocalRequest> {
         const parsedParams = RequireManualDecisionOfIncomingRequestParameters.from(params)
         const request = await this.getOrThrow(parsedParams.requestId)
 
-        this.assertRequestStatus(request, ConsumptionRequestStatus.DecisionRequired)
+        this.assertRequestStatus(request, LocalRequestStatus.DecisionRequired)
 
-        request.changeStatus(ConsumptionRequestStatus.ManualDecisionRequired)
+        request.changeStatus(LocalRequestStatus.ManualDecisionRequired)
         await this.update(request)
 
         return request
@@ -190,8 +188,8 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
         this.assertRequestStatus(
             request,
-            ConsumptionRequestStatus.DecisionRequired,
-            ConsumptionRequestStatus.ManualDecisionRequired
+            LocalRequestStatus.DecisionRequired,
+            LocalRequestStatus.ManualDecisionRequired
         )
 
         const itemResults = await this.canDecideItems(params.items, request.content.items, request)
@@ -202,7 +200,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     private async canDecideGroup(
         params: DecideRequestItemGroupParametersJSON,
         requestItemGroup: RequestItemGroup,
-        request: ConsumptionRequest
+        request: LocalRequest
     ) {
         const itemResults = await this.canDecideItems(params.items, requestItemGroup.items, request)
         return ValidationResult.fromItems(itemResults)
@@ -211,7 +209,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     private async canDecideItems(
         params: (DecideRequestItemParametersJSON | DecideRequestItemGroupParametersJSON)[],
         items: (RequestItem | RequestItemGroup)[],
-        request: ConsumptionRequest
+        request: LocalRequest
     ) {
         const validationResults: ValidationResult[] = []
 
@@ -242,7 +240,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     private async canDecideItem(
         params: DecideRequestItemParametersJSON,
         requestItem: RequestItem,
-        request: ConsumptionRequest
+        request: LocalRequest
     ) {
         const processor = this.processorRegistry.getProcessorForItem(requestItem)
 
@@ -256,7 +254,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         }
     }
 
-    public async accept(params: DecideRequestParametersJSON): Promise<ConsumptionRequest> {
+    public async accept(params: DecideRequestParametersJSON): Promise<LocalRequest> {
         const canAccept = await this.canAccept(params)
         if (!canAccept.isSuccess()) {
             throw new Error(
@@ -266,7 +264,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return await this.decide({ ...params, accept: true })
     }
 
-    public async reject(params: DecideRequestParametersJSON): Promise<ConsumptionRequest> {
+    public async reject(params: DecideRequestParametersJSON): Promise<LocalRequest> {
         const canReject = await this.canReject(params)
         if (!canReject.isSuccess()) {
             throw new Error(
@@ -281,21 +279,21 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
         this.assertRequestStatus(
             consumptionRequest,
-            ConsumptionRequestStatus.DecisionRequired,
-            ConsumptionRequestStatus.ManualDecisionRequired
+            LocalRequestStatus.DecisionRequired,
+            LocalRequestStatus.ManualDecisionRequired
         )
 
         const consumptionResponse = await this.createConsumptionResponse(params, consumptionRequest)
 
         consumptionRequest.response = consumptionResponse
-        consumptionRequest.changeStatus(ConsumptionRequestStatus.Decided)
+        consumptionRequest.changeStatus(LocalRequestStatus.Decided)
 
         await this.update(consumptionRequest)
 
         return consumptionRequest
     }
 
-    private async createConsumptionResponse(params: InternalDecideRequestParametersJSON, request: ConsumptionRequest) {
+    private async createConsumptionResponse(params: InternalDecideRequestParametersJSON, request: LocalRequest) {
         const requestItems = request.content.items
         const responseItems = await this.decideItems(params.items, requestItems, request)
 
@@ -316,7 +314,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     private async decideGroup(
         groupItemParam: DecideRequestItemGroupParametersJSON,
         requestItemGroup: RequestItemGroup,
-        request: ConsumptionRequest
+        request: LocalRequest
     ) {
         const items = (await this.decideItems(groupItemParam.items, requestItemGroup.items, request)) as ResponseItem[]
 
@@ -330,7 +328,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     private async decideItems(
         params: (DecideRequestItemParametersJSON | DecideRequestItemGroupParametersJSON)[],
         requestItems: (RequestItemGroup | RequestItem)[],
-        request: ConsumptionRequest
+        request: LocalRequest
     ) {
         const responseItems: (ResponseItem | ResponseItemGroup)[] = []
 
@@ -358,7 +356,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     private async decideItem(
         params: DecideRequestItemParametersJSON,
         requestItem: RequestItem,
-        request: ConsumptionRequest
+        request: LocalRequest
     ): Promise<ResponseItem> {
         const processor = this.processorRegistry.getProcessorForItem(requestItem)
 
@@ -378,7 +376,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         }
     }
 
-    public async complete(params: ICompleteIncomingRequestParameters): Promise<ConsumptionRequest> {
+    public async complete(params: ICompleteIncomingRequestParameters): Promise<LocalRequest> {
         const parsedParams = CompleteIncomingRequestParameters.from(params)
         const request = await this.getOrThrow(parsedParams.requestId)
 
@@ -386,7 +384,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             throw new Error("Cannot decide own Request")
         }
 
-        this.assertRequestStatus(request, ConsumptionRequestStatus.Decided)
+        this.assertRequestStatus(request, LocalRequestStatus.Decided)
 
         let responseSource: "Message" | "RelationshipChange"
 
@@ -403,46 +401,46 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             reference: parsedParams.responseSourceObject.id
         })
 
-        request.changeStatus(ConsumptionRequestStatus.Completed)
+        request.changeStatus(LocalRequestStatus.Completed)
 
         await this.update(request)
 
         return request
     }
 
-    public async getIncomingRequests(query?: any): Promise<ConsumptionRequest[]> {
+    public async getIncomingRequests(query?: any): Promise<LocalRequest[]> {
         query ??= {}
         query.isOwn = false
 
         const requestDocs = await this.consumptionRequests.find(query)
 
-        const requests = requestDocs.map((r) => ConsumptionRequest.from(r))
+        const requests = requestDocs.map((r) => LocalRequest.from(r))
         return requests
     }
 
-    public async getIncomingRequest(idIncomingRequest: ICoreId): Promise<ConsumptionRequest | undefined> {
+    public async getIncomingRequest(idIncomingRequest: ICoreId): Promise<LocalRequest | undefined> {
         const requestDoc = await this.consumptionRequests.findOne({ id: idIncomingRequest.toString(), isOwn: false })
-        const request = requestDoc ? ConsumptionRequest.from(requestDoc) : undefined
+        const request = requestDoc ? LocalRequest.from(requestDoc) : undefined
         return request
     }
 
     private async getOrThrow(id: CoreId | string) {
         const request = await this.getIncomingRequest(CoreId.from(id))
         if (!request) {
-            throw TransportErrors.general.recordNotFound(ConsumptionRequest, id.toString())
+            throw TransportErrors.general.recordNotFound(LocalRequest, id.toString())
         }
         return request
     }
 
-    private async update(request: ConsumptionRequest) {
+    private async update(request: LocalRequest) {
         const requestDoc = await this.consumptionRequests.findOne({ id: request.id.toString(), isOwn: false })
         if (!requestDoc) {
-            throw TransportErrors.general.recordNotFound(ConsumptionRequest, request.id.toString())
+            throw TransportErrors.general.recordNotFound(LocalRequest, request.id.toString())
         }
         await this.consumptionRequests.update(requestDoc, request)
     }
 
-    private assertRequestStatus(request: ConsumptionRequest, ...status: ConsumptionRequestStatus[]) {
+    private assertRequestStatus(request: LocalRequest, ...status: LocalRequestStatus[]) {
         if (!status.includes(request.status)) {
             throw new Error(`Consumption Request has to be in status '${status.join("/")}'.`)
         }
@@ -451,5 +449,5 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
 interface InfoFromSource {
     peer: ICoreAddress
-    source: IConsumptionRequestSource
+    source: ILocalRequestSource
 }

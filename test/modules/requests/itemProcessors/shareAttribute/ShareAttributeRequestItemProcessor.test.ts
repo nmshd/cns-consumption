@@ -1,10 +1,10 @@
 import {
     AcceptShareAttributeRequestItemParametersJSON,
     ConsumptionController,
-    ConsumptionRequest,
-    ConsumptionRequestInfo,
     ICreateOutgoingRequestParameters,
     ISentOutgoingRequestParameters,
+    LocalRequest,
+    LocalRequestInfo,
     OutgoingRequestsController,
     RequestItemProcessorRegistry,
     ShareAttributeRequestItemProcessor
@@ -39,13 +39,13 @@ class MockOutgoingRequestsController extends OutgoingRequestsController {
         super(consumptionRequests, processorRegistry, parent)
     }
 
-    public override async create(params: ICreateOutgoingRequestParameters): Promise<ConsumptionRequest> {
+    public override async create(params: ICreateOutgoingRequestParameters): Promise<LocalRequest> {
         this.createWasCalledWith = params
         this.createWasCalled = true
         return await super.create(params)
     }
 
-    public override async sent(params: ISentOutgoingRequestParameters): Promise<ConsumptionRequest> {
+    public override async sent(params: ISentOutgoingRequestParameters): Promise<LocalRequest> {
         this.sentWasCalledWith = params
         this.sentWasCalled = true
         return await super.sent(params)
@@ -323,7 +323,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                             attributeId: attribute.id,
                             shareWith: shareWithAccountController.identity.address
                         })
-                        const requestInfo: ConsumptionRequestInfo = {
+                        const requestInfo: LocalRequestInfo = {
                             id: CoreId.from("requestId"),
                             peer: senderAddress
                         }
@@ -388,7 +388,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                             attributeId: attribute.id,
                             shareWith: shareWithAccountController.identity.address
                         })
-                        const requestInfo: ConsumptionRequestInfo = {
+                        const requestInfo: LocalRequestInfo = {
                             id: CoreId.from("requestId"),
                             peer: senderAddress
                         }
@@ -417,7 +417,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                         attributeId: attribute.id,
                         shareWith: CoreAddress.from("someAddressWithNoRelationshipTo")
                     })
-                    const requestInfo: ConsumptionRequestInfo = {
+                    const requestInfo: LocalRequestInfo = {
                         id: CoreId.from("requestId"),
                         peer: CoreAddress.from("senderAddress")
                     }
@@ -439,7 +439,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                         attributeId: CoreId.from("nonExistingAttributeId"),
                         shareWith: shareWithAccountController.identity.address
                     })
-                    const requestInfo: ConsumptionRequestInfo = {
+                    const requestInfo: LocalRequestInfo = {
                         id: CoreId.from("requestId"),
                         peer: CoreAddress.from("senderAddress")
                     }
@@ -456,7 +456,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
             describe("canAccept", function () {
                 it("always succeeds since there are no input parameters", function () {
                     const requestItem: ShareAttributeRequestItem = undefined! // is not used in canAccept anyway
-                    const request: ConsumptionRequest = undefined!
+                    const request: LocalRequest = undefined!
                     const acceptParams: AcceptShareAttributeRequestItemParametersJSON = { accept: true }
 
                     const result = processor2.canAccept(requestItem, acceptParams, request)
@@ -488,7 +488,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                         mustBeAccepted: false,
                         shareWith: shareWithAccountController.identity.address
                     })
-                    const request: ConsumptionRequest = undefined! // is not used in accept anyway
+                    const request: LocalRequest = undefined! // is not used in accept anyway
                     const acceptParams: AcceptShareAttributeRequestItemParametersJSON = { accept: true }
 
                     await recipientProcessor.accept(requestItem, acceptParams, request)
@@ -550,7 +550,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                         mustBeAccepted: false,
                         shareWith: shareWithAccountController.identity.address
                     })
-                    const request: ConsumptionRequest = undefined! // is not used in accept anyway
+                    const request: LocalRequest = undefined! // is not used in accept anyway
                     const acceptParams: AcceptShareAttributeRequestItemParametersJSON = { accept: true }
 
                     await rProcessor.accept(requestItem, acceptParams, request)
@@ -584,7 +584,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                         mustBeAccepted: false,
                         shareWith: shareWithAccountController.identity.address
                     })
-                    const request: ConsumptionRequest = undefined! // is not used in accept anyway
+                    const request: LocalRequest = undefined! // is not used in accept anyway
                     const acceptParams: AcceptShareAttributeRequestItemParametersJSON = { accept: true }
 
                     await rProcessor.accept(requestItem, acceptParams, request)

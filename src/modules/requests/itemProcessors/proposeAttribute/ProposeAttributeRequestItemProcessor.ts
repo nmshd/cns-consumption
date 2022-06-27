@@ -11,7 +11,7 @@ import { CoreAddress, CoreId, TransportErrors } from "@nmshd/transport"
 import { ConsumptionErrors } from "../../../../consumption"
 import { LocalAttribute } from "../../../attributes/local/LocalAttribute"
 import { GenericRequestItemProcessor } from "../GenericRequestItemProcessor"
-import { ConsumptionRequestInfo } from "../IRequestItemProcessor"
+import { LocalRequestInfo } from "../IRequestItemProcessor"
 import validateQuery from "../utility/validateQuery"
 import { ValidationResult } from "../ValidationResult"
 import {
@@ -39,7 +39,7 @@ export class ProposeAttributeRequestItemProcessor extends GenericRequestItemProc
     public override async canAccept(
         _requestItem: ProposeAttributeRequestItem,
         params: AcceptProposeAttributeRequestItemParametersJSON,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): Promise<ValidationResult> {
         const parsedParams: AcceptProposeAttributeRequestItemParameters =
             AcceptProposeAttributeRequestItemParameters.from(params)
@@ -70,7 +70,7 @@ export class ProposeAttributeRequestItemProcessor extends GenericRequestItemProc
     public override async accept(
         _requestItem: ProposeAttributeRequestItem,
         params: AcceptProposeAttributeRequestItemParametersJSON,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): Promise<ProposeAttributeAcceptResponseItem> {
         const parsedParams: AcceptProposeAttributeRequestItemParameters =
             AcceptProposeAttributeRequestItemParameters.from(params)
@@ -89,7 +89,7 @@ export class ProposeAttributeRequestItemProcessor extends GenericRequestItemProc
         })
     }
 
-    private async copyExistingAttribute(attributeId: CoreId, requestInfo: ConsumptionRequestInfo) {
+    private async copyExistingAttribute(attributeId: CoreId, requestInfo: LocalRequestInfo) {
         return await this.consumptionController.attributes.createSharedLocalAttributeCopy({
             attributeId: CoreId.from(attributeId),
             peer: CoreAddress.from(requestInfo.peer),
@@ -99,7 +99,7 @@ export class ProposeAttributeRequestItemProcessor extends GenericRequestItemProc
 
     private async createNewAttribute(
         attribute: IdentityAttribute | RelationshipAttribute,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ) {
         if (attribute instanceof IdentityAttribute) {
             const repositoryLocalAttribute = await this.consumptionController.attributes.createLocalAttribute({
@@ -123,7 +123,7 @@ export class ProposeAttributeRequestItemProcessor extends GenericRequestItemProc
     public override async applyIncomingResponseItem(
         responseItem: ProposeAttributeAcceptResponseItem | RejectResponseItem,
         _requestItem: ProposeAttributeRequestItem,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): Promise<void> {
         if (!(responseItem instanceof ProposeAttributeAcceptResponseItem)) {
             return
