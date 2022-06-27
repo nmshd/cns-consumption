@@ -211,8 +211,8 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
             })
 
             describe("canAccept", function () {
-                it("can be called with the id of an existing own ConsumptionAttribute", async function () {
-                    const attribute = await consumptionController.attributes.createConsumptionAttribute({
+                it("can be called with the id of an existing own LocalAttribute", async function () {
+                    const attribute = await consumptionController.attributes.createLocalAttribute({
                         content: TestObjectFactory.createIdentityAttribute({
                             owner: CoreAddress.from(accountController.identity.address)
                         })
@@ -318,7 +318,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const peerAttributeId = await ConsumptionIds.attribute.generate()
 
-                    await consumptionController.attributes.createPeerConsumptionAttribute({
+                    await consumptionController.attributes.createPeerLocalAttribute({
                         id: peerAttributeId,
                         content: TestObjectFactory.createIdentityAttribute({
                             owner: peer
@@ -361,7 +361,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
             describe("accept", function () {
                 it("in case of a given attributeId of an own Consumption Attribute, creates a copy of the Consumption Attribute with the given id with share info for the peer of the Request", async function () {
-                    const attribute = await consumptionController.attributes.createConsumptionAttribute({
+                    const attribute = await consumptionController.attributes.createLocalAttribute({
                         content: TestObjectFactory.createIdentityAttribute({
                             owner: CoreAddress.from(accountController.identity.address)
                         })
@@ -392,7 +392,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const result = await processor.accept(requestItem, acceptParams, incomingRequest)
 
-                    const createdAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                    const createdAttribute = await consumptionController.attributes.getLocalAttribute(
                         result.attributeId
                     )
                     expect(createdAttribute).to.exist
@@ -432,7 +432,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                     }
 
                     const result = await processor.accept(requestItem, acceptParams, incomingRequest)
-                    const createdSharedAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                    const createdSharedAttribute = await consumptionController.attributes.getLocalAttribute(
                         result.attributeId
                     )
 
@@ -441,7 +441,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                     expect(createdSharedAttribute!.shareInfo!.peer.toString()).to.equal(incomingRequest.peer.toString())
                     expect(createdSharedAttribute!.shareInfo!.sourceAttribute).to.exist
 
-                    const createdRepositoryAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                    const createdRepositoryAttribute = await consumptionController.attributes.getLocalAttribute(
                         createdSharedAttribute!.shareInfo!.sourceAttribute!
                     )
                     expect(createdRepositoryAttribute).to.exist
@@ -490,7 +490,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                     }
 
                     const result = await processor.accept(requestItem, acceptParams, incomingRequest)
-                    const createdSharedAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                    const createdSharedAttribute = await consumptionController.attributes.getLocalAttribute(
                         result.attributeId
                     )
 
@@ -534,7 +534,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     await processor.applyIncomingResponseItem(responseItem, requestItem, incomingRequest)
 
-                    const createdAttribute = await consumptionController.attributes.getConsumptionAttribute(attributeId)
+                    const createdAttribute = await consumptionController.attributes.getLocalAttribute(attributeId)
                     expect(createdAttribute).to.exist
                     expect(createdAttribute!.shareInfo).to.exist
                     expect(createdAttribute!.shareInfo!.peer.toString()).to.equal(incomingRequest.peer.toString())

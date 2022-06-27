@@ -9,24 +9,21 @@ import {
 } from "@nmshd/content"
 import { CoreAddress, CoreId, ICoreAddress, ICoreId } from "@nmshd/transport"
 
-export interface CreatePeerConsumptionAttributeParamsJSON {
+export interface CreatePeerLocalAttributeParamsJSON {
     id: string
     content: IdentityAttributeJSON | RelationshipAttributeJSON
     requestReferece: string
     peer: string
 }
 
-export interface ICreatePeerConsumptionAttributeParams extends ISerializable {
+export interface ICreatePeerLocalAttributeParams extends ISerializable {
     id?: ICoreId // needs to be optional because sometimes (e.g. when accepting a CreateAttributeRequestItem) the id is not known yet
     content: IIdentityAttribute | IRelationshipAttribute
     requestReference: ICoreId
     peer: ICoreAddress
 }
 
-export class CreatePeerConsumptionAttributeParams
-    extends Serializable
-    implements ICreatePeerConsumptionAttributeParams
-{
+export class CreatePeerLocalAttributeParams extends Serializable implements ICreatePeerLocalAttributeParams {
     @serialize()
     @validate()
     public id: CoreId
@@ -44,8 +41,8 @@ export class CreatePeerConsumptionAttributeParams
     public peer: CoreAddress
 
     public static from(
-        value: ICreatePeerConsumptionAttributeParams | CreatePeerConsumptionAttributeParamsJSON
-    ): CreatePeerConsumptionAttributeParams {
+        value: ICreatePeerLocalAttributeParams | CreatePeerLocalAttributeParamsJSON
+    ): CreatePeerLocalAttributeParams {
         return this.fromAny(value)
     }
 }

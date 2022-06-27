@@ -9,7 +9,7 @@ import {
 } from "@nmshd/content"
 import { CoreAddress, CoreId, TransportErrors } from "@nmshd/transport"
 import { ConsumptionErrors } from "../../../../consumption"
-import { ConsumptionAttribute } from "../../../attributes/local/ConsumptionAttribute"
+import { LocalAttribute } from "../../../attributes/local/LocalAttribute"
 import { GenericRequestItemProcessor } from "../GenericRequestItemProcessor"
 import { ConsumptionRequestInfo } from "../IRequestItemProcessor"
 import validateQuery from "../utility/validateQuery"
@@ -45,13 +45,13 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
             AcceptReadAttributeRequestItemParameters.from(params)
 
         if (parsedParams.attributeId) {
-            const foundAttribute = await this.consumptionController.attributes.getConsumptionAttribute(
+            const foundAttribute = await this.consumptionController.attributes.getLocalAttribute(
                 parsedParams.attributeId
             )
 
             if (!foundAttribute) {
                 return ValidationResult.error(
-                    TransportErrors.general.recordNotFound(ConsumptionAttribute, requestInfo.id.toString())
+                    TransportErrors.general.recordNotFound(LocalAttribute, requestInfo.id.toString())
                 )
             }
 
@@ -75,22 +75,22 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
         const parsedParams: AcceptReadAttributeRequestItemParameters =
             AcceptReadAttributeRequestItemParameters.from(params)
 
-        let sharedConsumptionAttribute: ConsumptionAttribute
+        let sharedLocalAttribute: LocalAttribute
         if (parsedParams.attributeId) {
-            sharedConsumptionAttribute = await this.copyExistingAttribute(parsedParams.attributeId, requestInfo)
+            sharedLocalAttribute = await this.copyExistingAttribute(parsedParams.attributeId, requestInfo)
         } else {
-            sharedConsumptionAttribute = await this.createNewAttribute(parsedParams.attribute!, requestInfo)
+            sharedLocalAttribute = await this.createNewAttribute(parsedParams.attribute!, requestInfo)
         }
 
         return ReadAttributeAcceptResponseItem.from({
             result: ResponseItemResult.Accepted,
-            attributeId: sharedConsumptionAttribute.id,
-            attribute: sharedConsumptionAttribute.content
+            attributeId: sharedLocalAttribute.id,
+            attribute: sharedLocalAttribute.content
         })
     }
 
     private async copyExistingAttribute(attributeId: CoreId, requestInfo: ConsumptionRequestInfo) {
-        return await this.consumptionController.attributes.createSharedConsumptionAttributeCopy({
+        return await this.consumptionController.attributes.createSharedLocalAttributeCopy({
             attributeId: CoreId.from(attributeId),
             peer: CoreAddress.from(requestInfo.peer),
             requestReference: CoreId.from(requestInfo.id)
@@ -102,19 +102,18 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
         requestInfo: ConsumptionRequestInfo
     ) {
         if (attribute instanceof IdentityAttribute) {
-            const repositoryConsumptionAttribute =
-                await this.consumptionController.attributes.createConsumptionAttribute({
-                    content: attribute
-                })
+            const repositoryLocalAttribute = await this.consumptionController.attributes.createLocalAttribute({
+                content: attribute
+            })
 
-            return await this.consumptionController.attributes.createSharedConsumptionAttributeCopy({
-                attributeId: CoreId.from(repositoryConsumptionAttribute.id),
+            return await this.consumptionController.attributes.createSharedLocalAttributeCopy({
+                attributeId: CoreId.from(repositoryLocalAttribute.id),
                 peer: CoreAddress.from(requestInfo.peer),
                 requestReference: CoreId.from(requestInfo.id)
             })
         }
 
-        return await this.consumptionController.attributes.createPeerConsumptionAttribute({
+        return await this.consumptionController.attributes.createPeerLocalAttribute({
             content: attribute,
             peer: requestInfo.peer,
             requestReference: CoreId.from(requestInfo.id)
@@ -130,7 +129,7 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
             return
         }
 
-        await this.consumptionController.attributes.createPeerConsumptionAttribute({
+        await this.consumptionController.attributes.createPeerLocalAttribute({
             id: responseItem.attributeId,
             content: responseItem.attribute,
             peer: requestInfo.peer,

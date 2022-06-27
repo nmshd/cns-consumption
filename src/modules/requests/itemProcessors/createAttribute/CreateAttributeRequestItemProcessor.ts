@@ -63,14 +63,14 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
         _params: AcceptCreateAttributeRequestItemParametersJSON,
         requestInfo: ConsumptionRequestInfo
     ): Promise<CreateAttributeAcceptResponseItem> {
-        const peerConsumptionAttribute = await this.consumptionController.attributes.createPeerConsumptionAttribute({
+        const peerLocalAttribute = await this.consumptionController.attributes.createPeerLocalAttribute({
             content: requestItem.attribute,
             peer: requestInfo.peer,
             requestReference: requestInfo.id
         })
 
         return CreateAttributeAcceptResponseItem.from({
-            attributeId: peerConsumptionAttribute.id,
+            attributeId: peerLocalAttribute.id,
             result: ResponseItemResult.Accepted,
             metadata: requestItem.responseMetadata
         })
@@ -87,7 +87,7 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
 
         /* TODO: in case of an own IdentityAttribute that was sent to the peer, we need to specify a source attribute; but currently we can't find the source attribute, because we don't know the id the user picked when sending the request */
 
-        await this.consumptionController.attributes.createPeerConsumptionAttribute({
+        await this.consumptionController.attributes.createPeerLocalAttribute({
             id: responseItem.attributeId,
             content: requestItem.attribute,
             peer: requestInfo.peer,

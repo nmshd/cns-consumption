@@ -9,8 +9,8 @@ import {
 } from "@nmshd/content"
 import { DateTime } from "luxon"
 import { nameof } from "ts-simple-nameof"
-import { ConsumptionAttribute } from "./ConsumptionAttribute"
-import { ConsumptionAttributeShareInfo } from "./ConsumptionAttributeShareInfo"
+import { LocalAttribute } from "./LocalAttribute"
+import { LocalAttributeShareInfo } from "./LocalAttributeShareInfo"
 
 export const identityQueryTranslator = new QueryTranslator({
     whitelist: {
@@ -23,10 +23,10 @@ export const identityQueryTranslator = new QueryTranslator({
     alias: {
         // @type of attributeValue
         [nameof<IIdentityAttributeQuery>((x) => x.valueType)]: [
-            `${nameof<ConsumptionAttribute>((x) => x.content)}.${nameof<IdentityAttribute>((x) => x.value)}.@type`
+            `${nameof<LocalAttribute>((x) => x.content)}.${nameof<IdentityAttribute>((x) => x.value)}.@type`
         ],
         // @type of attribute
-        attributeType: [`${nameof<ConsumptionAttribute>((x) => x.content)}.@type`]
+        attributeType: [`${nameof<LocalAttribute>((x) => x.content)}.@type`]
     },
     custom: {
         // tags
@@ -34,9 +34,9 @@ export const identityQueryTranslator = new QueryTranslator({
             const allowedTags = []
             for (const tag of input) {
                 const tagQuery = {
-                    [`${nameof<ConsumptionAttribute>((x) => x.content)}.${nameof<IdentityAttributeJSON>(
-                        (x) => x.tags
-                    )}`]: { $contains: tag }
+                    [`${nameof<LocalAttribute>((x) => x.content)}.${nameof<IdentityAttributeJSON>((x) => x.tags)}`]: {
+                        $contains: tag
+                    }
                 }
                 allowedTags.push(tagQuery)
             }
@@ -48,11 +48,10 @@ export const identityQueryTranslator = new QueryTranslator({
                 return
             }
             const validFromUtcString = DateTime.fromISO(input).toUTC().toString()
-            query[
-                `${nameof<ConsumptionAttribute>((x) => x.content)}.${nameof<AbstractAttributeJSON>((x) => x.validFrom)}`
-            ] = {
-                $gte: validFromUtcString
-            }
+            query[`${nameof<LocalAttribute>((x) => x.content)}.${nameof<AbstractAttributeJSON>((x) => x.validFrom)}`] =
+                {
+                    $gte: validFromUtcString
+                }
         },
         // validTo
         [nameof<IIdentityAttributeQuery>((x) => x.validTo)]: (query: any, input: any) => {
@@ -60,9 +59,7 @@ export const identityQueryTranslator = new QueryTranslator({
                 return
             }
             const validToUtcString = DateTime.fromISO(input).toUTC().toString()
-            query[
-                `${nameof<ConsumptionAttribute>((x) => x.content)}.${nameof<AbstractAttributeJSON>((x) => x.validTo)}`
-            ] = {
+            query[`${nameof<LocalAttribute>((x) => x.content)}.${nameof<AbstractAttributeJSON>((x) => x.validTo)}`] = {
                 $lte: validToUtcString
             }
         }
@@ -82,23 +79,21 @@ export const relationshipQueryTranslator = new QueryTranslator({
     alias: {
         // key
         [nameof<IRelationshipAttributeQuery>((x) => x.key)]: [
-            `${nameof<ConsumptionAttribute>((x) => x.content)}.${nameof<RelationshipAttribute>((x) => x.key)}`
+            `${nameof<LocalAttribute>((x) => x.content)}.${nameof<RelationshipAttribute>((x) => x.key)}`
         ],
         // @type of attributeValue
         [nameof<IRelationshipAttributeQuery>((x) => x.valueType)]: [
-            `${nameof<ConsumptionAttribute>((x) => x.content)}.${nameof<RelationshipAttribute>((x) => x.value)}.@type`
+            `${nameof<LocalAttribute>((x) => x.content)}.${nameof<RelationshipAttribute>((x) => x.value)}.@type`
         ],
         // @type of attribute
-        attributeType: [`${nameof<ConsumptionAttribute>((x) => x.content)}.@type`],
+        attributeType: [`${nameof<LocalAttribute>((x) => x.content)}.@type`],
         // owner
         [nameof<IRelationshipAttributeQuery>((x) => x.owner)]: [
-            `${nameof<ConsumptionAttribute>((x) => x.content)}.${nameof<RelationshipAttribute>((x) => x.owner)}`
+            `${nameof<LocalAttribute>((x) => x.content)}.${nameof<RelationshipAttribute>((x) => x.owner)}`
         ],
         // peer
         [nameof<IRelationshipAttributeQuery>((x) => x.thirdParty)]: [
-            `${nameof<ConsumptionAttribute>((x) => x.shareInfo)}.${nameof<ConsumptionAttributeShareInfo>(
-                (x) => x.peer
-            )}`
+            `${nameof<LocalAttribute>((x) => x.shareInfo)}.${nameof<LocalAttributeShareInfo>((x) => x.peer)}`
         ]
     },
     custom: {
@@ -108,11 +103,10 @@ export const relationshipQueryTranslator = new QueryTranslator({
                 return
             }
             const validFromUtcString = DateTime.fromISO(input).toUTC().toString()
-            query[
-                `${nameof<ConsumptionAttribute>((x) => x.content)}.${nameof<AbstractAttributeJSON>((x) => x.validFrom)}`
-            ] = {
-                $gte: validFromUtcString
-            }
+            query[`${nameof<LocalAttribute>((x) => x.content)}.${nameof<AbstractAttributeJSON>((x) => x.validFrom)}`] =
+                {
+                    $gte: validFromUtcString
+                }
         },
         // validTo
         [nameof<IRelationshipAttributeQuery>((x) => x.validTo)]: (query: any, input: any) => {
@@ -120,9 +114,7 @@ export const relationshipQueryTranslator = new QueryTranslator({
                 return
             }
             const validToUtcString = DateTime.fromISO(input).toUTC().toString()
-            query[
-                `${nameof<ConsumptionAttribute>((x) => x.content)}.${nameof<AbstractAttributeJSON>((x) => x.validTo)}`
-            ] = {
+            query[`${nameof<LocalAttribute>((x) => x.content)}.${nameof<AbstractAttributeJSON>((x) => x.validTo)}`] = {
                 $lte: validToUtcString
             }
         }

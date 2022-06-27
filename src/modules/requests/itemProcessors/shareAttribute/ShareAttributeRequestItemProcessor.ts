@@ -10,7 +10,7 @@ import {
 } from "@nmshd/content"
 import { CoreAddress, TransportErrors } from "@nmshd/transport"
 import { ConsumptionErrors } from "../../../../consumption"
-import { ConsumptionAttribute } from "../../../attributes/local/ConsumptionAttribute"
+import { LocalAttribute } from "../../../attributes/local/LocalAttribute"
 import { GenericRequestItemProcessor } from "../GenericRequestItemProcessor"
 import { ConsumptionRequestInfo } from "../IRequestItemProcessor"
 import { ValidationResult } from "../ValidationResult"
@@ -25,7 +25,7 @@ export class ShareAttributeRequestItemProcessor extends GenericRequestItemProces
         _request: Request,
         recipient: CoreAddress
     ): Promise<ValidationResult> {
-        const attribute = await this.consumptionController.attributes.getConsumptionAttribute(requestItem.attributeId)
+        const attribute = await this.consumptionController.attributes.getLocalAttribute(requestItem.attributeId)
         if (!attribute) {
             return ValidationResult.error(
                 TransportErrors.general.recordNotFound(Attribute, requestItem.attributeId.toString())
@@ -56,7 +56,7 @@ export class ShareAttributeRequestItemProcessor extends GenericRequestItemProces
             return false // Should the containing Request move to Error state?
         }
 
-        const attribute = await this.consumptionController.attributes.getConsumptionAttribute(requestItem.attributeId)
+        const attribute = await this.consumptionController.attributes.getLocalAttribute(requestItem.attributeId)
 
         if (!attribute) {
             return false // Should the containing Request move to Error state?
@@ -111,7 +111,7 @@ export class ShareAttributeRequestItemProcessor extends GenericRequestItemProces
         _params: AcceptShareAttributeRequestItemParametersJSON,
         _requestInfo: ConsumptionRequestInfo
     ): Promise<AcceptResponseItem> {
-        const attribute = await this.consumptionController.attributes.getConsumptionAttribute(requestItem.attributeId)
+        const attribute = await this.consumptionController.attributes.getLocalAttribute(requestItem.attributeId)
 
         if (!(await this.isAttributeAlreadyShared(attribute!, requestItem.shareWith))) {
             await this.shareAttribute(attribute, requestItem.shareWith)
@@ -120,11 +120,11 @@ export class ShareAttributeRequestItemProcessor extends GenericRequestItemProces
         return AcceptResponseItem.from({ result: ResponseItemResult.Accepted })
     }
 
-    private async isAttributeAlreadyShared(attribute: ConsumptionAttribute, shareWith: CoreAddress) {
+    private async isAttributeAlreadyShared(attribute: LocalAttribute, shareWith: CoreAddress) {
         if (attribute.content instanceof IdentityAttribute) {
             return (
                 (
-                    await this.consumptionController.attributes.getConsumptionAttributes({
+                    await this.consumptionController.attributes.getLocalAttributes({
                         "shareInfo.sourceAttribute": attribute.shareInfo!.sourceAttribute!.toString(), // eslint-disable-line @typescript-eslint/naming-convention
                         "shareInfo.peer": shareWith.toString() // eslint-disable-line @typescript-eslint/naming-convention
                     })
@@ -133,7 +133,7 @@ export class ShareAttributeRequestItemProcessor extends GenericRequestItemProces
         }
         return (
             (
-                await this.consumptionController.attributes.getConsumptionAttributes({
+                await this.consumptionController.attributes.getLocalAttributes({
                     "shareInfo.sourceAttribute": attribute.id.toString(), // eslint-disable-line @typescript-eslint/naming-convention
                     "shareInfo.peer": shareWith.toString() // eslint-disable-line @typescript-eslint/naming-convention
                 })
@@ -141,7 +141,7 @@ export class ShareAttributeRequestItemProcessor extends GenericRequestItemProces
         )
     }
 
-    private async shareAttribute(attribute: ConsumptionAttribute | undefined, shareWith: CoreAddress) {
+    private async shareAttribute(attribute: LocalAttribute | undefined, shareWith: CoreAddress) {
         const createAttributeRequestItem = CreateAttributeRequestItem.from({
             attribute: attribute!.content,
             mustBeAccepted: true

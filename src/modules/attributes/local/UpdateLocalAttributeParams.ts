@@ -9,17 +9,17 @@ import {
 } from "@nmshd/content"
 import { CoreId, ICoreId } from "@nmshd/transport"
 
-export interface UpdateConsumptionAttributeParamsJSON extends ISerializable {
+export interface UpdateLocalAttributeParamsJSON extends ISerializable {
     id: string
     content: IdentityAttributeJSON | RelationshipAttributeJSON
 }
 
-export interface IUpdateConsumptionAttributeParams extends ISerializable {
+export interface IUpdateLocalAttributeParams extends ISerializable {
     id: ICoreId
     content: IIdentityAttribute | IRelationshipAttribute
 }
 
-export class UpdateConsumptionAttributeParams extends Serializable implements IUpdateConsumptionAttributeParams {
+export class UpdateLocalAttributeParams extends Serializable implements IUpdateLocalAttributeParams {
     @serialize()
     @validate()
     public id: CoreId
@@ -29,8 +29,8 @@ export class UpdateConsumptionAttributeParams extends Serializable implements IU
     public content: IdentityAttribute | RelationshipAttribute
 
     public static from(
-        value: IUpdateConsumptionAttributeParams | UpdateConsumptionAttributeParamsJSON
-    ): UpdateConsumptionAttributeParams {
+        value: IUpdateLocalAttributeParams | UpdateLocalAttributeParamsJSON
+    ): UpdateLocalAttributeParams {
         return this.fromAny(value)
     }
 }

@@ -51,7 +51,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
             describe("canCreateOutgoingRequestItem", function () {
                 it("returns success when passing a Relationship Attribute with 'owner=sender'", async function () {
                     const recipientAddress = CoreAddress.from("recipientAddress")
-                    const attribute = await consumptionController.attributes.createConsumptionAttribute({
+                    const attribute = await consumptionController.attributes.createLocalAttribute({
                         content: RelationshipAttribute.from({
                             key: "aKey",
                             confidentiality: RelationshipAttributeConfidentiality.Public,
@@ -72,7 +72,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
 
                 it("returns success when passing an Identity Attribute with 'owner=sender'", async function () {
                     const recipientAddress = CoreAddress.from("recipientAddress")
-                    const attribute = await consumptionController.attributes.createConsumptionAttribute({
+                    const attribute = await consumptionController.attributes.createLocalAttribute({
                         content: TestObjectFactory.createIdentityAttribute({ owner: testAccount.identity.address })
                     })
                     const requestItem = CreateAttributeRequestItem.from({
@@ -88,7 +88,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
 
                 it("returns an error when passing a Relationship Attribute with 'owner!=sender'", async function () {
                     const recipientAddress = CoreAddress.from("recipientAddress")
-                    const attribute = await consumptionController.attributes.createConsumptionAttribute({
+                    const attribute = await consumptionController.attributes.createLocalAttribute({
                         content: RelationshipAttribute.from({
                             key: "aKey",
                             confidentiality: RelationshipAttributeConfidentiality.Public,
@@ -112,7 +112,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
 
                 it("returns an error when passing an Identity Attribute with 'owner!=sender' (Identity Attributes for the recipient should always be created via ProposeAttributeRequestItem)", async function () {
                     const recipientAddress = CoreAddress.from("recipientAddress")
-                    const attribute = await consumptionController.attributes.createConsumptionAttribute({
+                    const attribute = await consumptionController.attributes.createLocalAttribute({
                         content: TestObjectFactory.createIdentityAttribute({
                             owner: recipientAddress
                         })
@@ -159,7 +159,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                         },
                         incomingRequest
                     )
-                    const createdAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                    const createdAttribute = await consumptionController.attributes.getLocalAttribute(
                         result.attributeId
                     )
                     expect(createdAttribute).to.exist
@@ -168,7 +168,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                     expect(createdAttribute!.shareInfo!.sourceAttribute).to.be.undefined
                 })
 
-                it("in case of a RelationshipAttribute, creates a ConsumptionAttribute for the peer of the Request", async function () {
+                it("in case of a RelationshipAttribute, creates a LocalAttribute for the peer of the Request", async function () {
                     const requestItem = CreateAttributeRequestItem.from({
                         mustBeAccepted: true,
                         attribute: RelationshipAttribute.from({
@@ -196,7 +196,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                         accept: true
                     }
                     const result = await processor.accept(requestItem, acceptParams, incomingRequest)
-                    const createdAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                    const createdAttribute = await consumptionController.attributes.getLocalAttribute(
                         result.attributeId
                     )
                     expect(createdAttribute).to.exist
@@ -207,7 +207,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
             })
 
             describe("applyIncomingResponseItem", function () {
-                it("creates a ConsumptionAttribute with the Attribute from the RequestItem and the attributeId from the ResponseItem for the peer of the request ", async function () {
+                it("creates a LocalAttribute with the Attribute from the RequestItem and the attributeId from the ResponseItem for the peer of the request ", async function () {
                     const requestItem = CreateAttributeRequestItem.from({
                         mustBeAccepted: true,
                         attribute: RelationshipAttribute.from({
@@ -237,7 +237,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                         attributeId: await ConsumptionIds.attribute.generate()
                     })
                     await processor.applyIncomingResponseItem(responseItem, requestItem, incomingRequest)
-                    const createdAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                    const createdAttribute = await consumptionController.attributes.getLocalAttribute(
                         responseItem.attributeId
                     )
                     expect(createdAttribute).to.exist

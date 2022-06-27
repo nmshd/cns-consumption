@@ -271,16 +271,15 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
                 })
             })
             describe("canAccept", function () {
-                it("returns success when called with the id of an existing own ConsumptionAttribute", async function () {
+                it("returns success when called with the id of an existing own LocalAttribute", async function () {
                     const senderAddress = CoreAddress.from("recipientAddress")
                     const recipientAddress = accountController.identity.address
 
-                    const existingConsumptionAttribute =
-                        await consumptionController.attributes.createConsumptionAttribute({
-                            content: TestObjectFactory.createIdentityAttribute({
-                                owner: CoreAddress.from(accountController.identity.address)
-                            })
+                    const existingLocalAttribute = await consumptionController.attributes.createLocalAttribute({
+                        content: TestObjectFactory.createIdentityAttribute({
+                            owner: CoreAddress.from(accountController.identity.address)
                         })
+                    })
 
                     const requestItem = ProposeAttributeRequestItem.from({
                         mustBeAccepted: false,
@@ -308,7 +307,7 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const acceptParams: AcceptProposeAttributeRequestItemParametersJSON = {
                         accept: true,
-                        attributeId: existingConsumptionAttribute.id.toString()
+                        attributeId: existingLocalAttribute.id.toString()
                     }
 
                     const result = await processor.canAccept(requestItem, acceptParams, request)
@@ -390,7 +389,7 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const idOfAttributeOfOtherIdentity = await ConsumptionIds.attribute.generate()
 
-                    await consumptionController.attributes.createPeerConsumptionAttribute({
+                    await consumptionController.attributes.createPeerLocalAttribute({
                         id: idOfAttributeOfOtherIdentity,
                         content: TestObjectFactory.createIdentityAttribute({
                             owner: someOtherIdentity
@@ -434,7 +433,7 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
 
             describe("accept", function () {
                 it("in case of a given attributeId of an own Consumption Attribute, creates a copy of the Consumption Attribute with the given id with share info for the peer of the Request", async function () {
-                    const attribute = await consumptionController.attributes.createConsumptionAttribute({
+                    const attribute = await consumptionController.attributes.createLocalAttribute({
                         content: TestObjectFactory.createIdentityAttribute({
                             owner: CoreAddress.from(accountController.identity.address)
                         })
@@ -466,7 +465,7 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const result = await processor.accept(requestItem, acceptParams, incomingRequest)
 
-                    const createdAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                    const createdAttribute = await consumptionController.attributes.getLocalAttribute(
                         result.attributeId
                     )
                     expect(createdAttribute).to.exist
@@ -507,7 +506,7 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
                     }
 
                     const result = await processor.accept(requestItem, acceptParams, incomingRequest)
-                    const createdSharedAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                    const createdSharedAttribute = await consumptionController.attributes.getLocalAttribute(
                         result.attributeId
                     )
 
@@ -516,7 +515,7 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
                     expect(createdSharedAttribute!.shareInfo!.peer.toString()).to.equal(incomingRequest.peer.toString())
                     expect(createdSharedAttribute!.shareInfo!.sourceAttribute).to.exist
 
-                    const createdRepositoryAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                    const createdRepositoryAttribute = await consumptionController.attributes.getLocalAttribute(
                         createdSharedAttribute!.shareInfo!.sourceAttribute!
                     )
                     expect(createdRepositoryAttribute).to.exist
@@ -566,7 +565,7 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
                     }
 
                     const result = await processor.accept(requestItem, acceptParams, incomingRequest)
-                    const createdSharedAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                    const createdSharedAttribute = await consumptionController.attributes.getLocalAttribute(
                         result.attributeId
                     )
 

@@ -11,38 +11,38 @@ import { CoreDate, CoreId, CoreSynchronizable, ICoreDate, ICoreId, ICoreSynchron
 import { nameof } from "ts-simple-nameof"
 import { ConsumptionIds } from "../../../consumption"
 import {
-    ConsumptionAttributeShareInfo,
-    ConsumptionAttributeShareInfoJSON,
-    IConsumptionAttributeShareInfo
-} from "./ConsumptionAttributeShareInfo"
+    ILocalAttributeShareInfo,
+    LocalAttributeShareInfo,
+    LocalAttributeShareInfoJSON
+} from "./LocalAttributeShareInfo"
 
-export interface ConsumptionAttributeJSON {
+export interface LocalAttributeJSON {
     content: IdentityAttributeJSON | RelationshipAttributeJSON
     createdAt: string
     succeeds: string
     succeededBy: string
-    shareInfo: ConsumptionAttributeShareInfoJSON
+    shareInfo: LocalAttributeShareInfoJSON
 }
 
-export interface IConsumptionAttribute extends ICoreSynchronizable {
+export interface ILocalAttribute extends ICoreSynchronizable {
     content: IIdentityAttribute | IRelationshipAttribute
     createdAt: ICoreDate
     succeeds?: ICoreId
     succeededBy?: ICoreId
-    shareInfo?: IConsumptionAttributeShareInfo
+    shareInfo?: ILocalAttributeShareInfo
 }
 
-@type("ConsumptionAttribute")
-export class ConsumptionAttribute extends CoreSynchronizable implements IConsumptionAttribute {
+@type("LocalAttribute")
+export class LocalAttribute extends CoreSynchronizable implements ILocalAttribute {
     public override readonly technicalProperties = [
         "@type",
         "@context",
-        nameof<ConsumptionAttribute>((r) => r.createdAt),
-        nameof<ConsumptionAttribute>((r) => r.succeeds),
-        nameof<ConsumptionAttribute>((r) => r.createdAt)
+        nameof<LocalAttribute>((r) => r.createdAt),
+        nameof<LocalAttribute>((r) => r.succeeds),
+        nameof<LocalAttribute>((r) => r.createdAt)
     ]
 
-    public override readonly userdataProperties = [nameof<ConsumptionAttribute>((r) => r.content)]
+    public override readonly userdataProperties = [nameof<LocalAttribute>((r) => r.content)]
 
     @validate()
     @serialize({ unionTypes: [IdentityAttribute, RelationshipAttribute] })
@@ -62,17 +62,17 @@ export class ConsumptionAttribute extends CoreSynchronizable implements IConsump
 
     @validate({ nullable: true })
     @serialize()
-    public shareInfo?: ConsumptionAttributeShareInfo
+    public shareInfo?: LocalAttributeShareInfo
 
-    public static from(value: IConsumptionAttribute): ConsumptionAttribute {
+    public static from(value: ILocalAttribute): LocalAttribute {
         return this.fromAny(value)
     }
 
     public static async fromAttribute(
         attribute: IIdentityAttribute | IRelationshipAttribute,
         succeeds?: ICoreId,
-        shareInfo?: IConsumptionAttributeShareInfo
-    ): Promise<ConsumptionAttribute> {
+        shareInfo?: ILocalAttributeShareInfo
+    ): Promise<LocalAttribute> {
         return this.from({
             content: attribute,
             id: await ConsumptionIds.attribute.generate(),
