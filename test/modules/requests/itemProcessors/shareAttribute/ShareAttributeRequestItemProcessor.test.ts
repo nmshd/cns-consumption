@@ -541,7 +541,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                     expect(mockOutgoingRequestsController2.sentWasCalled).to.be.false
                 })
 
-                it.only("does not send a request to shareWith when the relationship attribute is already shared", async function () {
+                it("does not send a request to shareWith when the relationship attribute is already shared", async function () {
                     const shareWithAccountController = accountController1
                     const rConsumptionController = consumptionController2
                     const rProcessor = processor2
@@ -553,13 +553,6 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                         peer: CoreAddress.from("senderAddress"),
                         requestReference: CoreId.from("aRequestReference")
                     })
-
-                    // const attributeToShare =
-                    //     await rConsumptionController.attributes.createSharedConsumptionAttributeCopy({
-                    //         attributeId: sourceAttribute.id,
-                    //         peer: CoreAddress.from("senderAddress"),
-                    //         requestReference: CoreId.from("aRequestReference")
-                    //     })
 
                     await rConsumptionController.attributes.createSharedConsumptionAttributeCopy({
                         attributeId: attributeToShare.id,
