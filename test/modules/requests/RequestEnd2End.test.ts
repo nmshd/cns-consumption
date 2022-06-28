@@ -75,26 +75,26 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                 )
             })
 
-            it("recipient: create Consumption Request", async function () {
+            it("recipient: create Local Request", async function () {
                 rLocalRequest = await rConsumptionController.incomingRequests.received({
                     receivedRequest: (rTemplate.cache!.content as RelationshipTemplateBody).onNewRelationship,
                     requestSourceObject: rTemplate
                 })
             })
 
-            it("recipient: check prerequisites of Consumption Request", async function () {
+            it("recipient: check prerequisites of Local Request", async function () {
                 rLocalRequest = await rConsumptionController.incomingRequests.checkPrerequisites({
                     requestId: rLocalRequest.id
                 })
             })
 
-            it("recipient: require manual decision of Consumption Request", async function () {
+            it("recipient: require manual decision of Local Request", async function () {
                 rLocalRequest = await rConsumptionController.incomingRequests.requireManualDecision({
                     requestId: rLocalRequest.id
                 })
             })
 
-            it("recipient: accept Consumption Request", async function () {
+            it("recipient: accept Local Request", async function () {
                 rLocalRequest = await rConsumptionController.incomingRequests.accept({
                     requestId: rLocalRequest.id.toString(),
                     items: [
@@ -114,7 +114,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                 })
             })
 
-            it("recipient: complete Consumption Request", async function () {
+            it("recipient: complete Local Request", async function () {
                 rLocalRequest = await rConsumptionController.incomingRequests.complete({
                     requestId: rLocalRequest.id,
                     responseSourceObject: rRelationship.cache!.changes[0]
@@ -126,7 +126,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                 sRelationship = newRelationships[0]
             }).timeout(20000)
 
-            it("sender: create Consumption Request and Response from Relationship Change", async function () {
+            it("sender: create Local Request and Response from Relationship Change", async function () {
                 sLocalRequest = await sConsumptionController.outgoingRequests.createFromRelationshipCreationChange({
                     template: sTemplate,
                     creationChange: sRelationship.cache!.changes[0]
@@ -134,11 +134,11 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
             })
 
             it("expectations", function () {
-                // in the end, both Consumption Requests should be completed
+                // in the end, both Local Requests should be completed
                 expect(rLocalRequest.status).to.equal(LocalRequestStatus.Completed)
                 expect(sLocalRequest.status).to.equal(LocalRequestStatus.Completed)
 
-                // the ids of the Consumption Requests should be equal
+                // the ids of the Local Requests should be equal
                 expect(rLocalRequest.id.toString()).to.equal(sLocalRequest.id.toString())
 
                 // make sure (de-)serialization worked as expected
@@ -205,7 +205,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                 await TestUtil.addRelationship(sAccountController, rAccountController)
             })
 
-            it("sender: create Consumption Request", async function () {
+            it("sender: create Local Request", async function () {
                 sLocalRequest = await sConsumptionController.outgoingRequests.create({
                     content: Request.from({
                         items: [TestRequestItem.from({ mustBeAccepted: false })]
@@ -221,7 +221,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                 })
             })
 
-            it("sender: mark Consumption Request as sent", async function () {
+            it("sender: mark Local Request as sent", async function () {
                 sLocalRequest = await sConsumptionController.outgoingRequests.sent({
                     requestId: sLocalRequest.id,
                     requestSourceObject: sMessageWithRequest
@@ -233,26 +233,26 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                 rMessageWithRequest = messages[0]
             }).timeout(20000)
 
-            it("recipient: create Consumption Request", async function () {
+            it("recipient: create Local Request", async function () {
                 rLocalRequest = await rConsumptionController.incomingRequests.received({
                     receivedRequest: rMessageWithRequest.cache!.content as Request,
                     requestSourceObject: rMessageWithRequest
                 })
             })
 
-            it("recipient: check prerequisites of Consumption Request", async function () {
+            it("recipient: check prerequisites of Local Request", async function () {
                 rLocalRequest = await rConsumptionController.incomingRequests.checkPrerequisites({
                     requestId: rLocalRequest.id
                 })
             })
 
-            it("recipient: require manual decision of Consumption Request", async function () {
+            it("recipient: require manual decision of Local Request", async function () {
                 rLocalRequest = await rConsumptionController.incomingRequests.requireManualDecision({
                     requestId: rLocalRequest.id
                 })
             })
 
-            it("recipient: accept Consumption Request", async function () {
+            it("recipient: accept Local Request", async function () {
                 rLocalRequest = await rConsumptionController.incomingRequests.accept({
                     requestId: rLocalRequest.id.toString(),
                     items: [
@@ -270,7 +270,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                 })
             })
 
-            it("recipient: complete Consumption Request", async function () {
+            it("recipient: complete Local Request", async function () {
                 rLocalRequest = await rConsumptionController.incomingRequests.complete({
                     requestId: rLocalRequest.id,
                     responseSourceObject: rMessageWithResponse
@@ -282,7 +282,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                 sMessageWithResponse = messages[0]
             }).timeout(20000)
 
-            it("sender: complete Consumption Request", async function () {
+            it("sender: complete Local Request", async function () {
                 sLocalRequest = await sConsumptionController.outgoingRequests.complete({
                     requestId: sLocalRequest.id,
                     responseSourceObject: sMessageWithResponse,
@@ -291,11 +291,11 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
             })
 
             it("expectations", function () {
-                // in the end, both Consumption Requests should be completed
+                // in the end, both Local Requests should be completed
                 expect(rLocalRequest.status).to.equal(LocalRequestStatus.Completed)
                 expect(sLocalRequest.status).to.equal(LocalRequestStatus.Completed)
 
-                // the ids of the Consumption Requests should be equal
+                // the ids of the Local Requests should be equal
                 expect(rLocalRequest.id.toString()).to.equal(sLocalRequest.id.toString())
 
                 // make sure (de-)serialization worked as expected

@@ -3,7 +3,6 @@ import { ILoggerFactory } from "@js-soft/logging-abstractions"
 import {
     ConsumptionController,
     ConsumptionIds,
-    ConsumptionResponse,
     DecideRequestParametersJSON,
     ICheckPrerequisitesOfIncomingRequestParameters,
     ICompleteIncomingRequestParameters,
@@ -18,6 +17,7 @@ import {
     LocalRequest,
     LocalRequestSource,
     LocalRequestStatus,
+    LocalResponse,
     OutgoingRequestsController,
     ReceivedIncomingRequestParameters,
     RequestItemProcessorRegistry,
@@ -114,7 +114,7 @@ export class RequestsTestsContext {
     public reset(): void {
         this.canCreateWasCalled = false
         this.givenLocalRequest = undefined
-        this.consumptionRequestAfterAction = undefined
+        this.localRequestAfterAction = undefined
         this.validationResult = undefined
         this.actionToTry = undefined
 
@@ -122,7 +122,7 @@ export class RequestsTestsContext {
     }
 
     public givenLocalRequest?: LocalRequest
-    public consumptionRequestAfterAction?: LocalRequest
+    public localRequestAfterAction?: LocalRequest
     public consumptionRequestsAfterAction?: LocalRequest[]
     public validationResult?: ValidationResult
     public canCreateWasCalled = false
@@ -372,10 +372,9 @@ export class RequestsWhen {
         params: Partial<IRequireManualDecisionOfIncomingRequestParameters>
     ): Promise<void> {
         params.requestId ??= this.context.givenLocalRequest!.id
-        this.context.consumptionRequestAfterAction =
-            await this.context.incomingRequestsController.requireManualDecision(
-                params as IRequireManualDecisionOfIncomingRequestParameters
-            )
+        this.context.localRequestAfterAction = await this.context.incomingRequestsController.requireManualDecision(
+            params as IRequireManualDecisionOfIncomingRequestParameters
+        )
     }
 
     public iTryToAccept(): Promise<void> {
@@ -471,7 +470,7 @@ export class RequestsWhen {
     ): Promise<void> {
         params.requestId ??= this.context.givenLocalRequest?.id
 
-        this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.checkPrerequisites(
+        this.context.localRequestAfterAction = await this.context.incomingRequestsController.checkPrerequisites(
             params as ICheckPrerequisitesOfIncomingRequestParameters
         )
     }
@@ -494,7 +493,7 @@ export class RequestsWhen {
         params.requestId ??= this.context.givenLocalRequest!.id
         params.requestSourceObject ??= TestObjectFactory.createOutgoingMessage(this.context.currentIdentity)
 
-        this.context.consumptionRequestAfterAction = await this.context.outgoingRequestsController.sent({
+        this.context.localRequestAfterAction = await this.context.outgoingRequestsController.sent({
             requestId: params.requestId,
             requestSourceObject: params.requestSourceObject
         })
@@ -576,7 +575,7 @@ export class RequestsWhen {
             peer: CoreAddress.from("id1")
         }
 
-        this.context.consumptionRequestAfterAction = await this.context.outgoingRequestsController.create(params)
+        this.context.localRequestAfterAction = await this.context.outgoingRequestsController.create(params)
     }
 
     public async iCreateAnOutgoingRequestFromRelationshipCreationChange(): Promise<void> {
@@ -592,7 +591,7 @@ export class RequestsWhen {
         )
         params.creationChange ??= TestObjectFactory.createIncomingIRelationshipChange(RelationshipChangeType.Creation)
 
-        this.context.consumptionRequestAfterAction =
+        this.context.localRequestAfterAction =
             await this.context.outgoingRequestsController.createFromRelationshipCreationChange(
                 params as ICreateOutgoingRequestFromRelationshipCreationChangeParameters
             )
@@ -601,7 +600,7 @@ export class RequestsWhen {
     public async iCreateAnIncomingRequestWithSource(sourceObject: Message | RelationshipTemplate): Promise<void> {
         const request = TestObjectFactory.createRequestWithOneItem()
 
-        this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.received({
+        this.context.localRequestAfterAction = await this.context.incomingRequestsController.received({
             receivedRequest: request,
             requestSourceObject: sourceObject
         })
@@ -611,7 +610,7 @@ export class RequestsWhen {
         params.receivedRequest ??= TestObjectFactory.createRequestWithOneItem()
         params.requestSourceObject ??= TestObjectFactory.createIncomingMessage(this.context.currentIdentity)
 
-        this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.received({
+        this.context.localRequestAfterAction = await this.context.incomingRequestsController.received({
             receivedRequest: params.receivedRequest,
             requestSourceObject: params.requestSourceObject
         })
@@ -629,7 +628,7 @@ export class RequestsWhen {
     public async iCompleteTheIncomingRequestWith(params: Partial<ICompleteIncomingRequestParameters>): Promise<void> {
         params.requestId ??= this.context.givenLocalRequest!.id
         params.responseSourceObject ??= TestObjectFactory.createOutgoingIMessage(this.context.currentIdentity)
-        this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.complete(
+        this.context.localRequestAfterAction = await this.context.incomingRequestsController.complete(
             params as ICompleteIncomingRequestParameters
         )
     }
@@ -643,7 +642,7 @@ export class RequestsWhen {
             ]
         }
 
-        this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.accept({
+        this.context.localRequestAfterAction = await this.context.incomingRequestsController.accept({
             requestId: this.context.givenLocalRequest!.id.toString(),
             ...params
         })
@@ -658,7 +657,7 @@ export class RequestsWhen {
             ]
         }
 
-        this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.reject({
+        this.context.localRequestAfterAction = await this.context.incomingRequestsController.reject({
             requestId: this.context.givenLocalRequest!.id.toString(),
             ...params
         })
@@ -672,7 +671,7 @@ export class RequestsWhen {
             items: [AcceptResponseItem.from({ result: ResponseItemResult.Accepted })]
         } as IResponse
 
-        this.context.consumptionRequestAfterAction = await this.context.outgoingRequestsController.complete({
+        this.context.localRequestAfterAction = await this.context.outgoingRequestsController.complete({
             requestId: this.context.givenLocalRequest!.id,
             responseSourceObject: responseSource,
             receivedResponse: responseContent
@@ -690,7 +689,7 @@ export class RequestsWhen {
 
         params.receivedResponse.requestId = params.requestId
 
-        this.context.consumptionRequestAfterAction = await this.context.outgoingRequestsController.complete(
+        this.context.localRequestAfterAction = await this.context.outgoingRequestsController.complete(
             params as ICompleteOugoingRequestParameters
         )
     }
@@ -708,26 +707,22 @@ export class RequestsWhen {
     }
 
     public async iGetTheIncomingRequestWith(id: CoreId): Promise<void> {
-        this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.getIncomingRequest(
-            id
-        )
+        this.context.localRequestAfterAction = await this.context.incomingRequestsController.getIncomingRequest(id)
     }
 
     public async iGetTheOutgoingRequestWith(id: CoreId): Promise<void> {
-        this.context.consumptionRequestAfterAction = await this.context.outgoingRequestsController.getOutgoingRequest(
-            id
-        )
+        this.context.localRequestAfterAction = await this.context.outgoingRequestsController.getOutgoingRequest(id)
     }
 
     public async iTryToGetARequestWithANonExistentId(): Promise<void> {
-        this.context.consumptionRequestAfterAction = (await this.context.incomingRequestsController.getIncomingRequest(
+        this.context.localRequestAfterAction = (await this.context.incomingRequestsController.getIncomingRequest(
             await CoreId.generate()
         ))!
     }
 
     public iTryToCompleteTheIncomingRequestWithoutResponseSource(): Promise<void> {
         this.context.actionToTry = async () => {
-            this.context.consumptionRequestAfterAction = await this.context.incomingRequestsController.complete({
+            this.context.localRequestAfterAction = await this.context.incomingRequestsController.complete({
                 requestId: this.context.givenLocalRequest!.id
             } as any)
         }
@@ -860,13 +855,13 @@ export class RequestsThen {
     }
 
     public theReturnedRequestHasTheId(id: CoreId): Promise<void> {
-        expect(this.context.consumptionRequestAfterAction).to.exist
-        expect(this.context.consumptionRequestAfterAction!.id.toString()).to.equal(id.toString())
+        expect(this.context.localRequestAfterAction).to.exist
+        expect(this.context.localRequestAfterAction!.id.toString()).to.equal(id.toString())
         return Promise.resolve()
     }
 
     public iExpectUndefinedToBeReturned(): Promise<void> {
-        expect(this.context.consumptionRequestAfterAction).to.be.undefined
+        expect(this.context.localRequestAfterAction).to.be.undefined
         return Promise.resolve()
     }
 
@@ -875,37 +870,37 @@ export class RequestsThen {
         sourceId: CoreId,
         sourceType: "Message" | "RelationshipTemplate"
     ): Promise<void> {
-        expect(this.context.consumptionRequestAfterAction).to.be.instanceOf(LocalRequest)
-        expect(this.context.consumptionRequestAfterAction!.id).to.exist
-        expect(this.context.consumptionRequestAfterAction!.isOwn).to.be.false
-        expect(this.context.consumptionRequestAfterAction!.peer.toString()).to.equal(createdBy.toString())
-        expect(this.context.consumptionRequestAfterAction!.source).to.exist
-        expect(this.context.consumptionRequestAfterAction!.source!.reference.toString()).to.equal(sourceId.toString())
-        expect(this.context.consumptionRequestAfterAction!.source!.type).to.equal(sourceType)
-        expect(this.context.consumptionRequestAfterAction!.response).to.be.undefined
-        expect(this.context.consumptionRequestAfterAction!.statusLog).to.be.empty
+        expect(this.context.localRequestAfterAction).to.be.instanceOf(LocalRequest)
+        expect(this.context.localRequestAfterAction!.id).to.exist
+        expect(this.context.localRequestAfterAction!.isOwn).to.be.false
+        expect(this.context.localRequestAfterAction!.peer.toString()).to.equal(createdBy.toString())
+        expect(this.context.localRequestAfterAction!.source).to.exist
+        expect(this.context.localRequestAfterAction!.source!.reference.toString()).to.equal(sourceId.toString())
+        expect(this.context.localRequestAfterAction!.source!.type).to.equal(sourceType)
+        expect(this.context.localRequestAfterAction!.response).to.be.undefined
+        expect(this.context.localRequestAfterAction!.statusLog).to.be.empty
 
         return Promise.resolve()
     }
 
     public theCreatedOutgoingRequestHasAllProperties(): Promise<void> {
-        expect(this.context.consumptionRequestAfterAction).to.exist
+        expect(this.context.localRequestAfterAction).to.exist
 
-        expect(this.context.consumptionRequestAfterAction!.id).to.exist
-        expect(this.context.consumptionRequestAfterAction!.createdAt).to.exist
-        expect(this.context.consumptionRequestAfterAction!.isOwn).to.equal(true)
+        expect(this.context.localRequestAfterAction!.id).to.exist
+        expect(this.context.localRequestAfterAction!.createdAt).to.exist
+        expect(this.context.localRequestAfterAction!.isOwn).to.equal(true)
 
         return Promise.resolve()
     }
 
     public theRequestHasItsResponsePropertySetCorrectly(expectedResult: ResponseItemResult): Promise<void> {
-        expect(this.context.consumptionRequestAfterAction!.response).to.exist
-        expect(this.context.consumptionRequestAfterAction!.response).to.be.instanceOf(ConsumptionResponse)
-        expect(this.context.consumptionRequestAfterAction!.response!.content).to.be.instanceOf(Response)
-        expect(this.context.consumptionRequestAfterAction!.response!.content.requestId.toString()).to.equal(
-            (this.context.consumptionRequestAfterAction ?? this.context.givenLocalRequest!).id.toString()
+        expect(this.context.localRequestAfterAction!.response).to.exist
+        expect(this.context.localRequestAfterAction!.response).to.be.instanceOf(LocalResponse)
+        expect(this.context.localRequestAfterAction!.response!.content).to.be.instanceOf(Response)
+        expect(this.context.localRequestAfterAction!.response!.content.requestId.toString()).to.equal(
+            (this.context.localRequestAfterAction ?? this.context.givenLocalRequest!).id.toString()
         )
-        expect(this.context.consumptionRequestAfterAction?.response!.content.result).to.equal(expectedResult)
+        expect(this.context.localRequestAfterAction?.response!.content.result).to.equal(expectedResult)
 
         return Promise.resolve()
     }
@@ -913,9 +908,9 @@ export class RequestsThen {
     public theResponseHasItsSourcePropertySetCorrectly(expectedProperties: {
         responseSourceType: string
     }): Promise<void> {
-        expect(this.context.consumptionRequestAfterAction!.response!.source).to.exist
-        expect(this.context.consumptionRequestAfterAction!.response!.source!.reference).to.be.exist
-        expect(this.context.consumptionRequestAfterAction!.response!.source!.type).to.equal(
+        expect(this.context.localRequestAfterAction!.response!.source).to.exist
+        expect(this.context.localRequestAfterAction!.response!.source!.reference).to.be.exist
+        expect(this.context.localRequestAfterAction!.response!.source!.type).to.equal(
             expectedProperties.responseSourceType
         )
 
@@ -923,36 +918,34 @@ export class RequestsThen {
     }
 
     public theRequestHasItsSourcePropertySet(): Promise<void> {
-        expect(this.context.consumptionRequestAfterAction!.source).to.exist
-        expect(this.context.consumptionRequestAfterAction!.source).to.be.instanceOf(LocalRequestSource)
-        expect(this.context.consumptionRequestAfterAction!.source!.reference).to.be.instanceOf(CoreId)
+        expect(this.context.localRequestAfterAction!.source).to.exist
+        expect(this.context.localRequestAfterAction!.source).to.be.instanceOf(LocalRequestSource)
+        expect(this.context.localRequestAfterAction!.source!.reference).to.be.instanceOf(CoreId)
 
         return Promise.resolve()
     }
 
     public theRequestHasItsSourcePropertySetTo(expectedSource: ILocalRequestSource): Promise<void> {
-        expect(this.context.consumptionRequestAfterAction!.source).to.exist
-        expect(this.context.consumptionRequestAfterAction!.source).to.be.instanceOf(LocalRequestSource)
-        expect(this.context.consumptionRequestAfterAction!.source!.reference.toString()).to.equal(
-            expectedSource.reference.id
-        )
-        expect(this.context.consumptionRequestAfterAction!.source!.type).to.equal(expectedSource.type)
+        expect(this.context.localRequestAfterAction!.source).to.exist
+        expect(this.context.localRequestAfterAction!.source).to.be.instanceOf(LocalRequestSource)
+        expect(this.context.localRequestAfterAction!.source!.reference.toString()).to.equal(expectedSource.reference.id)
+        expect(this.context.localRequestAfterAction!.source!.type).to.equal(expectedSource.type)
 
         return Promise.resolve()
     }
 
     public theRequestIsInStatus(status: LocalRequestStatus): Promise<void> {
-        expect(this.context.consumptionRequestAfterAction!.status).to.equal(status)
+        expect(this.context.localRequestAfterAction!.status).to.equal(status)
         return Promise.resolve()
     }
 
     public theRequestDoesNotHaveSourceSet(): Promise<void> {
-        expect(this.context.consumptionRequestAfterAction!.source).to.be.undefined
+        expect(this.context.localRequestAfterAction!.source).to.be.undefined
         return Promise.resolve()
     }
 
     public theRequestMovesToStatus(status: LocalRequestStatus): Promise<void> {
-        const modifiedRequest = this.context.consumptionRequestAfterAction!
+        const modifiedRequest = this.context.localRequestAfterAction!
 
         expect(modifiedRequest.status).to.equal(status)
 
@@ -974,30 +967,30 @@ export class RequestsThen {
 
     public async theNewRequestIsPersistedInTheDatabase(): Promise<void> {
         const requestDoc = await this.context.requestsCollection.read(
-            this.context.consumptionRequestAfterAction!.id.toString()
+            this.context.localRequestAfterAction!.id.toString()
         )
         const requestInDatabase = LocalRequest.from(requestDoc)
 
         expect(requestInDatabase).to.exist
-        expect(requestInDatabase.toJSON()).to.deep.equal(this.context.consumptionRequestAfterAction!.toJSON())
+        expect(requestInDatabase.toJSON()).to.deep.equal(this.context.localRequestAfterAction!.toJSON())
     }
 
     public async theChangesArePersistedInTheDatabase(): Promise<void> {
         const requestDoc = await this.context.requestsCollection.read(
-            this.context.consumptionRequestAfterAction!.id.toString()
+            this.context.localRequestAfterAction!.id.toString()
         )
         const requestInDatabase = LocalRequest.from(requestDoc)
 
-        expect(requestInDatabase.toJSON()).to.deep.equal(this.context.consumptionRequestAfterAction!.toJSON())
+        expect(requestInDatabase.toJSON()).to.deep.equal(this.context.localRequestAfterAction!.toJSON())
     }
 
     public theRequestHasTheId(id: CoreId | string): Promise<void> {
-        expect(this.context.consumptionRequestAfterAction!.id.toString()).to.equal(id.toString())
+        expect(this.context.localRequestAfterAction!.id.toString()).to.equal(id.toString())
         return Promise.resolve()
     }
 
     public iExpectTheResponseContent(customExpects: (responseContent: Response) => void): Promise<void> {
-        customExpects(this.context.consumptionRequestAfterAction!.response!.content)
+        customExpects(this.context.localRequestAfterAction!.response!.content)
         return Promise.resolve()
     }
 

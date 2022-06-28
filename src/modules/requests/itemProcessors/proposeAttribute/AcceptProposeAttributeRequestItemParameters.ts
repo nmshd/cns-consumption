@@ -16,7 +16,7 @@ export interface AcceptProposeAttributeRequestItemParametersJSON extends AcceptR
     attributeId?: string
 
     /**
-     * Pass an `attribute` to create a new Consumption Attribute. If you want to use the proposed Attribute, just pass it here.
+     * Pass an `attribute` to create a new Local Attribute. If you want to use the proposed Attribute, just pass it here.
      */
     attribute?: IdentityAttributeJSON | RelationshipAttributeJSON
 }

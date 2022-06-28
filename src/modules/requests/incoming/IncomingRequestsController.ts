@@ -28,7 +28,7 @@ import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProce
 import { ValidationResult } from "../itemProcessors/ValidationResult"
 import { ILocalRequestSource, LocalRequest } from "../local/LocalRequest"
 import { LocalRequestStatus } from "../local/LocalRequestStatus"
-import { ConsumptionResponse, ConsumptionResponseSource } from "../local/LocalResponse"
+import { LocalResponse, LocalResponseSource } from "../local/LocalResponse"
 import {
     CheckPrerequisitesOfIncomingRequestParameters,
     ICheckPrerequisitesOfIncomingRequestParameters
@@ -283,9 +283,9 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             LocalRequestStatus.ManualDecisionRequired
         )
 
-        const consumptionResponse = await this.createConsumptionResponse(params, consumptionRequest)
+        const localResponse = await this.createLocalResponse(params, consumptionRequest)
 
-        consumptionRequest.response = consumptionResponse
+        consumptionRequest.response = localResponse
         consumptionRequest.changeStatus(LocalRequestStatus.Decided)
 
         await this.update(consumptionRequest)
@@ -293,7 +293,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         return consumptionRequest
     }
 
-    private async createConsumptionResponse(params: InternalDecideRequestParametersJSON, request: LocalRequest) {
+    private async createLocalResponse(params: InternalDecideRequestParametersJSON, request: LocalRequest) {
         const requestItems = request.content.items
         const responseItems = await this.decideItems(params.items, requestItems, request)
 
@@ -303,12 +303,12 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             items: responseItems
         })
 
-        const consumptionResponse = ConsumptionResponse.from({
+        const localResponse = LocalResponse.from({
             content: response,
             createdAt: CoreDate.utc()
         })
 
-        return consumptionResponse
+        return localResponse
     }
 
     private async decideGroup(
@@ -396,7 +396,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             throw new Error("Unknown response source")
         }
 
-        request.response!.source = ConsumptionResponseSource.from({
+        request.response!.source = LocalResponseSource.from({
             type: responseSource,
             reference: parsedParams.responseSourceObject.id
         })
@@ -442,7 +442,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
     private assertRequestStatus(request: LocalRequest, ...status: LocalRequestStatus[]) {
         if (!status.includes(request.status)) {
-            throw new Error(`Consumption Request has to be in status '${status.join("/")}'.`)
+            throw new Error(`Local Request has to be in status '${status.join("/")}'.`)
         }
     }
 }

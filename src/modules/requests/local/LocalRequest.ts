@@ -14,7 +14,7 @@ import {
 } from "@nmshd/transport"
 import { LocalRequestStatus } from "./LocalRequestStatus"
 import { ILocalRequestStatusLogEntry, LocalRequestStatusLogEntry } from "./LocalRequestStatusLogEntry"
-import { ConsumptionResponse, IConsumptionResponse } from "./LocalResponse"
+import { ILocalResponse, LocalResponse } from "./LocalResponse"
 
 export interface ILocalRequestSource extends ICoreSerializable {
     type: "Message" | "RelationshipTemplate"
@@ -42,7 +42,7 @@ export interface ILocalRequest extends ICoreSynchronizable {
     createdAt: ICoreDate
     content: IRequest
     source?: ILocalRequestSource
-    response?: IConsumptionResponse
+    response?: ILocalResponse
     status: LocalRequestStatus
     statusLog: ILocalRequestStatusLogEntry[]
 }
@@ -71,7 +71,7 @@ export class LocalRequest extends CoreSynchronizable implements ILocalRequest {
 
     @serialize()
     @validate({ nullable: true })
-    public response?: ConsumptionResponse
+    public response?: LocalResponse
 
     @serialize()
     @validate()
@@ -95,7 +95,7 @@ export class LocalRequest extends CoreSynchronizable implements ILocalRequest {
 
     public sent(source: LocalRequestSource): void {
         if (this.status !== LocalRequestStatus.Draft) {
-            throw new Error("Consumption Request has to be in status 'Draft'.")
+            throw new Error("Local Request has to be in status 'Draft'.")
         }
 
         this.source = source

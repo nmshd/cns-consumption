@@ -1,9 +1,9 @@
 import {
-    ConsumptionResponse,
     ILocalRequest,
     LocalRequest,
     LocalRequestStatus,
-    LocalRequestStatusLogEntry
+    LocalRequestStatusLogEntry,
+    LocalResponse
 } from "@nmshd/consumption"
 import { ResponseItem } from "@nmshd/content"
 import { CoreAddress, CoreDate, CoreId } from "@nmshd/transport"
@@ -42,7 +42,7 @@ export class LocalRequestTest extends UnitTest {
 
                 expect(request).to.be.instanceOf(LocalRequest)
                 expect(request.content.items[0]).to.be.instanceOf(TestRequestItem)
-                expect(request.response).to.be.instanceOf(ConsumptionResponse)
+                expect(request.response).to.be.instanceOf(LocalResponse)
                 expect(request.response!.content.items[0]).to.be.instanceOf(ResponseItem)
                 expect(request.statusLog[0]).to.be.instanceOf(LocalRequestStatusLogEntry)
             })

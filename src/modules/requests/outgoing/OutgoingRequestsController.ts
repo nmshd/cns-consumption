@@ -25,7 +25,7 @@ import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProce
 import { ValidationResult } from "../itemProcessors/ValidationResult"
 import { LocalRequest, LocalRequestSource } from "../local/LocalRequest"
 import { LocalRequestStatus } from "../local/LocalRequestStatus"
-import { ConsumptionResponse } from "../local/LocalResponse"
+import { LocalResponse } from "../local/LocalResponse"
 import {
     CompleteOugoingRequestParameters,
     ICompleteOugoingRequestParameters
@@ -238,13 +238,13 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
             throw new Error("Invalid responseSourceObject")
         }
 
-        const consumptionResponse = ConsumptionResponse.from({
+        const localResponse = LocalResponse.from({
             content: receivedResponse,
             createdAt: CoreDate.utc(),
             source: { reference: responseSourceObject.id, type: responseSource }
         })
 
-        request.response = consumptionResponse
+        request.response = localResponse
         request.changeStatus(LocalRequestStatus.Completed)
 
         await this.update(request)
@@ -343,7 +343,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
 
     private assertRequestStatus(request: LocalRequest, ...status: LocalRequestStatus[]) {
         if (!status.includes(request.status)) {
-            throw new Error(`Consumption Request has to be in status '${status.join("/")}'.`)
+            throw new Error(`Local Request has to be in status '${status.join("/")}'.`)
         }
     }
 }

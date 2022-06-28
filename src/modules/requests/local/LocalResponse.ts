@@ -2,13 +2,13 @@ import { serialize, type, validate } from "@js-soft/ts-serval"
 import { IResponse, Response } from "@nmshd/content"
 import { CoreDate, CoreId, CoreSerializable, ICoreDate, ICoreId, ICoreSerializable } from "@nmshd/transport"
 
-export interface IConsumptionResponseSource extends ICoreSerializable {
+export interface ILocalResponseSource extends ICoreSerializable {
     type: "Message" | "RelationshipChange"
     reference: ICoreId
 }
 
-@type("ConsumptionResponseSource")
-export class ConsumptionResponseSource extends CoreSerializable implements IConsumptionResponseSource {
+@type("LocalResponseSource")
+export class LocalResponseSource extends CoreSerializable implements ILocalResponseSource {
     @serialize()
     @validate()
     public type: "Message" | "RelationshipChange"
@@ -17,19 +17,19 @@ export class ConsumptionResponseSource extends CoreSerializable implements ICons
     @validate()
     public reference: CoreId
 
-    public static from(value: IConsumptionResponseSource): ConsumptionResponseSource {
+    public static from(value: ILocalResponseSource): LocalResponseSource {
         return this.fromAny(value)
     }
 }
 
-export interface IConsumptionResponse extends ICoreSerializable {
+export interface ILocalResponse extends ICoreSerializable {
     createdAt: ICoreDate
     content: IResponse
-    source?: IConsumptionResponseSource
+    source?: ILocalResponseSource
 }
 
-@type("ConsumptionResponse")
-export class ConsumptionResponse extends CoreSerializable implements IConsumptionResponse {
+@type("LocalResponse")
+export class LocalResponse extends CoreSerializable implements ILocalResponse {
     @serialize()
     @validate()
     public createdAt: CoreDate
@@ -40,9 +40,9 @@ export class ConsumptionResponse extends CoreSerializable implements IConsumptio
 
     @serialize()
     @validate({ nullable: true })
-    public source?: ConsumptionResponseSource
+    public source?: LocalResponseSource
 
-    public static from(value: IConsumptionResponse): ConsumptionResponse {
+    public static from(value: ILocalResponse): LocalResponse {
         return this.fromAny(value)
     }
 }

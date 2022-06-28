@@ -177,13 +177,13 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     }
                 )
 
-                it("throws when the Consumption Request is not in status 'Open'", async function () {
+                it("throws when the Local Request is not in status 'Open'", async function () {
                     await Given.anIncomingRequestInStatus(LocalRequestStatus.DecisionRequired)
                     await When.iTryToCheckPrerequisites()
-                    await Then.itThrowsAnErrorWithTheErrorMessage("*Consumption Request has to be in status 'Open'*")
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*Local Request has to be in status 'Open'*")
                 })
 
-                it("throws when no Consumption Request with the given id exists in DB", async function () {
+                it("throws when no Local Request with the given id exists in DB", async function () {
                     const nonExistentId = CoreId.from("nonExistentId")
                     await When.iTryToCheckPrerequisitesWith({ requestId: nonExistentId })
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
@@ -203,15 +203,15 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.theChangesArePersistedInTheDatabase()
                 })
 
-                it("throws when the Consumption Request is not in status 'DecisionRequired'", async function () {
+                it("throws when the Local Request is not in status 'DecisionRequired'", async function () {
                     await Given.anIncomingRequestInStatus(LocalRequestStatus.Open)
                     await When.iTryToRequireManualDecision()
                     await Then.itThrowsAnErrorWithTheErrorMessage(
-                        "*Consumption Request has to be in status 'DecisionRequired'*"
+                        "*Local Request has to be in status 'DecisionRequired'*"
                     )
                 })
 
-                it("throws when no Consumption Request with the given id exists in DB", async function () {
+                it("throws when no Local Request with the given id exists in DB", async function () {
                     const nonExistentId = CoreId.from("nonExistentId")
                     await When.iTryToRequireManualDecisionWith({ requestId: nonExistentId })
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
@@ -319,7 +319,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     }
                 )
 
-                it("throws when no Consumption Request with the given id exists in DB", async function () {
+                it("throws when no Local Request with the given id exists in DB", async function () {
                     await When.iTryToCallCanAcceptWith({ requestId: "nonExistentId" })
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
@@ -329,11 +329,11 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.itThrowsAnErrorWithTheErrorMessage("*requestId*Value is not defined*")
                 })
 
-                it("throws when the Consumption Request is not in status 'DecisionRequired/ManualDecisionRequired'", async function () {
+                it("throws when the Local Request is not in status 'DecisionRequired/ManualDecisionRequired'", async function () {
                     await Given.anIncomingRequestInStatus(LocalRequestStatus.Open)
                     await When.iTryToCallCanAccept()
                     await Then.itThrowsAnErrorWithTheErrorMessage(
-                        "*Consumption Request has to be in status 'DecisionRequired/ManualDecisionRequired'*"
+                        "*Local Request has to be in status 'DecisionRequired/ManualDecisionRequired'*"
                     )
                 })
 
@@ -510,7 +510,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     }
                 )
 
-                it("throws when no Consumption Request with the given id exists in DB", async function () {
+                it("throws when no Local Request with the given id exists in DB", async function () {
                     await When.iTryToCallCanRejectWith({ requestId: "nonExistentId" })
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
@@ -520,11 +520,11 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.itThrowsAnErrorWithTheErrorMessage("*requestId*Value is not defined*")
                 })
 
-                it("throws when the Consumption Request is not in status 'DecisionRequired/ManualDecisionRequired'", async function () {
+                it("throws when the Local Request is not in status 'DecisionRequired/ManualDecisionRequired'", async function () {
                     await Given.anIncomingRequestInStatus(LocalRequestStatus.Open)
                     await When.iTryToCallCanReject()
                     await Then.itThrowsAnErrorWithTheErrorMessage(
-                        "*Consumption Request has to be in status 'DecisionRequired/ManualDecisionRequired'*"
+                        "*Local Request has to be in status 'DecisionRequired/ManualDecisionRequired'*"
                     )
                 })
 
@@ -712,7 +712,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     )
                 })
 
-                it("throws when no Consumption Request with the given id exists in DB", async function () {
+                it("throws when no Local Request with the given id exists in DB", async function () {
                     When.iTryToAcceptWith({ requestId: "nonExistentId" })
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
@@ -731,11 +731,11 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     )
                 })
 
-                it("throws when the Consumption Request is not in status 'DecisionRequired/ManualDecisionRequired'", async function () {
+                it("throws when the Local Request is not in status 'DecisionRequired/ManualDecisionRequired'", async function () {
                     await Given.anIncomingRequestInStatus(LocalRequestStatus.Open)
                     await When.iTryToAccept()
                     await Then.itThrowsAnErrorWithTheErrorMessage(
-                        "*Consumption Request has to be in status 'DecisionRequired/ManualDecisionRequired'*"
+                        "*Local Request has to be in status 'DecisionRequired/ManualDecisionRequired'*"
                     )
                 })
 
@@ -851,7 +851,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     )
                 })
 
-                it("throws when no Consumption Request with the given id exists in DB", async function () {
+                it("throws when no Local Request with the given id exists in DB", async function () {
                     When.iTryToRejectWith({ requestId: "nonExistentId" })
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
@@ -870,11 +870,11 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     )
                 })
 
-                it("throws when the Consumption Request is not in status 'DecisionRequired/ManualDecisionRequired'", async function () {
+                it("throws when the Local Request is not in status 'DecisionRequired/ManualDecisionRequired'", async function () {
                     await Given.anIncomingRequestInStatus(LocalRequestStatus.Open)
                     await When.iTryToReject()
                     await Then.itThrowsAnErrorWithTheErrorMessage(
-                        "*Consumption Request has to be in status 'DecisionRequired/ManualDecisionRequired'*"
+                        "*Local Request has to be in status 'DecisionRequired/ManualDecisionRequired'*"
                     )
                 })
 
@@ -915,13 +915,13 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.itThrowsAnErrorWithTheErrorMessage("*responseSource*Value is not defined*")
                 })
 
-                it("throws when the Consumption Request is not in status 'Decided'", async function () {
+                it("throws when the Local Request is not in status 'Decided'", async function () {
                     await Given.anIncomingRequestInStatus(LocalRequestStatus.Open)
                     await When.iTryToCompleteTheIncomingRequest()
-                    await Then.itThrowsAnErrorWithTheErrorMessage("*Consumption Request has to be in status 'Decided'*")
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*Local Request has to be in status 'Decided'*")
                 })
 
-                it("throws when no Consumption Request with the given id exists in DB", async function () {
+                it("throws when no Local Request with the given id exists in DB", async function () {
                     const nonExistentId = CoreId.from("nonExistentId")
                     await When.iTryToCompleteTheIncomingRequestWith({ requestId: nonExistentId })
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")

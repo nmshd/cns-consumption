@@ -432,7 +432,7 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
             })
 
             describe("accept", function () {
-                it("in case of a given attributeId of an own Consumption Attribute, creates a copy of the Consumption Attribute with the given id with share info for the peer of the Request", async function () {
+                it("in case of a given attributeId of an own Local Attribute, creates a copy of the Local Attribute with the given id with share info for the peer of the Request", async function () {
                     const attribute = await consumptionController.attributes.createLocalAttribute({
                         content: TestObjectFactory.createIdentityAttribute({
                             owner: CoreAddress.from(accountController.identity.address)
@@ -521,7 +521,7 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
                     expect(createdRepositoryAttribute).to.exist
                 })
 
-                it("in case of a given peer RelationshipAttribute, creates a new Consumption Attribute with share info for the peer of the Request - but no Repository Attribute", async function () {
+                it("in case of a given peer RelationshipAttribute, creates a new Local Attribute with share info for the peer of the Request - but no Repository Attribute", async function () {
                     const senderAddress = accountController.identity.address
                     const requestItem = ProposeAttributeRequestItem.from({
                         mustBeAccepted: true,

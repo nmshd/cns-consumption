@@ -133,7 +133,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
             })
 
             describe("accept", function () {
-                it("in case of an IdentityAttribute with 'owner=sender', creates a Consumption Attribute for the peer of the Request", async function () {
+                it("in case of an IdentityAttribute with 'owner=sender', creates a Local Attribute for the peer of the Request", async function () {
                     const senderAddress = CoreAddress.from("SenderAddress")
                     const requestItem = CreateAttributeRequestItem.from({
                         mustBeAccepted: true,

@@ -266,7 +266,7 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                     await Then.theNewRequestIsPersistedInTheDatabase()
                 })
 
-                it("uses the id from the Creation Change content for the created Consumption Request", async function () {
+                it("uses the id from the Creation Change content for the created Local Request", async function () {
                     await When.iCreateAnOutgoingRequestFromRelationshipCreationChangeWith({
                         creationChange: TestObjectFactory.createIncomingIRelationshipChange(
                             RelationshipChangeType.Creation,
@@ -297,10 +297,10 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                     await Then.itThrowsAnErrorWithTheErrorMessage("*requestSourceObject*Value is not defined*")
                 })
 
-                it("throws when the Consumption Request is not in status 'Draft' ", async function () {
+                it("throws when the Local Request is not in status 'Draft' ", async function () {
                     await Given.anOutgoingRequestInStatus(LocalRequestStatus.Open)
                     When.iTryToCallSent()
-                    await Then.itThrowsAnErrorWithTheErrorMessage("*Consumption Request has to be in status 'Draft'*")
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*Local Request has to be in status 'Draft'*")
                 })
 
                 it("sets the source property depending on the given source", async function () {
@@ -523,10 +523,10 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
 
-                it("throws when the Consumption Request is not in status 'Open'", async function () {
+                it("throws when the Local Request is not in status 'Open'", async function () {
                     await Given.anOutgoingRequestInStatus(LocalRequestStatus.Draft)
                     When.iTryToCompleteTheOutgoingRequest()
-                    await Then.itThrowsAnErrorWithTheErrorMessage("*Consumption Request has to be in status 'Open'*")
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*Local Request has to be in status 'Open'*")
                 })
             })
 
