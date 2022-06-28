@@ -23,9 +23,9 @@ import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionIds } 
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
 import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProcessorRegistry"
 import { ValidationResult } from "../itemProcessors/ValidationResult"
-import { ConsumptionRequest, ConsumptionRequestSource } from "../local/ConsumptionRequest"
-import { ConsumptionRequestStatus } from "../local/ConsumptionRequestStatus"
-import { ConsumptionResponse } from "../local/ConsumptionResponse"
+import { LocalRequest, LocalRequestSource } from "../local/LocalRequest"
+import { LocalRequestStatus } from "../local/LocalRequestStatus"
+import { LocalResponse } from "../local/LocalResponse"
 import {
     CompleteOugoingRequestParameters,
     ICompleteOugoingRequestParameters
@@ -96,7 +96,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         return result
     }
 
-    public async create(params: ICreateOutgoingRequestParameters): Promise<ConsumptionRequest> {
+    public async create(params: ICreateOutgoingRequestParameters): Promise<LocalRequest> {
         const parsedParams = CreateOutgoingRequestParameters.from(params)
 
         const id = await ConsumptionIds.request.generate()
@@ -116,13 +116,13 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
             throw canCreateResult.error
         }
 
-        const consumptionRequest = ConsumptionRequest.from({
+        const consumptionRequest = LocalRequest.from({
             id: id,
             content: content,
             createdAt: CoreDate.utc(),
             isOwn: true,
             peer: peer,
-            status: ConsumptionRequestStatus.Draft,
+            status: LocalRequestStatus.Draft,
             statusLog: []
         })
 
@@ -132,7 +132,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
 
     public async createFromRelationshipCreationChange(
         params: ICreateOutgoingRequestFromRelationshipCreationChangeParameters
-    ): Promise<ConsumptionRequest> {
+    ): Promise<LocalRequest> {
         const parsedParams = CreateOutgoingRequestFromRelationshipCreationChangeParameters.from(params)
 
         const peer = parsedParams.creationChange.request.createdBy
@@ -161,22 +161,19 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         return consumptionRequest
     }
 
-    public async sent(params: ISentOutgoingRequestParameters): Promise<ConsumptionRequest> {
+    public async sent(params: ISentOutgoingRequestParameters): Promise<LocalRequest> {
         const parsedParams = SentOutgoingRequestParameters.from(params)
         return await this._sent(parsedParams.requestId, parsedParams.requestSourceObject)
     }
 
-    private async _sent(
-        requestId: CoreId,
-        requestSourceObject: Message | RelationshipTemplate
-    ): Promise<ConsumptionRequest> {
+    private async _sent(requestId: CoreId, requestSourceObject: Message | RelationshipTemplate): Promise<LocalRequest> {
         const request = await this.getOrThrow(requestId)
 
-        this.assertRequestStatus(request, ConsumptionRequestStatus.Draft)
+        this.assertRequestStatus(request, LocalRequestStatus.Draft)
 
-        request.changeStatus(ConsumptionRequestStatus.Open)
+        request.changeStatus(LocalRequestStatus.Open)
 
-        request.source = ConsumptionRequestSource.from({
+        request.source = LocalRequestSource.from({
             reference: requestSourceObject.id,
             type: this.getSourceType(requestSourceObject)
         })
@@ -205,7 +202,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         )
     }
 
-    public async complete(params: ICompleteOugoingRequestParameters): Promise<ConsumptionRequest> {
+    public async complete(params: ICompleteOugoingRequestParameters): Promise<LocalRequest> {
         const parsedParams = CompleteOugoingRequestParameters.from(params)
         return await this._complete(
             parsedParams.requestId,
@@ -218,10 +215,10 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         requestId: CoreId,
         responseSourceObject: Message | RelationshipChange,
         receivedResponse: Response
-    ): Promise<ConsumptionRequest> {
+    ): Promise<LocalRequest> {
         const request = await this.getOrThrow(requestId)
 
-        this.assertRequestStatus(request, ConsumptionRequestStatus.Open)
+        this.assertRequestStatus(request, LocalRequestStatus.Open)
 
         const canComplete = await this.canComplete(request, receivedResponse)
 
@@ -241,21 +238,21 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
             throw new Error("Invalid responseSourceObject")
         }
 
-        const consumptionResponse = ConsumptionResponse.from({
+        const localResponse = LocalResponse.from({
             content: receivedResponse,
             createdAt: CoreDate.utc(),
             source: { reference: responseSourceObject.id, type: responseSource }
         })
 
-        request.response = consumptionResponse
-        request.changeStatus(ConsumptionRequestStatus.Completed)
+        request.response = localResponse
+        request.changeStatus(LocalRequestStatus.Completed)
 
         await this.update(request)
 
         return request
     }
 
-    private async canComplete(request: ConsumptionRequest, receivedResponse: Response): Promise<ValidationResult> {
+    private async canComplete(request: LocalRequest, receivedResponse: Response): Promise<ValidationResult> {
         for (let i = 0; i < receivedResponse.items.length; i++) {
             const requestItem = request.content.items[i]
             if (requestItem instanceof RequestItem) {
@@ -293,7 +290,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     private async applyItems(
         requestItems: (RequestItem | RequestItemGroup)[],
         responseItems: (ResponseItem | ResponseItemGroup)[],
-        request: ConsumptionRequest
+        request: LocalRequest
     ): Promise<void> {
         for (let i = 0; i < responseItems.length; i++) {
             const requestItem = requestItems[i]
@@ -307,46 +304,46 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         }
     }
 
-    private async applyItem(requestItem: RequestItem, responseItem: ResponseItem, request: ConsumptionRequest) {
+    private async applyItem(requestItem: RequestItem, responseItem: ResponseItem, request: LocalRequest) {
         const processor = this.processorRegistry.getProcessorForItem(requestItem)
         await processor.applyIncomingResponseItem(responseItem, requestItem, request)
     }
 
-    public async getOutgoingRequests(query?: any): Promise<ConsumptionRequest[]> {
+    public async getOutgoingRequests(query?: any): Promise<LocalRequest[]> {
         query ??= {}
         query.isOwn = true
 
         const requestDocs = await this.consumptionRequests.find(query)
 
-        const requests = requestDocs.map((r) => ConsumptionRequest.from(r))
+        const requests = requestDocs.map((r) => LocalRequest.from(r))
         return requests
     }
 
-    public async getOutgoingRequest(id: ICoreId): Promise<ConsumptionRequest | undefined> {
+    public async getOutgoingRequest(id: ICoreId): Promise<LocalRequest | undefined> {
         const requestDoc = await this.consumptionRequests.findOne({ id: id.toString(), isOwn: true })
-        const request = requestDoc ? ConsumptionRequest.from(requestDoc) : undefined
+        const request = requestDoc ? LocalRequest.from(requestDoc) : undefined
         return request
     }
 
     private async getOrThrow(id: CoreId) {
         const request = await this.getOutgoingRequest(id)
         if (!request) {
-            throw TransportErrors.general.recordNotFound(ConsumptionRequest, id.toString())
+            throw TransportErrors.general.recordNotFound(LocalRequest, id.toString())
         }
         return request
     }
 
-    private async update(request: ConsumptionRequest) {
+    private async update(request: LocalRequest) {
         const requestDoc = await this.consumptionRequests.findOne({ id: request.id.toString(), isOwn: true })
         if (!requestDoc) {
-            throw TransportErrors.general.recordNotFound(ConsumptionRequest, request.id.toString())
+            throw TransportErrors.general.recordNotFound(LocalRequest, request.id.toString())
         }
         await this.consumptionRequests.update(requestDoc, request)
     }
 
-    private assertRequestStatus(request: ConsumptionRequest, ...status: ConsumptionRequestStatus[]) {
+    private assertRequestStatus(request: LocalRequest, ...status: LocalRequestStatus[]) {
         if (!status.includes(request.status)) {
-            throw new Error(`Consumption Request has to be in status '${status.join("/")}'.`)
+            throw new Error(`Local Request has to be in status '${status.join("/")}'.`)
         }
     }
 }

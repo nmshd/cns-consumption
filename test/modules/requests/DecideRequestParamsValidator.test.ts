@@ -1,9 +1,9 @@
 import {
-    ConsumptionRequest,
-    ConsumptionRequestStatus,
     DecideRequestItemGroupParametersJSON,
     DecideRequestItemParametersJSON,
-    DecideRequestParametersValidator
+    DecideRequestParametersValidator,
+    LocalRequest,
+    LocalRequestStatus
 } from "@nmshd/consumption"
 import { Request, RequestItemGroup } from "@nmshd/content"
 import { CoreAddress, CoreDate, CoreId } from "@nmshd/transport"
@@ -338,14 +338,14 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
             ]
 
             itParam("${value.description}", [...successParams, ...errorParams], async function (data) {
-                const consumptionRequest = ConsumptionRequest.from({
+                const consumptionRequest = LocalRequest.from({
                     id: CoreId.from(requestId),
                     content: data.input.request,
                     createdAt: CoreDate.utc(),
                     isOwn: true,
                     peer: CoreAddress.from("id1"),
                     source: { reference: await CoreId.generate(), type: "Message" },
-                    status: ConsumptionRequestStatus.Open,
+                    status: LocalRequestStatus.Open,
                     statusLog: []
                 })
 

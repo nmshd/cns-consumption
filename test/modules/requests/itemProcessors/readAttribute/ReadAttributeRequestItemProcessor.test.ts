@@ -2,8 +2,8 @@ import {
     AcceptReadAttributeRequestItemParametersJSON,
     ConsumptionController,
     ConsumptionIds,
-    ConsumptionRequest,
-    ConsumptionRequestStatus,
+    LocalRequest,
+    LocalRequestStatus,
     ReadAttributeRequestItemProcessor
 } from "@nmshd/consumption"
 import {
@@ -211,8 +211,8 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
             })
 
             describe("canAccept", function () {
-                it("can be called with the id of an existing own ConsumptionAttribute", async function () {
-                    const attribute = await consumptionController.attributes.createConsumptionAttribute({
+                it("can be called with the id of an existing own LocalAttribute", async function () {
+                    const attribute = await consumptionController.attributes.createLocalAttribute({
                         content: TestObjectFactory.createIdentityAttribute({
                             owner: CoreAddress.from(accountController.identity.address)
                         })
@@ -223,12 +223,12 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         query: IdentityAttributeQuery.from({ valueType: "GivenName" })
                     })
                     const requestId = await ConsumptionIds.request.generate()
-                    const request = ConsumptionRequest.from({
+                    const request = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: CoreAddress.from("id1"),
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -252,12 +252,12 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         query: IdentityAttributeQuery.from({ valueType: "GivenName" })
                     })
                     const requestId = await ConsumptionIds.request.generate()
-                    const request = ConsumptionRequest.from({
+                    const request = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: CoreAddress.from("id1"),
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -288,12 +288,12 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         query: IdentityAttributeQuery.from({ valueType: "GivenName" })
                     })
                     const requestId = await ConsumptionIds.request.generate()
-                    const request = ConsumptionRequest.from({
+                    const request = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: CoreAddress.from("id1"),
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -318,7 +318,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const peerAttributeId = await ConsumptionIds.attribute.generate()
 
-                    await consumptionController.attributes.createPeerConsumptionAttribute({
+                    await consumptionController.attributes.createPeerLocalAttribute({
                         id: peerAttributeId,
                         content: TestObjectFactory.createIdentityAttribute({
                             owner: peer
@@ -332,12 +332,12 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         query: IdentityAttributeQuery.from({ valueType: "GivenName" })
                     })
                     const requestId = await ConsumptionIds.request.generate()
-                    const request = ConsumptionRequest.from({
+                    const request = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: peer,
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -360,8 +360,8 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
             })
 
             describe("accept", function () {
-                it("in case of a given attributeId of an own Consumption Attribute, creates a copy of the Consumption Attribute with the given id with share info for the peer of the Request", async function () {
-                    const attribute = await consumptionController.attributes.createConsumptionAttribute({
+                it("in case of a given attributeId of an own Local Attribute, creates a copy of the Local Attribute with the given id with share info for the peer of the Request", async function () {
+                    const attribute = await consumptionController.attributes.createLocalAttribute({
                         content: TestObjectFactory.createIdentityAttribute({
                             owner: CoreAddress.from(accountController.identity.address)
                         })
@@ -372,12 +372,12 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         query: IdentityAttributeQuery.from({ valueType: "GivenName" })
                     })
                     const requestId = await ConsumptionIds.request.generate()
-                    const incomingRequest = ConsumptionRequest.from({
+                    const incomingRequest = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: CoreAddress.from("id1"),
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -392,7 +392,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const result = await processor.accept(requestItem, acceptParams, incomingRequest)
 
-                    const createdAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                    const createdAttribute = await consumptionController.attributes.getLocalAttribute(
                         result.attributeId
                     )
                     expect(createdAttribute).to.exist
@@ -406,12 +406,12 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         query: IdentityAttributeQuery.from({ valueType: "GivenName" })
                     })
                     const requestId = await ConsumptionIds.request.generate()
-                    const incomingRequest = ConsumptionRequest.from({
+                    const incomingRequest = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: CoreAddress.from("id1"),
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -432,7 +432,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                     }
 
                     const result = await processor.accept(requestItem, acceptParams, incomingRequest)
-                    const createdSharedAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                    const createdSharedAttribute = await consumptionController.attributes.getLocalAttribute(
                         result.attributeId
                     )
 
@@ -441,13 +441,13 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                     expect(createdSharedAttribute!.shareInfo!.peer.toString()).to.equal(incomingRequest.peer.toString())
                     expect(createdSharedAttribute!.shareInfo!.sourceAttribute).to.exist
 
-                    const createdRepositoryAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                    const createdRepositoryAttribute = await consumptionController.attributes.getLocalAttribute(
                         createdSharedAttribute!.shareInfo!.sourceAttribute!
                     )
                     expect(createdRepositoryAttribute).to.exist
                 })
 
-                it("in case of a given peer RelationshipAttribute, creates a new Consumption Attribute with share info for the peer of the Request - but no Repository Attribute", async function () {
+                it("in case of a given peer RelationshipAttribute, creates a new Local Attribute with share info for the peer of the Request - but no Repository Attribute", async function () {
                     const senderAddress = accountController.identity.address
                     const requestItem = ReadAttributeRequestItem.from({
                         mustBeAccepted: true,
@@ -462,12 +462,12 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         })
                     })
                     const requestId = await ConsumptionIds.request.generate()
-                    const incomingRequest = ConsumptionRequest.from({
+                    const incomingRequest = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: senderAddress,
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -490,7 +490,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                     }
 
                     const result = await processor.accept(requestItem, acceptParams, incomingRequest)
-                    const createdSharedAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                    const createdSharedAttribute = await consumptionController.attributes.getLocalAttribute(
                         result.attributeId
                     )
 
@@ -510,12 +510,12 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                     const requestId = await ConsumptionIds.request.generate()
                     const peer = CoreAddress.from("id1")
 
-                    const incomingRequest = ConsumptionRequest.from({
+                    const incomingRequest = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: peer,
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -534,7 +534,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     await processor.applyIncomingResponseItem(responseItem, requestItem, incomingRequest)
 
-                    const createdAttribute = await consumptionController.attributes.getConsumptionAttribute(attributeId)
+                    const createdAttribute = await consumptionController.attributes.getLocalAttribute(attributeId)
                     expect(createdAttribute).to.exist
                     expect(createdAttribute!.shareInfo).to.exist
                     expect(createdAttribute!.shareInfo!.peer.toString()).to.equal(incomingRequest.peer.toString())

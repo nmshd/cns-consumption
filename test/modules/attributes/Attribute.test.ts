@@ -1,12 +1,12 @@
 import {
-    ConsumptionAttribute,
     ConsumptionController,
-    ICreateConsumptionAttributeParams,
-    ICreatePeerConsumptionAttributeParams,
-    ICreateSharedConsumptionAttributeCopyParams,
+    ICreateLocalAttributeParams,
+    ICreatePeerLocalAttributeParams,
+    ICreateSharedLocalAttributeCopyParams,
     IGetIdentityAttributesParams,
     IGetRelationshipAttributesParams,
-    ISucceedConsumptionAttributeParams
+    ISucceedLocalAttributeParams,
+    LocalAttribute
 } from "@nmshd/consumption"
 import {
     IdentityAttribute,
@@ -41,7 +41,7 @@ export class AttributeTest extends IntegrationTest {
             })
 
             beforeEach(async function () {
-                const surnameParams: ICreateConsumptionAttributeParams = {
+                const surnameParams: ICreateLocalAttributeParams = {
                     content: IdentityAttribute.from({
                         value: {
                             "@type": "Surname",
@@ -51,7 +51,7 @@ export class AttributeTest extends IntegrationTest {
                     })
                 }
 
-                const givenNamesParams: ICreateConsumptionAttributeParams = {
+                const givenNamesParams: ICreateLocalAttributeParams = {
                     content: IdentityAttribute.from({
                         value: {
                             "@type": "GivenName",
@@ -60,20 +60,20 @@ export class AttributeTest extends IntegrationTest {
                         owner: CoreAddress.from("address")
                     })
                 }
-                await consumptionController.attributes.createConsumptionAttribute(surnameParams)
-                await consumptionController.attributes.createConsumptionAttribute(givenNamesParams)
+                await consumptionController.attributes.createLocalAttribute(surnameParams)
+                await consumptionController.attributes.createLocalAttribute(givenNamesParams)
             })
 
             it("should list all attributes", async function () {
-                const attributes = await consumptionController.attributes.getConsumptionAttributes()
+                const attributes = await consumptionController.attributes.getLocalAttributes()
                 expect(attributes).to.be.of.length(2)
             })
 
             it("should create new attributes", async function () {
-                const attributesBeforeCreate = await consumptionController.attributes.getConsumptionAttributes()
+                const attributesBeforeCreate = await consumptionController.attributes.getLocalAttributes()
                 const nrAttributesBeforeCreate = attributesBeforeCreate.length
 
-                const addressParams: ICreateConsumptionAttributeParams = {
+                const addressParams: ICreateLocalAttributeParams = {
                     content: IdentityAttribute.from({
                         value: {
                             "@type": "StreetAddress",
@@ -89,7 +89,7 @@ export class AttributeTest extends IntegrationTest {
                     })
                 }
 
-                const birthDateParams: ICreateConsumptionAttributeParams = {
+                const birthDateParams: ICreateLocalAttributeParams = {
                     content: IdentityAttribute.from({
                         value: {
                             "@type": "BirthDate",
@@ -101,24 +101,24 @@ export class AttributeTest extends IntegrationTest {
                     })
                 }
 
-                const address = await consumptionController.attributes.createConsumptionAttribute(addressParams)
-                expect(address).instanceOf(ConsumptionAttribute)
+                const address = await consumptionController.attributes.createLocalAttribute(addressParams)
+                expect(address).instanceOf(LocalAttribute)
                 expect(address.content).instanceOf(IdentityAttribute)
-                const birthDate = await consumptionController.attributes.createConsumptionAttribute(birthDateParams)
-                expect(birthDate).instanceOf(ConsumptionAttribute)
+                const birthDate = await consumptionController.attributes.createLocalAttribute(birthDateParams)
+                expect(birthDate).instanceOf(LocalAttribute)
                 expect(birthDate.content).instanceOf(IdentityAttribute)
 
-                const attributesAfterCreate = await consumptionController.attributes.getConsumptionAttributes()
+                const attributesAfterCreate = await consumptionController.attributes.getLocalAttributes()
                 const nrAttributesAfterCreate = attributesAfterCreate.length
                 expect(nrAttributesAfterCreate).equals(nrAttributesBeforeCreate + 2)
             }).timeout(15000)
 
             it("should delete an attribute", async function () {
-                const attributes = await consumptionController.attributes.getConsumptionAttributes()
+                const attributes = await consumptionController.attributes.getLocalAttributes()
                 const nrAttributesBeforeDelete = attributes.length
                 await consumptionController.attributes.deleteAttribute(attributes[0])
 
-                const attributesAfterDelete = await consumptionController.attributes.getConsumptionAttributes()
+                const attributesAfterDelete = await consumptionController.attributes.getLocalAttributes()
                 const nrAttributesAfterDelete = attributesAfterDelete.length
                 expect(nrAttributesAfterDelete).equals(nrAttributesBeforeDelete - 1)
 
@@ -127,7 +127,7 @@ export class AttributeTest extends IntegrationTest {
             })
 
             it("should succeed attributes", async function () {
-                const displayNameParams: ICreateConsumptionAttributeParams = {
+                const displayNameParams: ICreateLocalAttributeParams = {
                     content: IdentityAttribute.from({
                         value: {
                             "@type": "DisplayName",
@@ -147,23 +147,21 @@ export class AttributeTest extends IntegrationTest {
                     validFrom: successorDate
                 })
 
-                const attribute = await consumptionController.attributes.createConsumptionAttribute(displayNameParams)
-                const createSuccessorParams: ISucceedConsumptionAttributeParams = {
+                const attribute = await consumptionController.attributes.createLocalAttribute(displayNameParams)
+                const createSuccessorParams: ISucceedLocalAttributeParams = {
                     successorContent: displayNameSuccessor,
                     succeeds: attribute.id
                 }
-                const successor = await consumptionController.attributes.succeedConsumptionAttribute(
-                    createSuccessorParams
-                )
-                const succeededAttribute = await consumptionController.attributes.getConsumptionAttribute(attribute.id)
+                const successor = await consumptionController.attributes.succeedLocalAttribute(createSuccessorParams)
+                const succeededAttribute = await consumptionController.attributes.getLocalAttribute(attribute.id)
                 expect(succeededAttribute?.content.validTo?.toISOString()).to.equal(
                     successorDate.subtract(1).toISOString()
                 )
 
-                const succeessorAttribute = await consumptionController.attributes.getConsumptionAttribute(successor.id)
+                const succeessorAttribute = await consumptionController.attributes.getLocalAttribute(successor.id)
                 expect(succeessorAttribute?.content.validFrom?.toISOString()).to.equal(successorDate.toISOString())
 
-                const allAttributes = await consumptionController.attributes.getConsumptionAttributes()
+                const allAttributes = await consumptionController.attributes.getLocalAttributes()
                 const allAttributesJSON = allAttributes.map((v) => v.id.toString())
                 expect(allAttributesJSON).to.include(succeededAttribute?.id.toString())
 
@@ -174,7 +172,7 @@ export class AttributeTest extends IntegrationTest {
             })
 
             it("should allow to create a share attribute copy", async function () {
-                const nationalityParams: ICreateConsumptionAttributeParams = {
+                const nationalityParams: ICreateLocalAttributeParams = {
                     content: IdentityAttribute.from({
                         value: {
                             "@type": "Nationality",
@@ -183,27 +181,25 @@ export class AttributeTest extends IntegrationTest {
                         owner: CoreAddress.from("address")
                     })
                 }
-                const nationalityAttribute = await consumptionController.attributes.createConsumptionAttribute(
+                const nationalityAttribute = await consumptionController.attributes.createLocalAttribute(
                     nationalityParams
                 )
 
                 const peer = CoreAddress.from("address")
-                const createSharedAttributesParams: ICreateSharedConsumptionAttributeCopyParams = {
+                const createSharedAttributesParams: ICreateSharedLocalAttributeCopyParams = {
                     attributeId: nationalityAttribute.id,
                     peer: peer,
                     requestReference: CoreId.from("requestId")
                 }
 
                 const sharedNationalityAttribute =
-                    await consumptionController.attributes.createSharedConsumptionAttributeCopy(
-                        createSharedAttributesParams
-                    )
-                expect(sharedNationalityAttribute).instanceOf(ConsumptionAttribute)
+                    await consumptionController.attributes.createSharedLocalAttributeCopy(createSharedAttributesParams)
+                expect(sharedNationalityAttribute).instanceOf(LocalAttribute)
                 expect(sharedNationalityAttribute.shareInfo?.peer).to.deep.equal(peer)
             })
 
             it("should allow to query relationship attributes", async function () {
-                const identityAttributeParams: ICreateConsumptionAttributeParams = {
+                const identityAttributeParams: ICreateLocalAttributeParams = {
                     content: IdentityAttribute.from({
                         value: {
                             "@type": "Nationality",
@@ -212,11 +208,11 @@ export class AttributeTest extends IntegrationTest {
                         owner: CoreAddress.from("address")
                     })
                 }
-                const identityAttribute = await consumptionController.attributes.createConsumptionAttribute(
+                const identityAttribute = await consumptionController.attributes.createLocalAttribute(
                     identityAttributeParams
                 )
 
-                const relationshipAttributeParams: ICreateConsumptionAttributeParams = {
+                const relationshipAttributeParams: ICreateLocalAttributeParams = {
                     content: RelationshipAttribute.from({
                         key: "nationality",
                         value: {
@@ -227,7 +223,7 @@ export class AttributeTest extends IntegrationTest {
                         confidentiality: "public" as RelationshipAttributeConfidentiality
                     })
                 }
-                const relationshipAttribute = await consumptionController.attributes.createConsumptionAttribute(
+                const relationshipAttribute = await consumptionController.attributes.createLocalAttribute(
                     relationshipAttributeParams
                 )
 
@@ -250,7 +246,7 @@ export class AttributeTest extends IntegrationTest {
             })
 
             it("should allow to query identity attributes", async function () {
-                const identityAttributeParams: ICreateConsumptionAttributeParams = {
+                const identityAttributeParams: ICreateLocalAttributeParams = {
                     content: IdentityAttribute.from({
                         value: {
                             "@type": "Nationality",
@@ -259,11 +255,11 @@ export class AttributeTest extends IntegrationTest {
                         owner: CoreAddress.from("address")
                     })
                 }
-                const identityAttribute = await consumptionController.attributes.createConsumptionAttribute(
+                const identityAttribute = await consumptionController.attributes.createLocalAttribute(
                     identityAttributeParams
                 )
 
-                const relationshipAttributeParams: ICreateConsumptionAttributeParams = {
+                const relationshipAttributeParams: ICreateLocalAttributeParams = {
                     content: RelationshipAttribute.from({
                         key: "nationality",
                         value: {
@@ -274,7 +270,7 @@ export class AttributeTest extends IntegrationTest {
                         confidentiality: "public" as RelationshipAttributeConfidentiality
                     })
                 }
-                const relationshipAttribute = await consumptionController.attributes.createConsumptionAttribute(
+                const relationshipAttribute = await consumptionController.attributes.createLocalAttribute(
                     relationshipAttributeParams
                 )
 
@@ -291,7 +287,7 @@ export class AttributeTest extends IntegrationTest {
             })
 
             it("should allow to create an attribute shared by a peer", async function () {
-                const attribute: ICreateConsumptionAttributeParams = {
+                const attribute: ICreateLocalAttributeParams = {
                     content: IdentityAttribute.from({
                         value: {
                             "@type": "Nationality",
@@ -300,21 +296,19 @@ export class AttributeTest extends IntegrationTest {
                         owner: CoreAddress.from("address")
                     })
                 }
-                const consumptionAttribute = await consumptionController.attributes.createConsumptionAttribute(
-                    attribute
-                )
-                const createPeerAttributeParams: ICreatePeerConsumptionAttributeParams = {
-                    id: consumptionAttribute.id,
+                const localAttribute = await consumptionController.attributes.createLocalAttribute(attribute)
+                const createPeerAttributeParams: ICreatePeerLocalAttributeParams = {
+                    id: localAttribute.id,
                     content: attribute.content,
                     requestReference: CoreId.from("requestId"),
                     peer: CoreAddress.from("address")
                 }
-                const peerConsumptionAttribute = await consumptionController.attributes.createPeerConsumptionAttribute(
+                const peerLocalAttribute = await consumptionController.attributes.createPeerLocalAttribute(
                     createPeerAttributeParams
                 )
-                expect(peerConsumptionAttribute.content.toJSON()).deep.equals(consumptionAttribute.content.toJSON())
-                expect(peerConsumptionAttribute.content.value).instanceOf(Nationality)
-                expect(createPeerAttributeParams.id).equals(consumptionAttribute.id)
+                expect(peerLocalAttribute.content.toJSON()).deep.equals(localAttribute.content.toJSON())
+                expect(peerLocalAttribute.content.value).instanceOf(Nationality)
+                expect(createPeerAttributeParams.id).equals(localAttribute.id)
                 expect(createPeerAttributeParams.peer.address).equals(CoreAddress.from("address").toString())
                 expect(createPeerAttributeParams.requestReference.toString()).equals(
                     CoreId.from("requestId").toString()
@@ -322,7 +316,7 @@ export class AttributeTest extends IntegrationTest {
             })
 
             afterEach(async function () {
-                const attributes = await consumptionController.attributes.getConsumptionAttributes()
+                const attributes = await consumptionController.attributes.getLocalAttributes()
                 attributes.forEach(async (attribute) => {
                     await consumptionController.attributes.deleteAttribute(attribute)
                 })

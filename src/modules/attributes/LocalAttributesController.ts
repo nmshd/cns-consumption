@@ -7,28 +7,25 @@ import {
     ConsumptionIds
 } from "../../consumption"
 import { ConsumptionController } from "../../consumption/ConsumptionController"
-import { ConsumptionAttribute } from "./local/ConsumptionAttribute"
-import { ConsumptionAttributeShareInfo } from "./local/ConsumptionAttributeShareInfo"
-import { ICreateConsumptionAttributeParams } from "./local/CreateConsumptionAttributeParams"
-import { ICreatePeerConsumptionAttributeParams } from "./local/CreatePeerConsumptionAttributeParams"
+import { ICreateLocalAttributeParams } from "./local/CreateLocalAttributeParams"
+import { ICreatePeerLocalAttributeParams } from "./local/CreatePeerLocalAttributeParams"
 import {
-    CreateSharedConsumptionAttributeCopyParams,
-    ICreateSharedConsumptionAttributeCopyParams
-} from "./local/CreateSharedConsumptionAttributeCopyParams"
+    CreateSharedLocalAttributeCopyParams,
+    ICreateSharedLocalAttributeCopyParams
+} from "./local/CreateSharedLocalAttributeCopyParams"
 import { IGetIdentityAttributesParams } from "./local/GetIdentityAttributesParams"
 import { IGetRelationshipAttributesParams } from "./local/GetRelationshipAttributesParams"
+import { LocalAttribute } from "./local/LocalAttribute"
+import { LocalAttributeShareInfo } from "./local/LocalAttributeShareInfo"
 import { identityQueryTranslator, relationshipQueryTranslator } from "./local/QueryTranslator"
-import {
-    ISucceedConsumptionAttributeParams,
-    SucceedConsumptionAttributeParams
-} from "./local/SucceedConsumptionAttributeParams"
-import { IUpdateConsumptionAttributeParams } from "./local/UpdateConsumptionAttributeParams"
+import { ISucceedLocalAttributeParams, SucceedLocalAttributeParams } from "./local/SucceedLocalAttributeParams"
+import { IUpdateLocalAttributeParams } from "./local/UpdateLocalAttributeParams"
 
-export class ConsumptionAttributesController extends ConsumptionBaseController {
+export class LocalAttributesController extends ConsumptionBaseController {
     private attributes: SynchronizedCollection
 
     public constructor(parent: ConsumptionController) {
-        super(ConsumptionControllerName.ConsumptionAttributesController, parent)
+        super(ConsumptionControllerName.LocalAttributesController, parent)
     }
 
     public override async init(): Promise<this> {
@@ -39,7 +36,7 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         return this
     }
 
-    public checkValid(attribute: ConsumptionAttribute): boolean {
+    public checkValid(attribute: LocalAttribute): boolean {
         const now = CoreDate.utc()
         if (!attribute.content.validFrom && !attribute.content.validTo) {
             return true
@@ -66,11 +63,11 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         return false
     }
 
-    public findCurrent(attributes: ConsumptionAttribute[]): ConsumptionAttribute | undefined {
+    public findCurrent(attributes: LocalAttribute[]): LocalAttribute | undefined {
         const sorted = attributes.sort((a, b) => {
             return a.createdAt.compare(b.createdAt)
         })
-        let current: ConsumptionAttribute | undefined
+        let current: LocalAttribute | undefined
         for (const attribute of sorted) {
             if (this.checkValid(attribute)) {
                 current = attribute
@@ -79,7 +76,7 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         return current
     }
 
-    public filterCurrent(attributes: ConsumptionAttribute[]): ConsumptionAttribute[] {
+    public filterCurrent(attributes: LocalAttribute[]): LocalAttribute[] {
         const sorted = attributes.sort((a, b) => {
             return a.createdAt.compare(b.createdAt)
         })
@@ -93,56 +90,54 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
         return items
     }
 
-    public async getConsumptionAttribute(id: CoreId): Promise<ConsumptionAttribute | undefined> {
+    public async getLocalAttribute(id: CoreId): Promise<LocalAttribute | undefined> {
         const result = await this.attributes.findOne({
-            [nameof<ConsumptionAttribute>((c) => c.id)]: id.toString()
+            [nameof<LocalAttribute>((c) => c.id)]: id.toString()
         })
 
         if (!result) return
-        return ConsumptionAttribute.from(result)
+        return LocalAttribute.from(result)
     }
 
-    public async getConsumptionAttributes(query?: any): Promise<ConsumptionAttribute[]> {
+    public async getLocalAttributes(query?: any): Promise<LocalAttribute[]> {
         const attributes = await this.attributes.find(query)
-        return await this.parseArray(attributes, ConsumptionAttribute)
+        return await this.parseArray(attributes, LocalAttribute)
     }
 
-    public async getValidConsumptionAttributes(query?: any): Promise<ConsumptionAttribute[]> {
+    public async getValidLocalAttributes(query?: any): Promise<LocalAttribute[]> {
         const attributes = await this.attributes.find(query)
-        const items = await this.parseArray(attributes, ConsumptionAttribute)
+        const items = await this.parseArray(attributes, LocalAttribute)
         return this.filterCurrent(items)
     }
 
     public async executeRelationshipAttributeQuery(
         params: IGetRelationshipAttributesParams
-    ): Promise<ConsumptionAttribute[]> {
+    ): Promise<LocalAttribute[]> {
         const queryWithType: any = params.query
         queryWithType["attributeType"] = "RelationshipAttribute"
         const dbQuery = relationshipQueryTranslator.parse(queryWithType)
         const attributes = await this.attributes.find(dbQuery)
-        return await this.parseArray(attributes, ConsumptionAttribute)
+        return await this.parseArray(attributes, LocalAttribute)
     }
 
-    public async executeIdentityAttributeQuery(params: IGetIdentityAttributesParams): Promise<ConsumptionAttribute[]> {
+    public async executeIdentityAttributeQuery(params: IGetIdentityAttributesParams): Promise<LocalAttribute[]> {
         const queryWithType: any = params.query
         queryWithType["attributeType"] = "IdentityAttribute"
         const dbQuery = identityQueryTranslator.parse(queryWithType)
         const attributes = await this.attributes.find(dbQuery)
-        return await this.parseArray(attributes, ConsumptionAttribute)
+        return await this.parseArray(attributes, LocalAttribute)
     }
 
-    public async createConsumptionAttribute(params: ICreateConsumptionAttributeParams): Promise<ConsumptionAttribute> {
-        const consumptionAttribute = await ConsumptionAttribute.fromAttribute(params.content)
-        await this.attributes.create(consumptionAttribute)
-        return consumptionAttribute
+    public async createLocalAttribute(params: ICreateLocalAttributeParams): Promise<LocalAttribute> {
+        const localAttribute = await LocalAttribute.fromAttribute(params.content)
+        await this.attributes.create(localAttribute)
+        return localAttribute
     }
 
-    public async succeedConsumptionAttribute(
-        params: ISucceedConsumptionAttributeParams
-    ): Promise<ConsumptionAttribute> {
-        const parsedParams = SucceedConsumptionAttributeParams.from(params)
+    public async succeedLocalAttribute(params: ISucceedLocalAttributeParams): Promise<LocalAttribute> {
+        const parsedParams = SucceedLocalAttributeParams.from(params)
         const current = await this.attributes.findOne({
-            [nameof<ConsumptionAttribute>((c) => c.id)]: params.succeeds.toString()
+            [nameof<LocalAttribute>((c) => c.id)]: params.succeeds.toString()
         })
         if (!current) {
             throw ConsumptionErrors.attributes.predecessorNotFound(parsedParams.succeeds.toString())
@@ -151,63 +146,61 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
             parsedParams.successorContent.validFrom = CoreDate.utc()
         }
         const validFrom = parsedParams.successorContent.validFrom
-        const currentUpdated = ConsumptionAttribute.from(current)
+        const currentUpdated = LocalAttribute.from(current)
         currentUpdated.content.validTo = validFrom.subtract(1)
         await this.attributes.update(current, currentUpdated)
 
-        const successor = await ConsumptionAttribute.fromAttribute(parsedParams.successorContent, parsedParams.succeeds)
+        const successor = await LocalAttribute.fromAttribute(parsedParams.successorContent, parsedParams.succeeds)
         await this.attributes.create(successor)
         return successor
     }
 
-    public async createSharedConsumptionAttributeCopy(
-        params: ICreateSharedConsumptionAttributeCopyParams
-    ): Promise<ConsumptionAttribute> {
-        const parsedParams = CreateSharedConsumptionAttributeCopyParams.from(params)
-        const sourceAttribute = await this.getConsumptionAttribute(parsedParams.attributeId)
+    public async createSharedLocalAttributeCopy(
+        params: ICreateSharedLocalAttributeCopyParams
+    ): Promise<LocalAttribute> {
+        const parsedParams = CreateSharedLocalAttributeCopyParams.from(params)
+        const sourceAttribute = await this.getLocalAttribute(parsedParams.attributeId)
         if (!sourceAttribute) {
             throw ConsumptionErrors.attributes.predecessorNotFound(parsedParams.attributeId.toString())
         }
-        const shareInfo = ConsumptionAttributeShareInfo.from({
+        const shareInfo = LocalAttributeShareInfo.from({
             peer: parsedParams.peer,
             requestReference: parsedParams.requestReference,
             sourceAttribute: parsedParams.attributeId
         })
 
-        const sharedConsumptionAttributeCopy = await ConsumptionAttribute.fromAttribute(
+        const sharedLocalAttributeCopy = await LocalAttribute.fromAttribute(
             sourceAttribute.content,
             undefined,
             shareInfo
         )
-        await this.attributes.create(sharedConsumptionAttributeCopy)
-        return sharedConsumptionAttributeCopy
+        await this.attributes.create(sharedLocalAttributeCopy)
+        return sharedLocalAttributeCopy
     }
 
-    public async createPeerConsumptionAttribute(
-        params: ICreatePeerConsumptionAttributeParams
-    ): Promise<ConsumptionAttribute> {
-        const shareInfo = ConsumptionAttributeShareInfo.from({
+    public async createPeerLocalAttribute(params: ICreatePeerLocalAttributeParams): Promise<LocalAttribute> {
+        const shareInfo = LocalAttributeShareInfo.from({
             peer: params.peer,
             requestReference: params.requestReference
         })
-        const peerConsumptionAttribute = ConsumptionAttribute.from({
+        const peerLocalAttribute = LocalAttribute.from({
             id: params.id ?? (await ConsumptionIds.attribute.generate()),
             content: params.content,
             shareInfo: shareInfo,
             createdAt: CoreDate.utc()
         })
-        await this.attributes.create(peerConsumptionAttribute)
-        return peerConsumptionAttribute
+        await this.attributes.create(peerLocalAttribute)
+        return peerLocalAttribute
     }
 
-    public async updateConsumptionAttribute(params: IUpdateConsumptionAttributeParams): Promise<ConsumptionAttribute> {
+    public async updateLocalAttribute(params: IUpdateLocalAttributeParams): Promise<LocalAttribute> {
         const current = await this.attributes.findOne({
-            [nameof<ConsumptionAttribute>((c) => c.id)]: params.id.toString()
+            [nameof<LocalAttribute>((c) => c.id)]: params.id.toString()
         })
         if (!current) {
-            throw TransportErrors.general.recordNotFound(ConsumptionAttribute, params.id.toString())
+            throw TransportErrors.general.recordNotFound(LocalAttribute, params.id.toString())
         }
-        const updatedConsumptionAttribute = ConsumptionAttribute.from({
+        const updatedLocalAttribute = LocalAttribute.from({
             id: current.id,
             content: params.content,
             createdAt: current.createdAt,
@@ -215,11 +208,11 @@ export class ConsumptionAttributesController extends ConsumptionBaseController {
             succeededBy: current.succeededBy,
             succeeds: current.succeeds
         })
-        await this.attributes.update(current, updatedConsumptionAttribute)
-        return updatedConsumptionAttribute
+        await this.attributes.update(current, updatedLocalAttribute)
+        return updatedLocalAttribute
     }
 
-    public async deleteAttribute(attribute: ConsumptionAttribute): Promise<void> {
+    public async deleteAttribute(attribute: LocalAttribute): Promise<void> {
         await this.attributes.delete(attribute)
     }
 }

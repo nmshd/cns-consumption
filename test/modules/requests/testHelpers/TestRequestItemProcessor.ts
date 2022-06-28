@@ -1,8 +1,8 @@
 import { ApplicationError } from "@js-soft/ts-utils"
 import {
     AcceptRequestItemParametersJSON,
-    ConsumptionRequestInfo,
     GenericRequestItemProcessor,
+    LocalRequestInfo,
     RejectRequestItemParametersJSON,
     ValidationResult
 } from "@nmshd/consumption"
@@ -61,7 +61,7 @@ export class TestRequestItemProcessor extends GenericRequestItemProcessor<TestRe
     public override accept(
         requestItem: TestRequestItem,
         params: AcceptRequestItemParametersJSON,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): AcceptResponseItem | Promise<AcceptResponseItem> {
         if (requestItem.shouldThrowOnAccept) {
             throw new Error("Accept failed for testing purposes.")
@@ -72,7 +72,7 @@ export class TestRequestItemProcessor extends GenericRequestItemProcessor<TestRe
     public override reject(
         requestItem: TestRequestItem,
         params: RejectRequestItemParametersJSON,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): RejectResponseItem | Promise<RejectResponseItem> {
         if (requestItem.shouldThrowOnReject) {
             throw new Error("Reject failed for testing purposes.")

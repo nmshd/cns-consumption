@@ -11,7 +11,7 @@ import {
     ReadAttributeRequestItemProcessor,
     ShareAttributeRequestItemProcessor
 } from "../modules"
-import { ConsumptionAttributesController } from "../modules/attributes/ConsumptionAttributesController"
+import { LocalAttributesController } from "../modules/attributes/LocalAttributesController"
 import { DraftsController } from "../modules/drafts/DraftsController"
 import { IncomingRequestsController } from "../modules/requests/incoming/IncomingRequestsController"
 import { ProcessorConstructor } from "../modules/requests/itemProcessors/ProcessorConstructor"
@@ -23,8 +23,8 @@ import { SettingsController } from "../modules/settings/SettingsController"
 export class ConsumptionController {
     public constructor(public readonly transport: Transport, public readonly accountController: AccountController) {}
 
-    private _attributes: ConsumptionAttributesController
-    public get attributes(): ConsumptionAttributesController {
+    private _attributes: LocalAttributesController
+    public get attributes(): LocalAttributesController {
         return this._attributes
     }
 
@@ -51,7 +51,7 @@ export class ConsumptionController {
     public async init(
         requestItemProcessorOverrides = new Map<RequestItemConstructor, ProcessorConstructor>()
     ): Promise<ConsumptionController> {
-        this._attributes = await new ConsumptionAttributesController(this).init()
+        this._attributes = await new LocalAttributesController(this).init()
         this._drafts = await new DraftsController(this).init()
 
         const processorRegistry = new RequestItemProcessorRegistry(this, this.getDefaultProcessors())

@@ -1,13 +1,13 @@
 import { ApplicationError, Result } from "@js-soft/ts-utils"
 import {
     ConsumptionIds,
-    ConsumptionRequest,
-    ConsumptionRequestStatus,
     DecideRequestParametersJSON,
     DecideRequestParametersValidator,
     ErrorValidationResult,
     ICreateOutgoingRequestParameters,
     IRequestWithoutId,
+    LocalRequest,
+    LocalRequestStatus,
     ValidationResult
 } from "@nmshd/consumption"
 import {
@@ -34,7 +34,7 @@ import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
 import { ITestRequestItem, TestRequestItem } from "./testHelpers/TestRequestItem"
 
 export class AlwaysTrueDecideRequestParamsValidator extends DecideRequestParametersValidator {
-    public override validate(_params: DecideRequestParametersJSON, _request: ConsumptionRequest): Result<undefined> {
+    public override validate(_params: DecideRequestParametersJSON, _request: LocalRequest): Result<undefined> {
         return Result.ok(undefined)
     }
 }
@@ -227,7 +227,7 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                 it("can handle valid input", async function () {
                     await When.iCreateAnOutgoingRequest()
                     await Then.theCreatedOutgoingRequestHasAllProperties()
-                    await Then.theRequestIsInStatus(ConsumptionRequestStatus.Draft)
+                    await Then.theRequestIsInStatus(LocalRequestStatus.Draft)
                     await Then.theRequestDoesNotHaveSourceSet()
                     await Then.theNewRequestIsPersistedInTheDatabase()
                 })
@@ -259,14 +259,14 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                 it("combines calls to create, sent and complete", async function () {
                     await When.iCreateAnOutgoingRequestFromRelationshipCreationChange()
                     await Then.theCreatedOutgoingRequestHasAllProperties()
-                    await Then.theRequestIsInStatus(ConsumptionRequestStatus.Completed)
+                    await Then.theRequestIsInStatus(LocalRequestStatus.Completed)
                     await Then.theRequestHasItsSourcePropertySet()
                     await Then.theRequestHasItsResponsePropertySetCorrectly(ResponseItemResult.Accepted)
                     await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "RelationshipChange" })
                     await Then.theNewRequestIsPersistedInTheDatabase()
                 })
 
-                it("uses the id from the Creation Change content for the created Consumption Request", async function () {
+                it("uses the id from the Creation Change content for the created Local Request", async function () {
                     await When.iCreateAnOutgoingRequestFromRelationshipCreationChangeWith({
                         creationChange: TestObjectFactory.createIncomingIRelationshipChange(
                             RelationshipChangeType.Creation,
@@ -284,29 +284,29 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
 
             describe("Sent", function () {
                 it("can handle valid input", async function () {
-                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
+                    await Given.anOutgoingRequestInStatus(LocalRequestStatus.Draft)
                     await When.iCallSent()
-                    await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Open)
+                    await Then.theRequestMovesToStatus(LocalRequestStatus.Open)
                     await Then.theRequestHasItsSourcePropertySet()
                     await Then.theChangesArePersistedInTheDatabase()
                 })
 
                 it("throws on syntactically invalid input", async function () {
-                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
+                    await Given.anOutgoingRequestInStatus(LocalRequestStatus.Draft)
                     await When.iTryToCallSentWithoutSourceObject()
                     await Then.itThrowsAnErrorWithTheErrorMessage("*requestSourceObject*Value is not defined*")
                 })
 
-                it("throws when the Consumption Request is not in status 'Draft' ", async function () {
-                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Open)
+                it("throws when the Local Request is not in status 'Draft' ", async function () {
+                    await Given.anOutgoingRequestInStatus(LocalRequestStatus.Open)
                     When.iTryToCallSent()
-                    await Then.itThrowsAnErrorWithTheErrorMessage("*Consumption Request has to be in status 'Draft'*")
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*Local Request has to be in status 'Draft'*")
                 })
 
                 it("sets the source property depending on the given source", async function () {
                     const source = TestObjectFactory.createOutgoingIMessage(context.currentIdentity)
 
-                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
+                    await Given.anOutgoingRequestInStatus(LocalRequestStatus.Draft)
                     await When.iCallSentWith({ requestSourceObject: source })
                     await Then.theRequestHasItsSourcePropertySetTo({
                         type: "Message",
@@ -322,7 +322,7 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                 it("throws when passing an incoming Message", async function () {
                     const invalidSource = TestObjectFactory.createIncomingIMessage(context.currentIdentity)
 
-                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
+                    await Given.anOutgoingRequestInStatus(LocalRequestStatus.Draft)
                     When.iTryToCallSentWith({ requestSourceObject: invalidSource })
                     await Then.itThrowsAnErrorWithTheErrorMessage("Cannot create outgoing Request from a peer*")
                 })
@@ -330,12 +330,12 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
 
             describe("Complete", function () {
                 it("can handle valid input with a Message as responseSourceObject", async function () {
-                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Open)
+                    await Given.anOutgoingRequestInStatus(LocalRequestStatus.Open)
                     const incomingMessage = TestObjectFactory.createIncomingIMessage(context.currentIdentity)
                     await When.iCompleteTheOutgoingRequestWith({
                         responseSourceObject: incomingMessage
                     })
-                    await Then.theRequestMovesToStatus(ConsumptionRequestStatus.Completed)
+                    await Then.theRequestMovesToStatus(LocalRequestStatus.Completed)
                     await Then.theRequestHasItsResponsePropertySetCorrectly(ResponseItemResult.Accepted)
                     await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "Message" })
                     await Then.theNewRequestIsPersistedInTheDatabase()
@@ -437,7 +437,7 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                     ],
                     async function (testParams) {
                         await Given.anOutgoingRequestWith({
-                            status: ConsumptionRequestStatus.Open,
+                            status: LocalRequestStatus.Open,
                             content: testParams.request
                         })
                         await When.iCompleteTheOutgoingRequestWith({ receivedResponse: testParams.response })
@@ -504,7 +504,7 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                     ],
                     async function (testParams) {
                         await Given.anOutgoingRequestWith({
-                            status: ConsumptionRequestStatus.Open,
+                            status: LocalRequestStatus.Open,
                             content: testParams.request
                         })
                         When.iTryToCompleteTheOutgoingRequestWith({ receivedResponse: testParams.response })
@@ -513,7 +513,7 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                 )
 
                 it("throws on syntactically invalid input", async function () {
-                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Open)
+                    await Given.anOutgoingRequestInStatus(LocalRequestStatus.Open)
                     await When.iTryToCallCompleteWithoutSourceObject()
                     await Then.itThrowsAnErrorWithTheErrorMessage("*responseSourceObject*Value is not defined*")
                 })
@@ -523,10 +523,10 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                     await Then.itThrowsAnErrorWithTheErrorCode("error.transport.recordNotFound")
                 })
 
-                it("throws when the Consumption Request is not in status 'Open'", async function () {
-                    await Given.anOutgoingRequestInStatus(ConsumptionRequestStatus.Draft)
+                it("throws when the Local Request is not in status 'Open'", async function () {
+                    await Given.anOutgoingRequestInStatus(LocalRequestStatus.Draft)
                     When.iTryToCompleteTheOutgoingRequest()
-                    await Then.itThrowsAnErrorWithTheErrorMessage("*Consumption Request has to be in status 'Open'*")
+                    await Then.itThrowsAnErrorWithTheErrorMessage("*Local Request has to be in status 'Open'*")
                 })
             })
 
@@ -567,10 +567,10 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                 })
 
                 it("filters Requests based on given query", async function () {
-                    await Given.anOutgoingRequestWith({ status: ConsumptionRequestStatus.Draft })
-                    await Given.anOutgoingRequestWith({ status: ConsumptionRequestStatus.Draft })
-                    await Given.anOutgoingRequestWith({ status: ConsumptionRequestStatus.Open })
-                    await When.iGetOutgoingRequestsWithTheQuery({ status: ConsumptionRequestStatus.Draft })
+                    await Given.anOutgoingRequestWith({ status: LocalRequestStatus.Draft })
+                    await Given.anOutgoingRequestWith({ status: LocalRequestStatus.Draft })
+                    await Given.anOutgoingRequestWith({ status: LocalRequestStatus.Open })
+                    await When.iGetOutgoingRequestsWithTheQuery({ status: LocalRequestStatus.Draft })
                     await Then.theNumberOfReturnedRequestsIs(2)
                 })
             })

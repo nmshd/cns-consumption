@@ -2,9 +2,9 @@ import {
     AcceptCreateAttributeRequestItemParametersJSON,
     ConsumptionController,
     ConsumptionIds,
-    ConsumptionRequest,
-    ConsumptionRequestStatus,
-    CreateAttributeRequestItemProcessor
+    CreateAttributeRequestItemProcessor,
+    LocalRequest,
+    LocalRequestStatus
 } from "@nmshd/consumption"
 import {
     CreateAttributeAcceptResponseItem,
@@ -51,7 +51,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
             describe("canCreateOutgoingRequestItem", function () {
                 it("returns success when passing a Relationship Attribute with 'owner=sender'", async function () {
                     const recipientAddress = CoreAddress.from("recipientAddress")
-                    const attribute = await consumptionController.attributes.createConsumptionAttribute({
+                    const attribute = await consumptionController.attributes.createLocalAttribute({
                         content: RelationshipAttribute.from({
                             key: "aKey",
                             confidentiality: RelationshipAttributeConfidentiality.Public,
@@ -72,7 +72,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
 
                 it("returns success when passing an Identity Attribute with 'owner=sender'", async function () {
                     const recipientAddress = CoreAddress.from("recipientAddress")
-                    const attribute = await consumptionController.attributes.createConsumptionAttribute({
+                    const attribute = await consumptionController.attributes.createLocalAttribute({
                         content: TestObjectFactory.createIdentityAttribute({ owner: testAccount.identity.address })
                     })
                     const requestItem = CreateAttributeRequestItem.from({
@@ -88,7 +88,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
 
                 it("returns an error when passing a Relationship Attribute with 'owner!=sender'", async function () {
                     const recipientAddress = CoreAddress.from("recipientAddress")
-                    const attribute = await consumptionController.attributes.createConsumptionAttribute({
+                    const attribute = await consumptionController.attributes.createLocalAttribute({
                         content: RelationshipAttribute.from({
                             key: "aKey",
                             confidentiality: RelationshipAttributeConfidentiality.Public,
@@ -112,7 +112,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
 
                 it("returns an error when passing an Identity Attribute with 'owner!=sender' (Identity Attributes for the recipient should always be created via ProposeAttributeRequestItem)", async function () {
                     const recipientAddress = CoreAddress.from("recipientAddress")
-                    const attribute = await consumptionController.attributes.createConsumptionAttribute({
+                    const attribute = await consumptionController.attributes.createLocalAttribute({
                         content: TestObjectFactory.createIdentityAttribute({
                             owner: recipientAddress
                         })
@@ -133,7 +133,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
             })
 
             describe("accept", function () {
-                it("in case of an IdentityAttribute with 'owner=sender', creates a Consumption Attribute for the peer of the Request", async function () {
+                it("in case of an IdentityAttribute with 'owner=sender', creates a Local Attribute for the peer of the Request", async function () {
                     const senderAddress = CoreAddress.from("SenderAddress")
                     const requestItem = CreateAttributeRequestItem.from({
                         mustBeAccepted: true,
@@ -141,12 +141,12 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                             owner: senderAddress
                         })
                     })
-                    const incomingRequest = ConsumptionRequest.from({
+                    const incomingRequest = LocalRequest.from({
                         id: await ConsumptionIds.request.generate(),
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: senderAddress,
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             items: [requestItem]
                         }),
@@ -159,7 +159,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                         },
                         incomingRequest
                     )
-                    const createdAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                    const createdAttribute = await consumptionController.attributes.getLocalAttribute(
                         result.attributeId
                     )
                     expect(createdAttribute).to.exist
@@ -168,7 +168,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                     expect(createdAttribute!.shareInfo!.sourceAttribute).to.be.undefined
                 })
 
-                it("in case of a RelationshipAttribute, creates a ConsumptionAttribute for the peer of the Request", async function () {
+                it("in case of a RelationshipAttribute, creates a LocalAttribute for the peer of the Request", async function () {
                     const requestItem = CreateAttributeRequestItem.from({
                         mustBeAccepted: true,
                         attribute: RelationshipAttribute.from({
@@ -180,12 +180,12 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                     })
 
                     const requestId = await ConsumptionIds.request.generate()
-                    const incomingRequest = ConsumptionRequest.from({
+                    const incomingRequest = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: CoreAddress.from("id1"),
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -196,7 +196,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                         accept: true
                     }
                     const result = await processor.accept(requestItem, acceptParams, incomingRequest)
-                    const createdAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                    const createdAttribute = await consumptionController.attributes.getLocalAttribute(
                         result.attributeId
                     )
                     expect(createdAttribute).to.exist
@@ -207,7 +207,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
             })
 
             describe("applyIncomingResponseItem", function () {
-                it("creates a ConsumptionAttribute with the Attribute from the RequestItem and the attributeId from the ResponseItem for the peer of the request ", async function () {
+                it("creates a LocalAttribute with the Attribute from the RequestItem and the attributeId from the ResponseItem for the peer of the request ", async function () {
                     const requestItem = CreateAttributeRequestItem.from({
                         mustBeAccepted: true,
                         attribute: RelationshipAttribute.from({
@@ -219,12 +219,12 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                     })
                     const requestId = await ConsumptionIds.request.generate()
                     const peer = CoreAddress.from("id1")
-                    const incomingRequest = ConsumptionRequest.from({
+                    const incomingRequest = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
                         isOwn: false,
                         peer: peer,
-                        status: ConsumptionRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.DecisionRequired,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -237,7 +237,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                         attributeId: await ConsumptionIds.attribute.generate()
                     })
                     await processor.applyIncomingResponseItem(responseItem, requestItem, incomingRequest)
-                    const createdAttribute = await consumptionController.attributes.getConsumptionAttribute(
+                    const createdAttribute = await consumptionController.attributes.getLocalAttribute(
                         responseItem.attributeId
                     )
                     expect(createdAttribute).to.exist

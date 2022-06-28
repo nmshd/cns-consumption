@@ -1,10 +1,10 @@
 import {
     AcceptShareAttributeRequestItemParametersJSON,
     ConsumptionController,
-    ConsumptionRequest,
-    ConsumptionRequestInfo,
     ICreateOutgoingRequestParameters,
     ISentOutgoingRequestParameters,
+    LocalRequest,
+    LocalRequestInfo,
     OutgoingRequestsController,
     RequestItemProcessorRegistry,
     ShareAttributeRequestItemProcessor
@@ -39,13 +39,13 @@ class MockOutgoingRequestsController extends OutgoingRequestsController {
         super(consumptionRequests, processorRegistry, parent)
     }
 
-    public override async create(params: ICreateOutgoingRequestParameters): Promise<ConsumptionRequest> {
+    public override async create(params: ICreateOutgoingRequestParameters): Promise<LocalRequest> {
         this.createWasCalledWith = params
         this.createWasCalled = true
         return await super.create(params)
     }
 
-    public override async sent(params: ISentOutgoingRequestParameters): Promise<ConsumptionRequest> {
+    public override async sent(params: ISentOutgoingRequestParameters): Promise<LocalRequest> {
         this.sentWasCalledWith = params
         this.sentWasCalled = true
         return await super.sent(params)
@@ -155,7 +155,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                                 break
                         }
 
-                        const attribute = await sConsumptionController.attributes.createPeerConsumptionAttribute({
+                        const attribute = await sConsumptionController.attributes.createPeerLocalAttribute({
                             content: TestObjectFactory.createIdentityAttribute({
                                 owner: attributeOwner
                             }),
@@ -221,7 +221,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                                 break
                         }
 
-                        const attribute = await sConsumptionController.attributes.createPeerConsumptionAttribute({
+                        const attribute = await sConsumptionController.attributes.createPeerLocalAttribute({
                             content: TestObjectFactory.createRelationshipAttribute({
                                 owner: attributeOwner
                             }),
@@ -311,7 +311,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                                 break
                         }
 
-                        const attribute = await rConsumptionController.attributes.createPeerConsumptionAttribute({
+                        const attribute = await rConsumptionController.attributes.createPeerLocalAttribute({
                             content: TestObjectFactory.createIdentityAttribute({
                                 owner: attributeOwner
                             }),
@@ -323,7 +323,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                             attributeId: attribute.id,
                             shareWith: shareWithAccountController.identity.address
                         })
-                        const requestInfo: ConsumptionRequestInfo = {
+                        const requestInfo: LocalRequestInfo = {
                             id: CoreId.from("requestId"),
                             peer: senderAddress
                         }
@@ -376,7 +376,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                                 break
                         }
 
-                        const attribute = await rConsumptionController.attributes.createPeerConsumptionAttribute({
+                        const attribute = await rConsumptionController.attributes.createPeerLocalAttribute({
                             content: TestObjectFactory.createRelationshipAttribute({
                                 owner: attributeOwner
                             }),
@@ -388,7 +388,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                             attributeId: attribute.id,
                             shareWith: shareWithAccountController.identity.address
                         })
-                        const requestInfo: ConsumptionRequestInfo = {
+                        const requestInfo: LocalRequestInfo = {
                             id: CoreId.from("requestId"),
                             peer: senderAddress
                         }
@@ -406,7 +406,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                     const recipientConsumptionController = consumptionController2
                     const recipientProcessor = processor2
 
-                    const attribute = await recipientConsumptionController.attributes.createConsumptionAttribute({
+                    const attribute = await recipientConsumptionController.attributes.createLocalAttribute({
                         content: TestObjectFactory.createIdentityAttribute({
                             owner: CoreAddress.from("someOwner")
                         })
@@ -417,7 +417,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                         attributeId: attribute.id,
                         shareWith: CoreAddress.from("someAddressWithNoRelationshipTo")
                     })
-                    const requestInfo: ConsumptionRequestInfo = {
+                    const requestInfo: LocalRequestInfo = {
                         id: CoreId.from("requestId"),
                         peer: CoreAddress.from("senderAddress")
                     }
@@ -439,7 +439,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                         attributeId: CoreId.from("nonExistingAttributeId"),
                         shareWith: shareWithAccountController.identity.address
                     })
-                    const requestInfo: ConsumptionRequestInfo = {
+                    const requestInfo: LocalRequestInfo = {
                         id: CoreId.from("requestId"),
                         peer: CoreAddress.from("senderAddress")
                     }
@@ -456,7 +456,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
             describe("canAccept", function () {
                 it("always succeeds since there are no input parameters", function () {
                     const requestItem: ShareAttributeRequestItem = undefined! // is not used in canAccept anyway
-                    const request: ConsumptionRequest = undefined!
+                    const request: LocalRequest = undefined!
                     const acceptParams: AcceptShareAttributeRequestItemParametersJSON = { accept: true }
 
                     const result = processor2.canAccept(requestItem, acceptParams, request)
@@ -471,14 +471,13 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                     const recipientConsumptionController = consumptionController2
                     const recipientProcessor = processor2
 
-                    const repositoryAttribute =
-                        await recipientConsumptionController.attributes.createConsumptionAttribute({
-                            content: TestObjectFactory.createIdentityAttribute({
-                                owner: recipientConsumptionController.accountController.identity.address
-                            })
+                    const repositoryAttribute = await recipientConsumptionController.attributes.createLocalAttribute({
+                        content: TestObjectFactory.createIdentityAttribute({
+                            owner: recipientConsumptionController.accountController.identity.address
                         })
+                    })
                     const attributeToShare =
-                        await recipientConsumptionController.attributes.createSharedConsumptionAttributeCopy({
+                        await recipientConsumptionController.attributes.createSharedLocalAttributeCopy({
                             attributeId: repositoryAttribute.id,
                             peer: CoreAddress.from("senderAddress"),
                             requestReference: CoreId.from("requestReference")
@@ -489,7 +488,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                         mustBeAccepted: false,
                         shareWith: shareWithAccountController.identity.address
                     })
-                    const request: ConsumptionRequest = undefined! // is not used in accept anyway
+                    const request: LocalRequest = undefined! // is not used in accept anyway
                     const acceptParams: AcceptShareAttributeRequestItemParametersJSON = { accept: true }
 
                     await recipientProcessor.accept(requestItem, acceptParams, request)
@@ -529,19 +528,18 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                     const rConsumptionController = consumptionController2
                     const rProcessor = processor2
 
-                    const repositoryAttribute = await rConsumptionController.attributes.createConsumptionAttribute({
+                    const repositoryAttribute = await rConsumptionController.attributes.createLocalAttribute({
                         content: TestObjectFactory.createIdentityAttribute({
                             owner: rConsumptionController.accountController.identity.address
                         })
                     })
-                    const attributeToShare =
-                        await rConsumptionController.attributes.createSharedConsumptionAttributeCopy({
-                            attributeId: repositoryAttribute.id,
-                            peer: CoreAddress.from("senderAddress"),
-                            requestReference: CoreId.from("aRequestReference")
-                        })
+                    const attributeToShare = await rConsumptionController.attributes.createSharedLocalAttributeCopy({
+                        attributeId: repositoryAttribute.id,
+                        peer: CoreAddress.from("senderAddress"),
+                        requestReference: CoreId.from("aRequestReference")
+                    })
 
-                    await rConsumptionController.attributes.createSharedConsumptionAttributeCopy({
+                    await rConsumptionController.attributes.createSharedLocalAttributeCopy({
                         attributeId: repositoryAttribute.id,
                         peer: shareWithAccountController.identity.address,
                         requestReference: CoreId.from("aRequestReference")
@@ -552,7 +550,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                         mustBeAccepted: false,
                         shareWith: shareWithAccountController.identity.address
                     })
-                    const request: ConsumptionRequest = undefined! // is not used in accept anyway
+                    const request: LocalRequest = undefined! // is not used in accept anyway
                     const acceptParams: AcceptShareAttributeRequestItemParametersJSON = { accept: true }
 
                     await rProcessor.accept(requestItem, acceptParams, request)
@@ -567,7 +565,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                     const rConsumptionController = consumptionController2
                     const rProcessor = processor2
 
-                    const attributeToShare = await rConsumptionController.attributes.createPeerConsumptionAttribute({
+                    const attributeToShare = await rConsumptionController.attributes.createPeerLocalAttribute({
                         content: TestObjectFactory.createRelationshipAttribute({
                             owner: rConsumptionController.accountController.identity.address
                         }),
@@ -575,7 +573,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                         requestReference: CoreId.from("aRequestReference")
                     })
 
-                    await rConsumptionController.attributes.createSharedConsumptionAttributeCopy({
+                    await rConsumptionController.attributes.createSharedLocalAttributeCopy({
                         attributeId: attributeToShare.id,
                         peer: shareWithAccountController.identity.address,
                         requestReference: CoreId.from("aRequestReference")
@@ -586,7 +584,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                         mustBeAccepted: false,
                         shareWith: shareWithAccountController.identity.address
                     })
-                    const request: ConsumptionRequest = undefined! // is not used in accept anyway
+                    const request: LocalRequest = undefined! // is not used in accept anyway
                     const acceptParams: AcceptShareAttributeRequestItemParametersJSON = { accept: true }
 
                     await rProcessor.accept(requestItem, acceptParams, request)

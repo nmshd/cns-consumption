@@ -1,21 +1,21 @@
 import { ISerializable, Serializable, serialize, validate } from "@js-soft/ts-serval"
 import { CoreAddress, CoreId, ICoreAddress, ICoreId } from "@nmshd/transport"
 
-export interface CreateSharedConsumptionAttributeCopyParamsJSON {
+export interface CreateSharedLocalAttributeCopyParamsJSON {
     attributeId: string
     peer: string
     requestReference: string
 }
 
-export interface ICreateSharedConsumptionAttributeCopyParams extends ISerializable {
+export interface ICreateSharedLocalAttributeCopyParams extends ISerializable {
     attributeId: ICoreId
     peer: ICoreAddress
     requestReference: ICoreId
 }
 
-export class CreateSharedConsumptionAttributeCopyParams
+export class CreateSharedLocalAttributeCopyParams
     extends Serializable
-    implements ICreateSharedConsumptionAttributeCopyParams
+    implements ICreateSharedLocalAttributeCopyParams
 {
     @serialize()
     @validate()
@@ -30,8 +30,8 @@ export class CreateSharedConsumptionAttributeCopyParams
     public requestReference: CoreId
 
     public static from(
-        value: ICreateSharedConsumptionAttributeCopyParams | CreateSharedConsumptionAttributeCopyParamsJSON
-    ): CreateSharedConsumptionAttributeCopyParams {
+        value: ICreateSharedLocalAttributeCopyParams | CreateSharedLocalAttributeCopyParamsJSON
+    ): CreateSharedLocalAttributeCopyParams {
         return this.fromAny(value)
     }
 }

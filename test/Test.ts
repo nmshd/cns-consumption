@@ -9,7 +9,7 @@ import { CreateAttributeRequestItemProcessorTests } from "./modules/requests/ite
 import { ProposeAttributeRequestItemProcessorTests } from "./modules/requests/itemProcessors/proposeAttribute/ProposeAttributeRequestItemProcessor.test"
 import { ReadAttributeRequestItemProcessorTests } from "./modules/requests/itemProcessors/readAttribute/ReadAttributeRequestItemProcessor.test"
 import { ShareAttributeRequestItemProcessorTests } from "./modules/requests/itemProcessors/shareAttribute/ShareAttributeRequestItemProcessor.test"
-import { ConsumptionRequestTest } from "./modules/requests/local/ConsumptionRequest.test"
+import { LocalRequestTest } from "./modules/requests/local/LocalRequest.test"
 import { OutgoingRequestsControllerTests } from "./modules/requests/OutgoingRequestsController.test"
 import { RequestEnd2EndTests } from "./modules/requests/RequestEnd2End.test"
 import { RequestItemProcessorRegistryTests } from "./modules/requests/RequestItemProcessorRegistry.test"
@@ -59,7 +59,7 @@ export class Test {
 
     public static runUnitTests(logger: ILoggerFactory): void {
         this.doSetup()
-        new ConsumptionRequestTest(logger).run()
+        new LocalRequestTest(logger).run()
         new DecideRequestParametersValidatorTests(logger).run()
     }
 }

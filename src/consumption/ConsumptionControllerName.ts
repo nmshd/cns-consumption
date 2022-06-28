@@ -1,5 +1,5 @@
 export enum ConsumptionControllerName {
-    ConsumptionAttributesController = "ConsumptionAttributesController",
+    LocalAttributesController = "LocalAttributesController",
     DraftsController = "DraftsController",
     RelationshipInfoController = "RelationshipInfoController",
     SingleRelationshipController = "SingleRelationshipController",

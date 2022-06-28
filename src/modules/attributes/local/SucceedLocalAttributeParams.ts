@@ -9,17 +9,17 @@ import {
 } from "@nmshd/content"
 import { CoreId, ICoreId } from "@nmshd/transport"
 
-export interface SucceedConsumptionAttributeParamsJSON {
+export interface SucceedLocalAttributeParamsJSON {
     successorContent: IdentityAttributeJSON | RelationshipAttributeJSON
     succeeds: string
 }
 
-export interface ISucceedConsumptionAttributeParams extends ISerializable {
+export interface ISucceedLocalAttributeParams extends ISerializable {
     successorContent: IIdentityAttribute | IRelationshipAttribute
     succeeds: ICoreId
 }
 
-export class SucceedConsumptionAttributeParams extends Serializable implements ISucceedConsumptionAttributeParams {
+export class SucceedLocalAttributeParams extends Serializable implements ISucceedLocalAttributeParams {
     @serialize({ unionTypes: [IdentityAttribute, RelationshipAttribute] })
     @validate()
     public successorContent: IdentityAttribute | RelationshipAttribute
@@ -29,8 +29,8 @@ export class SucceedConsumptionAttributeParams extends Serializable implements I
     public succeeds: CoreId
 
     public static from(
-        value: ISucceedConsumptionAttributeParams | SucceedConsumptionAttributeParamsJSON
-    ): SucceedConsumptionAttributeParams {
+        value: ISucceedLocalAttributeParams | SucceedLocalAttributeParamsJSON
+    ): SucceedLocalAttributeParams {
         return this.fromAny(value)
     }
 }

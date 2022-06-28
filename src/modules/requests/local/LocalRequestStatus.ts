@@ -1,4 +1,4 @@
-export enum ConsumptionRequestStatus {
+export enum LocalRequestStatus {
     Draft = "Draft",
     Open = "Open",
     DecisionRequired = "DecisionRequired",

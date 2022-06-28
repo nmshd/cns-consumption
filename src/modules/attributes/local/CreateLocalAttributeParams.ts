@@ -8,22 +8,22 @@ import {
     RelationshipAttributeJSON
 } from "@nmshd/content"
 
-export interface CreateConsumptionAttributeParamsJSON {
+export interface CreateLocalAttributeParamsJSON {
     content: IdentityAttributeJSON | RelationshipAttributeJSON
 }
 
-export interface ICreateConsumptionAttributeParams extends ISerializable {
+export interface ICreateLocalAttributeParams extends ISerializable {
     content: IIdentityAttribute | IRelationshipAttribute
 }
 
-export class CreateConsumptionAttributeParams extends Serializable implements ICreateConsumptionAttributeParams {
+export class CreateLocalAttributeParams extends Serializable implements ICreateLocalAttributeParams {
     @serialize({ unionTypes: [IdentityAttribute, RelationshipAttribute] })
     @validate()
     public content: IdentityAttribute | RelationshipAttribute
 
     public static from(
-        value: ICreateConsumptionAttributeParams | CreateConsumptionAttributeParamsJSON
-    ): CreateConsumptionAttributeParams {
+        value: ICreateLocalAttributeParams | CreateLocalAttributeParamsJSON
+    ): CreateLocalAttributeParams {
         return this.fromAny(value)
     }
 }

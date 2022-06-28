@@ -4,7 +4,7 @@ import { AcceptRequestItemParametersJSON } from "../incoming/decide/AcceptReques
 import { RejectRequestItemParametersJSON } from "../incoming/decide/RejectRequestItemParameters"
 import { ValidationResult } from "./ValidationResult"
 
-export interface ConsumptionRequestInfo {
+export interface LocalRequestInfo {
     id: CoreId
     peer: CoreAddress
 }
@@ -16,27 +16,27 @@ export interface IRequestItemProcessor<
 > {
     checkPrerequisitesOfIncomingRequestItem(
         requestItem: TRequestItem,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): Promise<boolean> | boolean
     canAccept(
         requestItem: TRequestItem,
         params: TAcceptParams,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): Promise<ValidationResult> | ValidationResult
     canReject(
         requestItem: TRequestItem,
         params: TRejectParams,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): Promise<ValidationResult> | ValidationResult
     accept(
         requestItem: TRequestItem,
         params: TAcceptParams,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): Promise<AcceptResponseItem> | AcceptResponseItem
     reject(
         requestItem: TRequestItem,
         params: TRejectParams,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): Promise<RejectResponseItem> | RejectResponseItem
 
     canCreateOutgoingRequestItem(
@@ -47,11 +47,11 @@ export interface IRequestItemProcessor<
     canApplyIncomingResponseItem(
         responseItem: ResponseItem,
         requestItem: TRequestItem,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): Promise<ValidationResult> | ValidationResult
     applyIncomingResponseItem(
         responseItem: ResponseItem,
         requestItem: TRequestItem,
-        requestInfo: ConsumptionRequestInfo
+        requestInfo: LocalRequestInfo
     ): Promise<void> | void
 }
