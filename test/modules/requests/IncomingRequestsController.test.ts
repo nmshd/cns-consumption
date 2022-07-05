@@ -665,40 +665,6 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     })
                 })
 
-                it("writes responseMetadata from Request Items and Groups into the corresponding Response Items and Groups", async function () {
-                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(LocalRequestStatus.DecisionRequired)
-                    await When.iAcceptTheRequest({
-                        items: [
-                            {
-                                accept: true
-                            },
-                            {
-                                items: [
-                                    {
-                                        accept: false
-                                    }
-                                ]
-                            }
-                        ]
-                    })
-                    await Then.iExpectTheResponseContent((responseContent) => {
-                        const outerResponseItem = responseContent.items[0] as ResponseItem
-                        expect(outerResponseItem.metadata).to.deep.equal({
-                            outerItemMetaKey: "outerItemMetaValue"
-                        })
-
-                        const responseGroup = responseContent.items[1] as ResponseItemGroup
-                        expect(responseGroup.metadata).to.deep.equal({
-                            groupMetaKey: "groupMetaValue"
-                        })
-
-                        const innerResponseItem = responseGroup.items[0]
-                        expect(innerResponseItem.metadata).to.deep.equal({
-                            innerItemMetaKey: "innerItemMetaValue"
-                        })
-                    })
-                })
-
                 it("throws when canAccept returns an error", async function () {
                     await Given.anIncomingRequestWith({
                         content: {
@@ -801,40 +767,6 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         const responseGroup = responseContent.items[1] as ResponseItemGroup
                         const innerResponseItem = responseGroup.items[0]
                         expect(innerResponseItem.result).to.equal(ResponseItemResult.Rejected)
-                    })
-                })
-
-                it("writes responseMetadata from Request Items and Groups into the corresponding Response Items and Groups", async function () {
-                    await Given.anIncomingRequestWithAnItemAndAGroupInStatus(LocalRequestStatus.DecisionRequired)
-                    await When.iRejectTheRequest({
-                        items: [
-                            {
-                                accept: false
-                            },
-                            {
-                                items: [
-                                    {
-                                        accept: false
-                                    }
-                                ]
-                            } as DecideRequestItemGroupParametersJSON
-                        ]
-                    })
-                    await Then.iExpectTheResponseContent((responseContent) => {
-                        const outerResponseItem = responseContent.items[0] as ResponseItem
-                        expect(outerResponseItem.metadata).to.deep.equal({
-                            outerItemMetaKey: "outerItemMetaValue"
-                        })
-
-                        const responseGroup = responseContent.items[1] as ResponseItemGroup
-                        expect(responseGroup.metadata).to.deep.equal({
-                            groupMetaKey: "groupMetaValue"
-                        })
-
-                        const innerResponseItem = responseGroup.items[0]
-                        expect(innerResponseItem.metadata).to.deep.equal({
-                            innerItemMetaKey: "innerItemMetaValue"
-                        })
                     })
                 })
 
