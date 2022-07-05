@@ -142,19 +142,19 @@ export class RequestsGiven {
             items: [
                 TestRequestItem.from({
                     mustBeAccepted: false,
-                    responseMetadata: {
+                    metadata: {
                         outerItemMetaKey: "outerItemMetaValue"
                     }
                 }),
                 RequestItemGroup.from({
                     "@type": "RequestItemGroup",
                     mustBeAccepted: false,
-                    responseMetadata: {
+                    metadata: {
                         groupMetaKey: "groupMetaValue"
                     },
                     items: [
                         TestRequestItem.from({
-                            responseMetadata: {
+                            metadata: {
                                 innerItemMetaKey: "innerItemMetaValue"
                             },
                             mustBeAccepted: false

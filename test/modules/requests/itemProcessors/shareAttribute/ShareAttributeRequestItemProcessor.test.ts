@@ -600,15 +600,15 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
 
 export abstract class RequestItemBuilder {
     protected _mustBeAccepted?: boolean
-    protected _responseMetadata?: object
+    protected _metadata?: object
 
     public mustBeAccepted(mustBeAccepted: boolean): this {
         this._mustBeAccepted = mustBeAccepted
         return this
     }
 
-    public responseMetadata(metadata: object): this {
-        this._responseMetadata = metadata
+    public metadata(metadata: object): this {
+        this._metadata = metadata
         return this
     }
 }
@@ -637,7 +637,7 @@ export class CreateAttributeRequestItemBuilder extends RequestItemBuilder {
         const obj = CreateAttributeRequestItem.from({
             attribute: ensureValue(this._attribute),
             mustBeAccepted: ensureValue(this._mustBeAccepted),
-            responseMetadata: this._responseMetadata
+            metadata: this._metadata
         })
         if (customize) customize(obj)
         return obj
@@ -676,7 +676,7 @@ export class ShareAttributeRequestItemBuilder extends RequestItemBuilder {
             attributeId: ensureValue(this._attributeId),
             shareWith: ensureValue(this._shareWith),
             mustBeAccepted: ensureValue(this._mustBeAccepted),
-            responseMetadata: this._responseMetadata
+            metadata: this._metadata
         })
         if (customize) customize(obj)
         return obj

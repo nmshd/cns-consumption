@@ -47,10 +47,7 @@ export class GenericRequestItemProcessor<
         params: TAcceptParams,
         requestInfo: LocalRequestInfo
     ): AcceptResponseItem | Promise<AcceptResponseItem> {
-        return AcceptResponseItem.from({
-            result: ResponseItemResult.Accepted,
-            metadata: requestItem.responseMetadata
-        })
+        return AcceptResponseItem.from({ result: ResponseItemResult.Accepted })
     }
 
     public reject(
@@ -58,10 +55,7 @@ export class GenericRequestItemProcessor<
         params: TRejectParams,
         requestInfo: LocalRequestInfo
     ): RejectResponseItem | Promise<RejectResponseItem> {
-        return RejectResponseItem.from({
-            result: ResponseItemResult.Rejected,
-            metadata: requestItem.responseMetadata
-        })
+        return RejectResponseItem.from({ result: ResponseItemResult.Rejected })
     }
 
     public canCreateOutgoingRequestItem(
