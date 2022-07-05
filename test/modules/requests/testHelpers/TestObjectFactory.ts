@@ -288,7 +288,7 @@ export class TestObjectFactory {
                 createdAt: CoreDate.utc(),
                 createdBy: CoreAddress.from("id1"),
                 createdByDevice: { id: "senderDeviceId" },
-                maxNumberOfRelationships: 1,
+                maxNumberOfAllocations: 1,
                 identity: {
                     address: CoreAddress.from("id1"),
                     publicKey: CryptoSignaturePublicKey.from({
@@ -328,7 +328,7 @@ export class TestObjectFactory {
                 createdAt: CoreDate.utc(),
                 createdBy: creator,
                 createdByDevice: CoreId.from("senderDeviceId"),
-                maxNumberOfRelationships: 1,
+                maxNumberOfAllocations: 1,
                 identity: {
                     address: creator,
                     publicKey: CryptoSignaturePublicKey.from({

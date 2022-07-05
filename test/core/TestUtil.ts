@@ -216,7 +216,7 @@ export class TestUtil {
         const templateFrom = await from.relationshipTemplates.sendRelationshipTemplate({
             content: templateBody,
             expiresAt: CoreDate.utc().add({ minutes: 5 }),
-            maxNumberOfRelationships: 1
+            maxNumberOfAllocations: 1
         })
 
         const templateToken = TokenContentRelationshipTemplate.from({
@@ -357,7 +357,7 @@ export class TestUtil {
         return await from.relationshipTemplates.sendRelationshipTemplate({
             content: body,
             expiresAt: CoreDate.utc().add({ minutes: 5 }),
-            maxNumberOfRelationships: 1
+            maxNumberOfAllocations: 1
         })
     }
 
@@ -373,7 +373,7 @@ export class TestUtil {
         const template = await account.relationshipTemplates.sendRelationshipTemplate({
             content: body,
             expiresAt: CoreDate.utc().add({ minutes: 5 }),
-            maxNumberOfRelationships: 1
+            maxNumberOfAllocations: 1
         })
         const templateToken = TokenContentRelationshipTemplate.from({
             templateId: template.id,

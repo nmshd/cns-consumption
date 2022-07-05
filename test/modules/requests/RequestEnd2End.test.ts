@@ -64,7 +64,7 @@ export class RequestEnd2EndTests extends RequestsIntegrationTest {
                 sTemplate = await sAccountController.relationshipTemplates.sendRelationshipTemplate({
                     content: RelationshipTemplateBody.from({ onNewRelationship: request }),
                     expiresAt: CoreDate.utc().add({ hours: 1 }),
-                    maxNumberOfRelationships: 1
+                    maxNumberOfAllocations: 1
                 })
             })
 
