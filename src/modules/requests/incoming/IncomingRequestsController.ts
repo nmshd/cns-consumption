@@ -318,10 +318,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     ) {
         const items = (await this.decideItems(groupItemParam.items, requestItemGroup.items, request)) as ResponseItem[]
 
-        const group = ResponseItemGroup.from({
-            items: items,
-            metadata: requestItemGroup.responseMetadata
-        })
+        const group = ResponseItemGroup.from({ items: items })
         return group
     }
 

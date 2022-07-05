@@ -71,8 +71,7 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
 
         return CreateAttributeAcceptResponseItem.from({
             attributeId: peerLocalAttribute.id,
-            result: ResponseItemResult.Accepted,
-            metadata: requestItem.responseMetadata
+            result: ResponseItemResult.Accepted
         })
     }
 
