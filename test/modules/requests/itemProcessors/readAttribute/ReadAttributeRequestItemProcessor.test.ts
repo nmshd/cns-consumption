@@ -1,5 +1,6 @@
 import {
-    AcceptReadAttributeRequestItemParametersJSON,
+    AcceptReadAttributeRequestItemParametersWithExistingAttributeJSON,
+    AcceptReadAttributeRequestItemParametersWithNewAttributeJSON,
     ConsumptionController,
     ConsumptionIds,
     LocalRequest,
@@ -236,7 +237,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         statusLog: []
                     })
 
-                    const acceptParams: AcceptReadAttributeRequestItemParametersJSON = {
+                    const acceptParams: AcceptReadAttributeRequestItemParametersWithExistingAttributeJSON = {
                         accept: true,
                         attributeId: attribute.id.toString()
                     }
@@ -265,9 +266,9 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         statusLog: []
                     })
 
-                    const acceptParams: AcceptReadAttributeRequestItemParametersJSON = {
+                    const acceptParams: AcceptReadAttributeRequestItemParametersWithNewAttributeJSON = {
                         accept: true,
-                        attribute: {
+                        newAttributeValue: {
                             "@type": "IdentityAttribute",
                             owner: accountController.identity.address.toString(),
                             value: {
@@ -301,7 +302,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         statusLog: []
                     })
 
-                    const acceptParams: AcceptReadAttributeRequestItemParametersJSON = {
+                    const acceptParams: AcceptReadAttributeRequestItemParametersWithExistingAttributeJSON = {
                         accept: true,
                         attributeId: "non-existent-id"
                     }
@@ -345,7 +346,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         statusLog: []
                     })
 
-                    const acceptParams: AcceptReadAttributeRequestItemParametersJSON = {
+                    const acceptParams: AcceptReadAttributeRequestItemParametersWithExistingAttributeJSON = {
                         accept: true,
                         attributeId: peerAttributeId.toString()
                     }
@@ -385,7 +386,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         statusLog: []
                     })
 
-                    const acceptParams: AcceptReadAttributeRequestItemParametersJSON = {
+                    const acceptParams: AcceptReadAttributeRequestItemParametersWithExistingAttributeJSON = {
                         accept: true,
                         attributeId: attribute.id.toString()
                     }
@@ -419,9 +420,9 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         statusLog: []
                     })
 
-                    const acceptParams: AcceptReadAttributeRequestItemParametersJSON = {
+                    const acceptParams: AcceptReadAttributeRequestItemParametersWithNewAttributeJSON = {
                         accept: true,
-                        attribute: {
+                        newAttributeValue: {
                             "@type": "IdentityAttribute",
                             owner: accountController.identity.address.toString(),
                             value: {
@@ -475,9 +476,9 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
                         statusLog: []
                     })
 
-                    const acceptParams: AcceptReadAttributeRequestItemParametersJSON = {
+                    const acceptParams: AcceptReadAttributeRequestItemParametersWithNewAttributeJSON = {
                         accept: true,
-                        attribute: {
+                        newAttributeValue: {
                             "@type": "RelationshipAttribute",
                             key: "AKey",
                             confidentiality: RelationshipAttributeConfidentiality.Public,
