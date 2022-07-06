@@ -2,7 +2,7 @@ import {
     RequestItem,
     RequestItemGroup,
     Response,
-    ResponseItem,
+    ResponseItemDerivations,
     ResponseItemGroup,
     ResponseResult
 } from "@nmshd/content"
@@ -316,7 +316,11 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         requestItemGroup: RequestItemGroup,
         request: LocalRequest
     ) {
-        const items = (await this.decideItems(groupItemParam.items, requestItemGroup.items, request)) as ResponseItem[]
+        const items = (await this.decideItems(
+            groupItemParam.items,
+            requestItemGroup.items,
+            request
+        )) as ResponseItemDerivations[]
 
         const group = ResponseItemGroup.from({ items: items })
         return group
@@ -326,8 +330,8 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         params: (DecideRequestItemParametersJSON | DecideRequestItemGroupParametersJSON)[],
         requestItems: (RequestItemGroup | RequestItem)[],
         request: LocalRequest
-    ) {
-        const responseItems: (ResponseItem | ResponseItemGroup)[] = []
+    ): Promise<(ResponseItemDerivations | ResponseItemGroup)[]> {
+        const responseItems: (ResponseItemDerivations | ResponseItemGroup)[] = []
 
         for (let i = 0; i < params.length; i++) {
             const itemParam = params[i]
@@ -354,7 +358,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         params: DecideRequestItemParametersJSON,
         requestItem: RequestItem,
         request: LocalRequest
-    ): Promise<ResponseItem> {
+    ): Promise<ResponseItemDerivations> {
         const processor = this.processorRegistry.getProcessorForItem(requestItem)
 
         try {

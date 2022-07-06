@@ -41,10 +41,9 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
         params: AcceptReadAttributeRequestItemParametersJSON,
         requestInfo: LocalRequestInfo
     ): Promise<ValidationResult> {
-        const parsedParams: AcceptReadAttributeRequestItemParameters =
-            AcceptReadAttributeRequestItemParameters.from(params)
+        const parsedParams = AcceptReadAttributeRequestItemParameters.from(params)
 
-        if (parsedParams.attributeId) {
+        if (parsedParams.isWithExistingAttribute()) {
             const foundAttribute = await this.consumptionController.attributes.getLocalAttribute(
                 parsedParams.attributeId
             )
@@ -72,14 +71,13 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
         params: AcceptReadAttributeRequestItemParametersJSON,
         requestInfo: LocalRequestInfo
     ): Promise<ReadAttributeAcceptResponseItem> {
-        const parsedParams: AcceptReadAttributeRequestItemParameters =
-            AcceptReadAttributeRequestItemParameters.from(params)
+        const parsedParams = AcceptReadAttributeRequestItemParameters.from(params)
 
         let sharedLocalAttribute: LocalAttribute
-        if (parsedParams.attributeId) {
+        if (parsedParams.isWithExistingAttribute()) {
             sharedLocalAttribute = await this.copyExistingAttribute(parsedParams.attributeId, requestInfo)
         } else {
-            sharedLocalAttribute = await this.createNewAttribute(parsedParams.attribute!, requestInfo)
+            sharedLocalAttribute = await this.createNewAttribute(parsedParams.newAttributeValue!, requestInfo)
         }
 
         return ReadAttributeAcceptResponseItem.from({
