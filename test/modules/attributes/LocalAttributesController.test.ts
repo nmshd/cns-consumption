@@ -3,13 +3,13 @@ import {
     ICreateLocalAttributeParams,
     ICreatePeerLocalAttributeParams,
     ICreateSharedLocalAttributeCopyParams,
-    IGetIdentityAttributesParams,
-    IGetRelationshipAttributesParams,
     ISucceedLocalAttributeParams,
     LocalAttribute
 } from "@nmshd/consumption"
 import {
     IdentityAttribute,
+    IIdentityAttributeQuery,
+    IRelationshipAttributeQuery,
     Nationality,
     RelationshipAttribute,
     RelationshipAttributeConfidentiality
@@ -19,11 +19,11 @@ import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
 
-export class AttributeTest extends IntegrationTest {
+export class LocalAttributesControllerTest extends IntegrationTest {
     public run(): void {
         const that = this
 
-        describe("Attributes", function () {
+        describe("LocalAttributesController", function () {
             const transport = new Transport(that.connection, that.config, that.loggerFactory)
 
             let consumptionController: ConsumptionController
@@ -227,22 +227,20 @@ export class AttributeTest extends IntegrationTest {
                     relationshipAttributeParams
                 )
 
-                const query: IGetRelationshipAttributesParams = {
-                    query: {
-                        valueType: "Nationality",
-                        key: "nationality",
-                        owner: CoreAddress.from("address"),
-                        attributeCreationHints: {
-                            title: "someHintTitle",
-                            confidentiality: "public" as RelationshipAttributeConfidentiality
-                        }
+                const query: IRelationshipAttributeQuery = {
+                    valueType: "Nationality",
+                    key: "nationality",
+                    owner: CoreAddress.from("address"),
+                    attributeCreationHints: {
+                        title: "someHintTitle",
+                        confidentiality: "public" as RelationshipAttributeConfidentiality
                     }
                 }
 
                 const attributes = await consumptionController.attributes.executeRelationshipAttributeQuery(query)
-                const attributesId = attributes.map((v) => v.id.toString())
-                expect(attributesId).to.not.include(identityAttribute.id.toString())
-                expect(attributesId).to.include(relationshipAttribute.id.toString())
+                const attributeIds = attributes.map((v) => v.id.toString())
+                expect(attributeIds).to.not.include(identityAttribute.id.toString())
+                expect(attributeIds).to.include(relationshipAttribute.id.toString())
             })
 
             it("should allow to query identity attributes", async function () {
@@ -274,10 +272,8 @@ export class AttributeTest extends IntegrationTest {
                     relationshipAttributeParams
                 )
 
-                const query: IGetIdentityAttributesParams = {
-                    query: {
-                        valueType: "Nationality"
-                    }
+                const query: IIdentityAttributeQuery = {
+                    valueType: "Nationality"
                 }
 
                 const attributes = await consumptionController.attributes.executeIdentityAttributeQuery(query)
