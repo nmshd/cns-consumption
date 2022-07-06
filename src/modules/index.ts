@@ -29,8 +29,11 @@ export * from "./requests/itemProcessors/IRequestItemProcessor"
 export * from "./requests/itemProcessors/ProcessorConstructor"
 export * from "./requests/itemProcessors/proposeAttribute/AcceptProposeAttributeRequestItemParameters"
 export * from "./requests/itemProcessors/proposeAttribute/ProposeAttributeRequestItemProcessor"
-export * from "./requests/itemProcessors/readAttribute/AcceptReadAttributeRequestItemParametersWithExistingAttribute"
-export * from "./requests/itemProcessors/readAttribute/AcceptReadAttributeRequestItemParametersWithNewAttribute"
+export {
+    AcceptReadAttributeRequestItemParametersJSON,
+    AcceptReadAttributeRequestItemParametersWithExistingAttributeJSON,
+    AcceptReadAttributeRequestItemParametersWithNewAttributeJSON
+} from "./requests/itemProcessors/readAttribute/AcceptReadAttributeRequestItemParameters"
 export * from "./requests/itemProcessors/readAttribute/ReadAttributeRequestItemProcessor"
 export * from "./requests/itemProcessors/RequestItemConstructor"
 export * from "./requests/itemProcessors/RequestItemProcessorRegistry"

@@ -15,18 +15,13 @@ import { LocalRequestInfo } from "../IRequestItemProcessor"
 import validateQuery from "../utility/validateQuery"
 import { ValidationResult } from "../ValidationResult"
 import {
-    AcceptReadAttributeRequestItemParametersWithExistingAttribute,
-    AcceptReadAttributeRequestItemParametersWithExistingAttributeJSON
-} from "./AcceptReadAttributeRequestItemParametersWithExistingAttribute"
-import {
-    AcceptReadAttributeRequestItemParametersWithNewAttribute,
-    AcceptReadAttributeRequestItemParametersWithNewAttributeJSON
-} from "./AcceptReadAttributeRequestItemParametersWithNewAttribute"
+    AcceptReadAttributeRequestItemParameters,
+    AcceptReadAttributeRequestItemParametersJSON
+} from "./AcceptReadAttributeRequestItemParameters"
 
 export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcessor<
     ReadAttributeRequestItem,
-    | AcceptReadAttributeRequestItemParametersWithExistingAttributeJSON
-    | AcceptReadAttributeRequestItemParametersWithNewAttributeJSON
+    AcceptReadAttributeRequestItemParametersJSON
 > {
     public override canCreateOutgoingRequestItem(
         requestItem: ReadAttributeRequestItem,
@@ -43,14 +38,12 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
 
     public override async canAccept(
         _requestItem: ReadAttributeRequestItem,
-        params:
-            | AcceptReadAttributeRequestItemParametersWithExistingAttributeJSON
-            | AcceptReadAttributeRequestItemParametersWithNewAttributeJSON,
+        params: AcceptReadAttributeRequestItemParametersJSON,
         requestInfo: LocalRequestInfo
     ): Promise<ValidationResult> {
-        const parsedParams = this.parseAcceptParams(params)
+        const parsedParams = AcceptReadAttributeRequestItemParameters.from(params)
 
-        if (parsedParams instanceof AcceptReadAttributeRequestItemParametersWithExistingAttribute) {
+        if (parsedParams.isWithExistingAttribute()) {
             const foundAttribute = await this.consumptionController.attributes.getLocalAttribute(
                 parsedParams.attributeId
             )
@@ -75,18 +68,16 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
 
     public override async accept(
         _requestItem: ReadAttributeRequestItem,
-        params:
-            | AcceptReadAttributeRequestItemParametersWithExistingAttributeJSON
-            | AcceptReadAttributeRequestItemParametersWithNewAttributeJSON,
+        params: AcceptReadAttributeRequestItemParametersJSON,
         requestInfo: LocalRequestInfo
     ): Promise<ReadAttributeAcceptResponseItem> {
-        const parsedParams = this.parseAcceptParams(params)
+        const parsedParams = AcceptReadAttributeRequestItemParameters.from(params)
 
         let sharedLocalAttribute: LocalAttribute
-        if (parsedParams instanceof AcceptReadAttributeRequestItemParametersWithExistingAttribute) {
+        if (parsedParams.isWithExistingAttribute()) {
             sharedLocalAttribute = await this.copyExistingAttribute(parsedParams.attributeId, requestInfo)
         } else {
-            sharedLocalAttribute = await this.createNewAttribute(parsedParams.newAttributeValue, requestInfo)
+            sharedLocalAttribute = await this.createNewAttribute(parsedParams.newAttributeValue!, requestInfo)
         }
 
         return ReadAttributeAcceptResponseItem.from({
@@ -94,22 +85,6 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
             attributeId: sharedLocalAttribute.id,
             attribute: sharedLocalAttribute.content
         })
-    }
-
-    private parseAcceptParams(
-        params:
-            | AcceptReadAttributeRequestItemParametersWithExistingAttributeJSON
-            | AcceptReadAttributeRequestItemParametersWithNewAttributeJSON
-    ) {
-        let parsedParams:
-            | AcceptReadAttributeRequestItemParametersWithExistingAttribute
-            | AcceptReadAttributeRequestItemParametersWithNewAttribute
-        try {
-            parsedParams = AcceptReadAttributeRequestItemParametersWithExistingAttribute.fromAny(params)
-        } catch (e) {
-            parsedParams = AcceptReadAttributeRequestItemParametersWithNewAttribute.fromAny(params)
-        }
-        return parsedParams
     }
 
     private async copyExistingAttribute(attributeId: CoreId, requestInfo: LocalRequestInfo) {
