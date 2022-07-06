@@ -1,3 +1,9 @@
+import {
+    IdentityAttributeQuery,
+    IIdentityAttributeQuery,
+    IRelationshipAttributeQuery,
+    RelationshipAttributeQuery
+} from "@nmshd/content"
 import { CoreDate, CoreId, SynchronizedCollection, TransportErrors } from "@nmshd/transport"
 import { nameof } from "ts-simple-nameof"
 import {
@@ -13,11 +19,9 @@ import {
     CreateSharedLocalAttributeCopyParams,
     ICreateSharedLocalAttributeCopyParams
 } from "./local/CreateSharedLocalAttributeCopyParams"
-import { IGetIdentityAttributesParams } from "./local/GetIdentityAttributesParams"
-import { IGetRelationshipAttributesParams } from "./local/GetRelationshipAttributesParams"
 import { LocalAttribute } from "./local/LocalAttribute"
 import { LocalAttributeShareInfo } from "./local/LocalAttributeShareInfo"
-import { identityQueryTranslator, relationshipQueryTranslator } from "./local/QueryTranslator"
+import { IdentityAttributeQueryTranslator, RelationshipAttributeQueryTranslator } from "./local/QueryTranslator"
 import { ISucceedLocalAttributeParams, SucceedLocalAttributeParams } from "./local/SucceedLocalAttributeParams"
 import { IUpdateLocalAttributeParams } from "./local/UpdateLocalAttributeParams"
 
@@ -110,21 +114,23 @@ export class LocalAttributesController extends ConsumptionBaseController {
         return this.filterCurrent(items)
     }
 
-    public async executeRelationshipAttributeQuery(
-        params: IGetRelationshipAttributesParams
-    ): Promise<LocalAttribute[]> {
-        const queryWithType: any = params.query
-        queryWithType["attributeType"] = "RelationshipAttribute"
-        const dbQuery = relationshipQueryTranslator.parse(queryWithType)
+    public async executeRelationshipAttributeQuery(query: IRelationshipAttributeQuery): Promise<LocalAttribute[]> {
+        const parsedQuery = RelationshipAttributeQuery.from(query)
+
+        const dbQuery = RelationshipAttributeQueryTranslator.translate(parsedQuery)
+
         const attributes = await this.attributes.find(dbQuery)
+
         return await this.parseArray(attributes, LocalAttribute)
     }
 
-    public async executeIdentityAttributeQuery(params: IGetIdentityAttributesParams): Promise<LocalAttribute[]> {
-        const queryWithType: any = params.query
-        queryWithType["attributeType"] = "IdentityAttribute"
-        const dbQuery = identityQueryTranslator.parse(queryWithType)
+    public async executeIdentityAttributeQuery(query: IIdentityAttributeQuery): Promise<LocalAttribute[]> {
+        const parsedQuery = IdentityAttributeQuery.from(query)
+
+        const dbQuery = IdentityAttributeQueryTranslator.translate(parsedQuery)
+
         const attributes = await this.attributes.find(dbQuery)
+
         return await this.parseArray(attributes, LocalAttribute)
     }
 
