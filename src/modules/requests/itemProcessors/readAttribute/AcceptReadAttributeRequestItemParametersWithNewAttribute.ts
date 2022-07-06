@@ -14,7 +14,7 @@ export interface AcceptReadAttributeRequestItemParametersWithNewAttributeJSON ex
 @type("AcceptReadAttributeRequestItemParameters")
 export class AcceptReadAttributeRequestItemParametersWithNewAttribute extends Serializable {
     @serialize({ unionTypes: [IdentityAttribute, RelationshipAttribute] })
-    @validate({ nullable: true })
+    @validate()
     public newAttributeValue: IdentityAttribute | RelationshipAttribute
 
     public static from(

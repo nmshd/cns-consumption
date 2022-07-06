@@ -10,7 +10,7 @@ export interface AcceptReadAttributeRequestItemParametersWithExistingAttributeJS
 @type("AcceptReadAttributeRequestItemParameters")
 export class AcceptReadAttributeRequestItemParametersWithExistingAttribute extends Serializable {
     @serialize()
-    @validate({ nullable: true })
+    @validate()
     public attributeId: CoreId
 
     public static from(
