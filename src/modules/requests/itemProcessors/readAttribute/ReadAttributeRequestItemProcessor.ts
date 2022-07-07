@@ -89,7 +89,7 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
 
     private async copyExistingAttribute(attributeId: CoreId, requestInfo: LocalRequestInfo) {
         return await this.consumptionController.attributes.createSharedLocalAttributeCopy({
-            attributeId: CoreId.from(attributeId),
+            sourceAttributeId: CoreId.from(attributeId),
             peer: CoreAddress.from(requestInfo.peer),
             requestReference: CoreId.from(requestInfo.id)
         })
@@ -105,7 +105,7 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
             })
 
             return await this.consumptionController.attributes.createSharedLocalAttributeCopy({
-                attributeId: CoreId.from(repositoryLocalAttribute.id),
+                sourceAttributeId: CoreId.from(repositoryLocalAttribute.id),
                 peer: CoreAddress.from(requestInfo.peer),
                 requestReference: CoreId.from(requestInfo.id)
             })
