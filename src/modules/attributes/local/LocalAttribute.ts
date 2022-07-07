@@ -76,7 +76,7 @@ export class LocalAttribute extends CoreSynchronizable implements ILocalAttribut
         return this.content instanceof IdentityAttribute
     }
 
-    public hasOwner(identity: CoreAddress): boolean {
+    public isOwnedBy(identity: CoreAddress): boolean {
         return this.content.owner.equals(identity)
     }
 
