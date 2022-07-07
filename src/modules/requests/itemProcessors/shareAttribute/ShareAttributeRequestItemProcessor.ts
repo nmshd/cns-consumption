@@ -111,9 +111,9 @@ export class ShareAttributeRequestItemProcessor extends GenericRequestItemProces
         _params: AcceptShareAttributeRequestItemParametersJSON,
         _requestInfo: LocalRequestInfo
     ): Promise<AcceptResponseItem> {
-        const attribute = await this.consumptionController.attributes.getLocalAttribute(requestItem.attributeId)
+        const attribute = (await this.consumptionController.attributes.getLocalAttribute(requestItem.attributeId))!
 
-        if (!(await this.isAttributeAlreadyShared(attribute!, requestItem.shareWith))) {
+        if (!(await this.isAttributeAlreadyShared(attribute, requestItem.shareWith))) {
             await this.shareAttribute(attribute, requestItem.shareWith)
         }
 
@@ -141,10 +141,11 @@ export class ShareAttributeRequestItemProcessor extends GenericRequestItemProces
         )
     }
 
-    private async shareAttribute(attribute: LocalAttribute | undefined, shareWith: CoreAddress) {
+    private async shareAttribute(attribute: LocalAttribute, shareWith: CoreAddress) {
         const createAttributeRequestItem = CreateAttributeRequestItem.from({
-            attribute: attribute!.content,
-            mustBeAccepted: true
+            attribute: attribute.content,
+            mustBeAccepted: true,
+            sourceAttributeId: attribute.id
         })
 
         const createAttributeRequest = await this.consumptionController.outgoingRequests.create({
