@@ -187,7 +187,7 @@ export class LocalAttributesControllerTest extends IntegrationTest {
 
                 const peer = CoreAddress.from("address")
                 const createSharedAttributesParams: ICreateSharedLocalAttributeCopyParams = {
-                    attributeId: nationalityAttribute.id,
+                    sourceAttributeId: nationalityAttribute.id,
                     peer: peer,
                     requestReference: CoreId.from("requestId")
                 }

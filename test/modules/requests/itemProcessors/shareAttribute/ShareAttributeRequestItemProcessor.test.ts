@@ -478,7 +478,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                     })
                     const attributeToShare =
                         await recipientConsumptionController.attributes.createSharedLocalAttributeCopy({
-                            attributeId: repositoryAttribute.id,
+                            sourceAttributeId: repositoryAttribute.id,
                             peer: CoreAddress.from("senderAddress"),
                             requestReference: CoreId.from("requestReference")
                         })
@@ -509,6 +509,10 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                     expect(sentCreateAttributeRequest.items[0]).to.be.instanceOf(CreateAttributeRequestItem)
 
                     const sentRequestItem = sentCreateAttributeRequest.items[0] as CreateAttributeRequestItem
+
+                    // ensure the request item has set sourceAttributeId
+                    expect(sentRequestItem.sourceAttributeId).to.exist
+
                     const recipientOfCreateAttributeRequest =
                         mockOutgoingRequestsController2.sentWasCalledWith!.requestSourceObject.cache!.recipients[0]
 
@@ -534,13 +538,13 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                         })
                     })
                     const attributeToShare = await rConsumptionController.attributes.createSharedLocalAttributeCopy({
-                        attributeId: repositoryAttribute.id,
+                        sourceAttributeId: repositoryAttribute.id,
                         peer: CoreAddress.from("senderAddress"),
                         requestReference: CoreId.from("aRequestReference")
                     })
 
                     await rConsumptionController.attributes.createSharedLocalAttributeCopy({
-                        attributeId: repositoryAttribute.id,
+                        sourceAttributeId: repositoryAttribute.id,
                         peer: shareWithAccountController.identity.address,
                         requestReference: CoreId.from("aRequestReference")
                     })
@@ -574,7 +578,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                     })
 
                     await rConsumptionController.attributes.createSharedLocalAttributeCopy({
-                        attributeId: attributeToShare.id,
+                        sourceAttributeId: attributeToShare.id,
                         peer: shareWithAccountController.identity.address,
                         requestReference: CoreId.from("aRequestReference")
                     })

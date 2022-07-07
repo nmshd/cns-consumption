@@ -21,8 +21,21 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
     public override canCreateOutgoingRequestItem(
         requestItem: CreateAttributeRequestItem,
         _request: Request,
-        _recipient: CoreAddress
+        recipient: CoreAddress
     ): ValidationResult | Promise<ValidationResult> {
+        const recipientIsOwnerOfTheAttribute = requestItem.attribute.owner.equals(recipient)
+
+        // When the owner of the Attribute is not the recipient of the Request, this means that
+        // we need to set the sourceAttributeId, because we have to set shareInfo as soon as the
+        // RequestItem was accepted.
+        if (!recipientIsOwnerOfTheAttribute && !requestItem.sourceAttributeId) {
+            return ValidationResult.error(
+                ConsumptionErrors.requests.invalidRequestItem(
+                    "'sourceAttributeId' cannot be undefined when sending an attribute that is not owned by the recipient."
+                )
+            )
+        }
+
         if (requestItem.attribute instanceof IdentityAttribute) {
             return this.canCreateRequestItemWithIdentityAttribute(requestItem)
         }
@@ -32,7 +45,6 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
 
     private canCreateRequestItemWithIdentityAttribute(requestItem: CreateAttributeRequestItem): ValidationResult {
         const iAmOwnerOfTheAttribute = this.accountController.identity.isMe(requestItem.attribute.owner)
-
         if (!iAmOwnerOfTheAttribute) {
             return ValidationResult.error(
                 ConsumptionErrors.requests.invalidRequestItem(
@@ -84,13 +96,24 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
             return
         }
 
-        /* TODO: in case of an own IdentityAttribute that was sent to the peer, we need to specify a source attribute; but currently we can't find the source attribute, because we don't know the id the user picked when sending the request */
+        if (requestItem.sourceAttributeId) {
+            const sourceAttribute = await this.consumptionController.attributes.getLocalAttribute(
+                requestItem.sourceAttributeId
+            )
 
-        await this.consumptionController.attributes.createPeerLocalAttribute({
-            id: responseItem.attributeId,
-            content: requestItem.attribute,
-            peer: requestInfo.peer,
-            requestReference: requestInfo.id
-        })
+            await this.consumptionController.attributes.createSharedLocalAttributeCopy({
+                attributeId: responseItem.attributeId,
+                sourceAttributeId: sourceAttribute!.id,
+                peer: requestInfo.peer,
+                requestReference: requestInfo.id
+            })
+        } else {
+            await this.consumptionController.attributes.createPeerLocalAttribute({
+                id: responseItem.attributeId,
+                content: requestItem.attribute,
+                peer: requestInfo.peer,
+                requestReference: requestInfo.id
+            })
+        }
     }
 }

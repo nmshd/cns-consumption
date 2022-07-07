@@ -2,13 +2,15 @@ import { ISerializable, Serializable, serialize, validate } from "@js-soft/ts-se
 import { CoreAddress, CoreId, ICoreAddress, ICoreId } from "@nmshd/transport"
 
 export interface CreateSharedLocalAttributeCopyParamsJSON {
-    attributeId: string
+    attributeId?: string
+    sourceAttributeId?: string
     peer: string
     requestReference: string
 }
 
 export interface ICreateSharedLocalAttributeCopyParams extends ISerializable {
-    attributeId: ICoreId
+    attributeId?: ICoreId
+    sourceAttributeId: ICoreId
     peer: ICoreAddress
     requestReference: ICoreId
 }
@@ -18,8 +20,12 @@ export class CreateSharedLocalAttributeCopyParams
     implements ICreateSharedLocalAttributeCopyParams
 {
     @serialize()
+    @validate({ nullable: true })
+    public attributeId?: CoreId
+
+    @serialize()
     @validate()
-    public attributeId: CoreId
+    public sourceAttributeId: CoreId
 
     @serialize()
     @validate()
