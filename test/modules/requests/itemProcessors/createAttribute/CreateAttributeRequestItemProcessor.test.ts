@@ -50,34 +50,66 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
 
             describe("canCreateOutgoingRequestItem", function () {
                 it("returns success when passing a Relationship Attribute with 'owner=sender'", async function () {
+                    const senderAddress = testAccount.identity.address
                     const recipientAddress = CoreAddress.from("recipientAddress")
-                    const attribute = await consumptionController.attributes.createLocalAttribute({
+
+                    const sourceAttribute = await consumptionController.attributes.createLocalAttribute({
                         content: RelationshipAttribute.from({
                             key: "aKey",
                             confidentiality: RelationshipAttributeConfidentiality.Public,
                             value: ProprietaryString.fromAny({ value: "aString" }),
-                            owner: testAccount.identity.address
+                            owner: senderAddress
                         })
                     })
                     const requestItem = CreateAttributeRequestItem.from({
                         mustBeAccepted: false,
-                        attribute: attribute.content
+                        attribute: sourceAttribute.content,
+                        sourceAttributeId: sourceAttribute.id
                     })
                     const request = Request.from({ items: [requestItem] })
 
                     const result = await processor.canCreateOutgoingRequestItem(requestItem, request, recipientAddress)
 
                     expect(result).to.be.a.successfulValidationResult()
+                })
+
+                it("returns an error when passing a Relationship Attribute with 'owner=sender', but no sourceAttributeId", async function () {
+                    const senderAddress = testAccount.identity.address
+                    const recipientAddress = CoreAddress.from("recipientAddress")
+
+                    const sourceAttribute = await consumptionController.attributes.createLocalAttribute({
+                        content: RelationshipAttribute.from({
+                            key: "aKey",
+                            confidentiality: RelationshipAttributeConfidentiality.Public,
+                            value: ProprietaryString.fromAny({ value: "aString" }),
+                            owner: senderAddress
+                        })
+                    })
+                    const requestItem = CreateAttributeRequestItem.from({
+                        mustBeAccepted: false,
+                        attribute: sourceAttribute.content,
+                        sourceAttributeId: undefined
+                    })
+                    const request = Request.from({ items: [requestItem] })
+
+                    const result = await processor.canCreateOutgoingRequestItem(requestItem, request, recipientAddress)
+
+                    expect(result).to.be.an.errorValidationResult({
+                        code: "error.consumption.requests.invalidRequestItem",
+                        message:
+                            /'sourceAttributeId' cannot be undefined when sending an attribute that is not owned by the recipient./
+                    })
                 })
 
                 it("returns success when passing an Identity Attribute with 'owner=sender'", async function () {
                     const recipientAddress = CoreAddress.from("recipientAddress")
-                    const attribute = await consumptionController.attributes.createLocalAttribute({
+                    const sourceAttribute = await consumptionController.attributes.createLocalAttribute({
                         content: TestObjectFactory.createIdentityAttribute({ owner: testAccount.identity.address })
                     })
                     const requestItem = CreateAttributeRequestItem.from({
                         mustBeAccepted: false,
-                        attribute: attribute.content
+                        attribute: sourceAttribute.content,
+                        sourceAttributeId: sourceAttribute.id
                     })
                     const request = Request.from({ items: [requestItem] })
 
@@ -86,9 +118,30 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                     expect(result).to.be.a.successfulValidationResult()
                 })
 
+                it("returns an error when passing an Identity Attribute with 'owner=sender', but no sourceAttributeId", async function () {
+                    const recipientAddress = CoreAddress.from("recipientAddress")
+                    const sourceAttribute = await consumptionController.attributes.createLocalAttribute({
+                        content: TestObjectFactory.createIdentityAttribute({ owner: testAccount.identity.address })
+                    })
+                    const requestItem = CreateAttributeRequestItem.from({
+                        mustBeAccepted: false,
+                        attribute: sourceAttribute.content,
+                        sourceAttributeId: undefined // this should not be valid
+                    })
+                    const request = Request.from({ items: [requestItem] })
+
+                    const result = await processor.canCreateOutgoingRequestItem(requestItem, request, recipientAddress)
+
+                    expect(result).to.be.an.errorValidationResult({
+                        code: "error.consumption.requests.invalidRequestItem",
+                        message:
+                            /'sourceAttributeId' cannot be undefined when sending an attribute that is not owned by the recipient./
+                    })
+                })
+
                 it("returns an error when passing a Relationship Attribute with 'owner!=sender'", async function () {
                     const recipientAddress = CoreAddress.from("recipientAddress")
-                    const attribute = await consumptionController.attributes.createLocalAttribute({
+                    const sourceAttribute = await consumptionController.attributes.createLocalAttribute({
                         content: RelationshipAttribute.from({
                             key: "aKey",
                             confidentiality: RelationshipAttributeConfidentiality.Public,
@@ -98,7 +151,8 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                     })
                     const requestItem = CreateAttributeRequestItem.from({
                         mustBeAccepted: false,
-                        attribute: attribute.content
+                        attribute: sourceAttribute.content,
+                        sourceAttributeId: sourceAttribute.id
                     })
                     const request = Request.from({ items: [requestItem] })
 
@@ -208,23 +262,22 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
 
             describe("applyIncomingResponseItem", function () {
                 it("creates a LocalAttribute with the Attribute from the RequestItem and the attributeId from the ResponseItem for the peer of the request ", async function () {
+                    const sourceAttribute = await consumptionController.attributes.createLocalAttribute({
+                        content: TestObjectFactory.createIdentityAttribute({ owner: testAccount.identity.address })
+                    })
                     const requestItem = CreateAttributeRequestItem.from({
                         mustBeAccepted: true,
-                        attribute: RelationshipAttribute.from({
-                            key: "aKey",
-                            confidentiality: RelationshipAttributeConfidentiality.Public,
-                            value: ProprietaryString.fromAny({ value: "aString" }),
-                            owner: testAccount.identity.address
-                        })
+                        attribute: sourceAttribute.content,
+                        sourceAttributeId: sourceAttribute.id
                     })
                     const requestId = await ConsumptionIds.request.generate()
                     const peer = CoreAddress.from("id1")
-                    const incomingRequest = LocalRequest.from({
+                    const localRequest = LocalRequest.from({
                         id: requestId,
                         createdAt: CoreDate.utc(),
-                        isOwn: false,
+                        isOwn: true,
                         peer: peer,
-                        status: LocalRequestStatus.DecisionRequired,
+                        status: LocalRequestStatus.Open,
                         content: Request.from({
                             id: requestId,
                             items: [requestItem]
@@ -236,15 +289,18 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
                         result: ResponseItemResult.Accepted,
                         attributeId: await ConsumptionIds.attribute.generate()
                     })
-                    await processor.applyIncomingResponseItem(responseItem, requestItem, incomingRequest)
+                    await processor.applyIncomingResponseItem(responseItem, requestItem, localRequest)
                     const createdAttribute = await consumptionController.attributes.getLocalAttribute(
                         responseItem.attributeId
                     )
                     expect(createdAttribute).to.exist
+                    expect(createdAttribute!.id.toString()).to.equal(responseItem.attributeId.toString())
                     expect(createdAttribute!.content.toJSON()).to.deep.equal(requestItem.attribute.toJSON())
                     expect(createdAttribute!.shareInfo).to.exist
-                    expect(createdAttribute!.shareInfo!.peer.toString()).to.equal(incomingRequest.peer.toString())
-                    expect(createdAttribute!.shareInfo!.sourceAttribute).to.be.undefined
+                    expect(createdAttribute!.shareInfo!.peer.toString()).to.equal(localRequest.peer.toString())
+                    expect(createdAttribute!.shareInfo!.sourceAttribute?.toString()).to.equal(
+                        sourceAttribute.id.toString()
+                    )
                 })
             })
         })
