@@ -2,6 +2,7 @@ import { ISerializable, Serializable, serialize, validate } from "@js-soft/ts-se
 import { CoreAddress, CoreId, ICoreAddress, ICoreId } from "@nmshd/transport"
 
 export interface CreateSharedLocalAttributeCopyParamsJSON {
+    attributeId?: string
     sourceAttributeId?: string
     peer: string
     requestReference: string
