@@ -165,20 +165,21 @@ export class LocalAttributesController extends ConsumptionBaseController {
         params: ICreateSharedLocalAttributeCopyParams
     ): Promise<LocalAttribute> {
         const parsedParams = CreateSharedLocalAttributeCopyParams.from(params)
-        const sourceAttribute = await this.getLocalAttribute(parsedParams.attributeId)
+        const sourceAttribute = await this.getLocalAttribute(parsedParams.sourceAttributeId)
         if (!sourceAttribute) {
-            throw ConsumptionErrors.attributes.predecessorNotFound(parsedParams.attributeId.toString())
+            throw ConsumptionErrors.attributes.predecessorNotFound(parsedParams.sourceAttributeId.toString())
         }
         const shareInfo = LocalAttributeShareInfo.from({
             peer: parsedParams.peer,
             requestReference: parsedParams.requestReference,
-            sourceAttribute: parsedParams.attributeId
+            sourceAttribute: parsedParams.sourceAttributeId
         })
 
         const sharedLocalAttributeCopy = await LocalAttribute.fromAttribute(
             sourceAttribute.content,
             undefined,
-            shareInfo
+            shareInfo,
+            parsedParams.attributeId
         )
         await this.attributes.create(sharedLocalAttributeCopy)
         return sharedLocalAttributeCopy

@@ -7,7 +7,15 @@ import {
     RelationshipAttribute,
     RelationshipAttributeJSON
 } from "@nmshd/content"
-import { CoreDate, CoreId, CoreSynchronizable, ICoreDate, ICoreId, ICoreSynchronizable } from "@nmshd/transport"
+import {
+    CoreAddress,
+    CoreDate,
+    CoreId,
+    CoreSynchronizable,
+    ICoreDate,
+    ICoreId,
+    ICoreSynchronizable
+} from "@nmshd/transport"
 import { nameof } from "ts-simple-nameof"
 import { ConsumptionIds } from "../../../consumption"
 import {
@@ -64,6 +72,14 @@ export class LocalAttribute extends CoreSynchronizable implements ILocalAttribut
     @serialize()
     public shareInfo?: LocalAttributeShareInfo
 
+    public isIdentityAttribute(): boolean {
+        return this.content instanceof IdentityAttribute
+    }
+
+    public hasOwner(identity: CoreAddress): boolean {
+        return this.content.owner.equals(identity)
+    }
+
     public static from(value: ILocalAttribute): LocalAttribute {
         return this.fromAny(value)
     }
@@ -71,11 +87,12 @@ export class LocalAttribute extends CoreSynchronizable implements ILocalAttribut
     public static async fromAttribute(
         attribute: IIdentityAttribute | IRelationshipAttribute,
         succeeds?: ICoreId,
-        shareInfo?: ILocalAttributeShareInfo
+        shareInfo?: ILocalAttributeShareInfo,
+        id?: CoreId
     ): Promise<LocalAttribute> {
         return this.from({
+            id: id ?? (await ConsumptionIds.attribute.generate()),
             content: attribute,
-            id: await ConsumptionIds.attribute.generate(),
             createdAt: CoreDate.utc(),
             succeeds: succeeds,
             shareInfo: shareInfo
