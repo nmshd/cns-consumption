@@ -239,7 +239,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const acceptParams: AcceptReadAttributeRequestItemParametersWithExistingAttributeJSON = {
                         accept: true,
-                        attributeId: attribute.id.toString()
+                        existingAttributeId: attribute.id.toString()
                     }
 
                     const result = await processor.canAccept(requestItem, acceptParams, request)
@@ -268,7 +268,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const acceptParams: AcceptReadAttributeRequestItemParametersWithNewAttributeJSON = {
                         accept: true,
-                        newAttributeValue: {
+                        newAttribute: {
                             "@type": "IdentityAttribute",
                             owner: accountController.identity.address.toString(),
                             value: {
@@ -304,7 +304,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const acceptParams: AcceptReadAttributeRequestItemParametersWithExistingAttributeJSON = {
                         accept: true,
-                        attributeId: "non-existent-id"
+                        existingAttributeId: "non-existent-id"
                     }
 
                     const result = await processor.canAccept(requestItem, acceptParams, request)
@@ -348,7 +348,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const acceptParams: AcceptReadAttributeRequestItemParametersWithExistingAttributeJSON = {
                         accept: true,
-                        attributeId: peerAttributeId.toString()
+                        existingAttributeId: peerAttributeId.toString()
                     }
 
                     const result = await processor.canAccept(requestItem, acceptParams, request)
@@ -388,7 +388,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const acceptParams: AcceptReadAttributeRequestItemParametersWithExistingAttributeJSON = {
                         accept: true,
-                        attributeId: attribute.id.toString()
+                        existingAttributeId: attribute.id.toString()
                     }
 
                     const result = await processor.accept(requestItem, acceptParams, incomingRequest)
@@ -422,7 +422,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const acceptParams: AcceptReadAttributeRequestItemParametersWithNewAttributeJSON = {
                         accept: true,
-                        newAttributeValue: {
+                        newAttribute: {
                             "@type": "IdentityAttribute",
                             owner: accountController.identity.address.toString(),
                             value: {
@@ -478,7 +478,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
 
                     const acceptParams: AcceptReadAttributeRequestItemParametersWithNewAttributeJSON = {
                         accept: true,
-                        newAttributeValue: {
+                        newAttribute: {
                             "@type": "RelationshipAttribute",
                             key: "AKey",
                             confidentiality: RelationshipAttributeConfidentiality.Public,

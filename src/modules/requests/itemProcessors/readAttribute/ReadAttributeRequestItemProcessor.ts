@@ -45,7 +45,7 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
 
         if (parsedParams.isWithExistingAttribute()) {
             const foundAttribute = await this.consumptionController.attributes.getLocalAttribute(
-                parsedParams.attributeId
+                parsedParams.existingAttributeId
             )
 
             if (!foundAttribute) {
@@ -75,9 +75,9 @@ export class ReadAttributeRequestItemProcessor extends GenericRequestItemProcess
 
         let sharedLocalAttribute: LocalAttribute
         if (parsedParams.isWithExistingAttribute()) {
-            sharedLocalAttribute = await this.copyExistingAttribute(parsedParams.attributeId, requestInfo)
+            sharedLocalAttribute = await this.copyExistingAttribute(parsedParams.existingAttributeId, requestInfo)
         } else {
-            sharedLocalAttribute = await this.createNewAttribute(parsedParams.newAttributeValue!, requestInfo)
+            sharedLocalAttribute = await this.createNewAttribute(parsedParams.newAttribute!, requestInfo)
         }
 
         return ReadAttributeAcceptResponseItem.from({
