@@ -11,11 +11,11 @@ import { AcceptRequestItemParametersJSON } from "../../incoming/decide/AcceptReq
 
 export interface AcceptReadAttributeRequestItemParametersWithExistingAttributeJSON
     extends AcceptRequestItemParametersJSON {
-    attributeId: string
+    existingAttributeId: string
 }
 
 export interface AcceptReadAttributeRequestItemParametersWithNewAttributeJSON extends AcceptRequestItemParametersJSON {
-    newAttributeValue: IdentityAttributeJSON | RelationshipAttributeJSON
+    newAttribute: IdentityAttributeJSON | RelationshipAttributeJSON
 }
 
 export type AcceptReadAttributeRequestItemParametersJSON =
@@ -26,18 +26,18 @@ export type AcceptReadAttributeRequestItemParametersJSON =
 export class AcceptReadAttributeRequestItemParameters extends Serializable {
     @serialize()
     @validate({ nullable: true })
-    public attributeId?: CoreId
+    public existingAttributeId?: CoreId
 
     @serialize({ unionTypes: [IdentityAttribute, RelationshipAttribute] })
     @validate({ nullable: true })
-    public newAttributeValue?: IdentityAttribute | RelationshipAttribute
+    public newAttribute?: IdentityAttribute | RelationshipAttribute
 
-    public isWithExistingAttribute(): this is { attributeId: CoreId } {
-        return this.attributeId !== undefined
+    public isWithExistingAttribute(): this is { existingAttributeId: CoreId } {
+        return this.existingAttributeId !== undefined
     }
 
     public isWithNewAttribute(): this is { newAttributeValue: IdentityAttribute | RelationshipAttribute } {
-        return this.newAttributeValue !== undefined
+        return this.newAttribute !== undefined
     }
 
     public static from(value: AcceptReadAttributeRequestItemParametersJSON): AcceptReadAttributeRequestItemParameters {
@@ -47,23 +47,23 @@ export class AcceptReadAttributeRequestItemParameters extends Serializable {
     protected static override postFrom<T extends Serializable>(value: T): T {
         if (!(value instanceof AcceptReadAttributeRequestItemParameters)) throw new Error("this should never happen")
 
-        if (value.attributeId && value.newAttributeValue) {
+        if (value.existingAttributeId && value.newAttribute) {
             throw new ValidationError(
                 AcceptReadAttributeRequestItemParameters.name,
-                nameof<AcceptReadAttributeRequestItemParameters>((x) => x.newAttributeValue),
+                nameof<AcceptReadAttributeRequestItemParameters>((x) => x.newAttribute),
                 `You cannot specify both ${nameof<AcceptReadAttributeRequestItemParameters>(
-                    (x) => x.newAttributeValue
-                )} and ${nameof<AcceptReadAttributeRequestItemParameters>((x) => x.attributeId)}.`
+                    (x) => x.newAttribute
+                )} and ${nameof<AcceptReadAttributeRequestItemParameters>((x) => x.existingAttributeId)}.`
             )
         }
 
-        if (!value.attributeId && !value.newAttributeValue) {
+        if (!value.existingAttributeId && !value.newAttribute) {
             throw new ValidationError(
                 AcceptReadAttributeRequestItemParameters.name,
-                nameof<AcceptReadAttributeRequestItemParameters>((x) => x.newAttributeValue),
+                nameof<AcceptReadAttributeRequestItemParameters>((x) => x.newAttribute),
                 `You have to specify either ${nameof<AcceptReadAttributeRequestItemParameters>(
-                    (x) => x.newAttributeValue
-                )} or ${nameof<AcceptReadAttributeRequestItemParameters>((x) => x.attributeId)}.`
+                    (x) => x.newAttribute
+                )} or ${nameof<AcceptReadAttributeRequestItemParameters>((x) => x.existingAttributeId)}.`
             )
         }
 
