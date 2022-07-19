@@ -24,6 +24,7 @@ interface TestParam {
         }
     }
     expectedError?: {
+        isRootError?: boolean
         code: string
         message: string
     }
@@ -159,6 +160,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
+                        isRootError: true,
                         code: "error.requests.decide.validation.invalidRequestId",
                         message: "The id of the request does not match the id of the response"
                     }
@@ -174,6 +176,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
+                        isRootError: true,
                         code: "error.requests.decide.validation.invalidNumberOfItems",
                         message: "Number of items in Request and Response do not match"
                     }
@@ -189,6 +192,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
+                        isRootError: true,
                         code: "error.requests.decide.validation.invalidNumberOfItems",
                         message: "Number of items in Request and Response do not match"
                     }
@@ -353,16 +357,30 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
 
                 if (!data.expectedError) {
                     expect(
-                        validationResult.isError,
-                        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                        `expected success, but received the error '${validationResult.error?.code} - ${validationResult.error?.message}'`
+                        validationResult.isError(),
+                        `expected success, but received the error '${
+                            validationResult.isError() ? validationResult.error.code : ""
+                        } - ${validationResult.isError() ? validationResult.error.message : ""}'`
                     ).to.be.false
                     return
                 }
 
-                expect(validationResult.isError, "expected an error, but received success").to.be.true
-                expect(validationResult.error.code).to.equal(data.expectedError.code)
-                expect(validationResult.error.message).to.equal(data.expectedError.message)
+                expect(validationResult.isError(), "expected an error, but received success").to.be.true
+
+                if (!validationResult.isError()) throw new Error()
+
+                if (data.expectedError.isRootError) {
+                    expect(validationResult.error.code).to.equal(data.expectedError.code)
+                    expect(validationResult.error.message).to.equal(data.expectedError.message)
+                    return
+                }
+
+                expect(validationResult.error.code).to.equal("inheritedFromItem")
+                expect(validationResult.error.message).to.equal("Some child items have errors.")
+
+                // TODO: validate the items of the ValidationResult
+                // expect(validationResult.error.code).to.equal(data.expectedError.code)
+                // expect(validationResult.error.message).to.equal(data.expectedError.message)
             })
         })
     }

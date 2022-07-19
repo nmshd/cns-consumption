@@ -1,4 +1,3 @@
-import { Result } from "@js-soft/ts-utils"
 import {
     ConsumptionIds,
     DecideRequestItemGroupParametersJSON,
@@ -6,7 +5,8 @@ import {
     DecideRequestParametersValidator,
     ErrorValidationResult,
     LocalRequest,
-    LocalRequestStatus
+    LocalRequestStatus,
+    ValidationResult
 } from "@nmshd/consumption"
 import {
     IRequest,
@@ -989,7 +989,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 }
 
 export class AlwaysTrueDecideRequestParamsValidator extends DecideRequestParametersValidator {
-    public override validate(_params: DecideRequestParametersJSON, _request: LocalRequest): Result<undefined> {
-        return Result.ok(undefined)
+    public override validate(_params: DecideRequestParametersJSON, _request: LocalRequest): ValidationResult {
+        return ValidationResult.success()
     }
 }
