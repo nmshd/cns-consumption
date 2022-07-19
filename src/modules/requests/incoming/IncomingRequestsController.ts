@@ -181,16 +181,14 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
         const request = await this.getOrThrow(params.requestId)
 
-        const validationResult = this.decideRequestParamsValidator.validate(params, request)
-        if (!validationResult.isSuccess) {
-            throw new Error(validationResult.error.message)
-        }
-
         this.assertRequestStatus(
             request,
             LocalRequestStatus.DecisionRequired,
             LocalRequestStatus.ManualDecisionRequired
         )
+
+        const validationResult = this.decideRequestParamsValidator.validate(params, request)
+        if (validationResult.isError()) return validationResult
 
         const itemResults = await this.canDecideItems(params.items, request.content.items, request)
 

@@ -1,6 +1,7 @@
-import { ApplicationError, Result } from "@js-soft/ts-utils"
+import { ApplicationError } from "@js-soft/ts-utils"
 import { RequestItem, RequestItemGroup } from "@nmshd/content"
 import { CoreId } from "@nmshd/transport"
+import { ValidationResult } from "../itemProcessors/ValidationResult"
 import { LocalRequest } from "../local/LocalRequest"
 import {
     DecideRequestItemGroupParametersJSON,
@@ -13,9 +14,9 @@ import {
 import { InternalDecideRequestParametersJSON } from "./decide/InternalDecideRequestParameters"
 
 export class DecideRequestParametersValidator {
-    public validate(params: InternalDecideRequestParametersJSON, request: LocalRequest): Result<void> {
+    public validate(params: InternalDecideRequestParametersJSON, request: LocalRequest): ValidationResult {
         if (!request.id.equals(CoreId.from(params.requestId))) {
-            return Result.fail(
+            return ValidationResult.error(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidRequestId",
                     "The id of the request does not match the id of the response"
@@ -24,88 +25,80 @@ export class DecideRequestParametersValidator {
         }
 
         if (params.items.length !== request.content.items.length) {
-            return Result.fail(this.invalidNumberOfItemsError("Number of items in Request and Response do not match"))
-        }
-
-        for (let i = 0; i < params.items.length; i++) {
-            const validationResult = this.checkItemOrGroup(
-                request.content.items[i],
-                params.items[i],
-                i.toString(),
-                params.accept
+            return ValidationResult.error(
+                this.invalidNumberOfItemsError("Number of items in Request and Response do not match")
             )
-            if (validationResult.isError) return validationResult
         }
 
-        return Result.ok(undefined)
+        const validationResults = request.content.items.map((requestItem, index) =>
+            this.checkItemOrGroup(requestItem, params.items[index], params.accept)
+        )
+        return ValidationResult.fromItems(validationResults)
     }
 
     private checkItemOrGroup(
         requestItem: RequestItem | RequestItemGroup,
         responseItem: DecideRequestItemParametersJSON | DecideRequestItemGroupParametersJSON,
-        index: string,
         isParentAccepted: boolean
-    ): Result<void> {
+    ): ValidationResult {
         if (requestItem instanceof RequestItem) {
-            return this.checkItem(requestItem, responseItem, index, isParentAccepted)
+            return this.checkItem(requestItem, responseItem, isParentAccepted)
         }
 
-        return this.checkItemGroup(requestItem, responseItem, index, isParentAccepted)
+        return this.checkItemGroup(requestItem, responseItem, isParentAccepted)
     }
 
     private checkItem(
         requestItem: RequestItem,
         response: DecideRequestItemParametersJSON | DecideRequestItemGroupParametersJSON,
-        index: string,
         isParentAccepted: boolean
-    ): Result<void> {
+    ): ValidationResult {
         if (isDecideRequestItemGroupParametersJSON(response)) {
-            return Result.fail(
+            return ValidationResult.error(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    `The RequestItem with index '${index}' was answered as a RequestItemGroup.`
+                    "The RequestItem was answered as a RequestItemGroup."
                 )
             )
         }
 
         if (!isParentAccepted && response.accept) {
-            return Result.fail(
+            return ValidationResult.error(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    `The RequestItem with index '${index}' was accepted, but the parent was not accepted.`
+                    "The RequestItem was accepted, but the parent was not accepted."
                 )
             )
         }
 
         if (isParentAccepted && requestItem.mustBeAccepted && !response.accept) {
-            return Result.fail(
+            return ValidationResult.error(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    `The RequestItem with index '${index}', which is flagged as 'mustBeAccepted', was not accepted.`
+                    "The RequestItem is flagged as 'mustBeAccepted', was not accepted."
                 )
             )
         }
 
-        return Result.ok(undefined)
+        return ValidationResult.success()
     }
 
     private checkItemGroup(
         requestItemGroup: RequestItemGroup,
         responseItemGroup: DecideRequestItemParametersJSON | DecideRequestItemGroupParametersJSON,
-        index: string,
         isParentAccepted: boolean
-    ): Result<void> {
+    ): ValidationResult {
         if (isDecideRequestItemParametersJSON(responseItemGroup)) {
-            return Result.fail(
+            return ValidationResult.error(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    `The RequestItemGroup with index '${index}' was answered as a RequestItem.`
+                    "The RequestItemGroup was answered as a RequestItem."
                 )
             )
         }
 
         if (responseItemGroup.items.length !== requestItemGroup.items.length) {
-            return Result.fail(
+            return ValidationResult.error(
                 this.invalidNumberOfItemsError("Number of items in RequestItemGroup and ResponseItemGroup do not match")
             )
         }
@@ -113,34 +106,27 @@ export class DecideRequestParametersValidator {
         const isGroupAccepted = responseItemGroup.items.some((value) => value.accept)
 
         if (!isParentAccepted && isGroupAccepted) {
-            return Result.fail(
+            return ValidationResult.error(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    `The RequestItemGroup with index '${index}' was accepted, but the parent was not accepted.`
+                    "The RequestItemGroup was accepted, but the parent was not accepted."
                 )
             )
         }
 
         if (isParentAccepted && requestItemGroup.mustBeAccepted && !isGroupAccepted) {
-            return Result.fail(
+            return ValidationResult.error(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    `The RequestItemGroup with index '${index}', which is flagged as 'mustBeAccepted', was not accepted. Please accept all 'mustBeAccepted' items in this group.`
+                    "The RequestItemGroup is flagged as 'mustBeAccepted', was not accepted. Please accept all 'mustBeAccepted' items in this group."
                 )
             )
         }
 
-        for (let i = 0; i < responseItemGroup.items.length; i++) {
-            const validationResult = this.checkItem(
-                requestItemGroup.items[i],
-                responseItemGroup.items[i],
-                `${index}.${i}`,
-                isGroupAccepted
-            )
-            if (validationResult.isError) return validationResult
-        }
-
-        return Result.ok(undefined)
+        const validationResults = requestItemGroup.items.map((requestItem, index) =>
+            this.checkItem(requestItem, responseItemGroup.items[index], isGroupAccepted)
+        )
+        return ValidationResult.fromItems(validationResults)
     }
 
     private invalidNumberOfItemsError(message: string) {
