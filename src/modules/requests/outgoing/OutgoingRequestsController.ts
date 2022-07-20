@@ -50,7 +50,7 @@ import {
 
 export class OutgoingRequestsController extends ConsumptionBaseController {
     public constructor(
-        private readonly consumptionRequests: SynchronizedCollection,
+        private readonly localRequests: SynchronizedCollection,
         private readonly processorRegistry: RequestItemProcessorRegistry,
         parent: ConsumptionController
     ) {
@@ -106,11 +106,11 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
 
         const id = await ConsumptionIds.request.generate()
         parsedParams.content.id = id
-        const consumptionRequest = await this._create(id, parsedParams.content, parsedParams.peer)
+        const request = await this._create(id, parsedParams.content, parsedParams.peer)
 
-        this.eventBus.publish(new OutgoingRequestCreatedEvent(this.identity.address.toString(), consumptionRequest))
+        this.eventBus.publish(new OutgoingRequestCreatedEvent(this.identity.address.toString(), request))
 
-        return consumptionRequest
+        return request
     }
 
     private async _create(id: CoreId, content: Request, peer: CoreAddress) {
@@ -123,7 +123,7 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
             throw canCreateResult.error
         }
 
-        const consumptionRequest = LocalRequest.from({
+        const request = LocalRequest.from({
             id: id,
             content: content,
             createdAt: CoreDate.utc(),
@@ -133,8 +133,8 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
             statusLog: []
         })
 
-        await this.consumptionRequests.create(consumptionRequest)
-        return consumptionRequest
+        await this.localRequests.create(request)
+        return request
     }
 
     public async createFromRelationshipCreationChange(
@@ -163,16 +163,16 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
 
         await this._sent(id, parsedParams.template)
 
-        const consumptionRequest = await this._complete(id, parsedParams.creationChange, receivedResponse)
+        const request = await this._complete(id, parsedParams.creationChange, receivedResponse)
 
         this.eventBus.publish(
             new OutgoingRequestFromRelationshipCreationChangeCreatedAndCompletedEvent(
                 this.identity.address.toString(),
-                consumptionRequest
+                request
             )
         )
 
-        return consumptionRequest
+        return request
     }
 
     public async sent(params: ISentOutgoingRequestParameters): Promise<LocalRequest> {
@@ -347,14 +347,14 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         query ??= {}
         query.isOwn = true
 
-        const requestDocs = await this.consumptionRequests.find(query)
+        const requestDocs = await this.localRequests.find(query)
 
         const requests = requestDocs.map((r) => LocalRequest.from(r))
         return requests
     }
 
     public async getOutgoingRequest(id: ICoreId): Promise<LocalRequest | undefined> {
-        const requestDoc = await this.consumptionRequests.findOne({ id: id.toString(), isOwn: true })
+        const requestDoc = await this.localRequests.findOne({ id: id.toString(), isOwn: true })
         const request = requestDoc ? LocalRequest.from(requestDoc) : undefined
         return request
     }
@@ -368,11 +368,11 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     }
 
     private async update(request: LocalRequest) {
-        const requestDoc = await this.consumptionRequests.findOne({ id: request.id.toString(), isOwn: true })
+        const requestDoc = await this.localRequests.findOne({ id: request.id.toString(), isOwn: true })
         if (!requestDoc) {
             throw TransportErrors.general.recordNotFound(LocalRequest, request.id.toString())
         }
-        await this.consumptionRequests.update(requestDoc, request)
+        await this.localRequests.update(requestDoc, request)
     }
 
     private assertRequestStatus(request: LocalRequest, ...status: LocalRequestStatus[]) {
