@@ -1,4 +1,4 @@
-import { ApplicationError, Result } from "@js-soft/ts-utils"
+import { ApplicationError } from "@js-soft/ts-utils"
 import {
     ConsumptionIds,
     DecideRequestParametersJSON,
@@ -34,8 +34,8 @@ import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
 import { ITestRequestItem, TestRequestItem } from "./testHelpers/TestRequestItem"
 
 export class AlwaysTrueDecideRequestParamsValidator extends DecideRequestParametersValidator {
-    public override validate(_params: DecideRequestParametersJSON, _request: LocalRequest): Result<undefined> {
-        return Result.ok(undefined)
+    public override validate(_params: DecideRequestParametersJSON, _request: LocalRequest): ValidationResult {
+        return ValidationResult.success()
     }
 }
 

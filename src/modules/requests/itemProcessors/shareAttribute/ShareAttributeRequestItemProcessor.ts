@@ -125,8 +125,8 @@ export class ShareAttributeRequestItemProcessor extends GenericRequestItemProces
             return (
                 (
                     await this.consumptionController.attributes.getLocalAttributes({
-                        "shareInfo.sourceAttribute": attribute.shareInfo!.sourceAttribute!.toString(), // eslint-disable-line @typescript-eslint/naming-convention
-                        "shareInfo.peer": shareWith.toString() // eslint-disable-line @typescript-eslint/naming-convention
+                        "shareInfo.sourceAttribute": attribute.shareInfo!.sourceAttribute!.toString(),
+                        "shareInfo.peer": shareWith.toString()
                     })
                 ).length > 0
             )
@@ -134,8 +134,8 @@ export class ShareAttributeRequestItemProcessor extends GenericRequestItemProces
         return (
             (
                 await this.consumptionController.attributes.getLocalAttributes({
-                    "shareInfo.sourceAttribute": attribute.id.toString(), // eslint-disable-line @typescript-eslint/naming-convention
-                    "shareInfo.peer": shareWith.toString() // eslint-disable-line @typescript-eslint/naming-convention
+                    "shareInfo.sourceAttribute": attribute.id.toString(),
+                    "shareInfo.peer": shareWith.toString()
                 })
             ).length > 0
         )
