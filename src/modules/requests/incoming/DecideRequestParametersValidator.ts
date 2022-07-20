@@ -19,7 +19,7 @@ export class DecideRequestParametersValidator {
             return ValidationResult.error(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidRequestId",
-                    "The id of the request does not match the id of the response"
+                    "The id of the Request does not match the id of the Response"
                 )
             )
         }

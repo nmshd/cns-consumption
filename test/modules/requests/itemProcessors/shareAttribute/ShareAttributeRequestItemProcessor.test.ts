@@ -402,7 +402,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                     }
                 )
 
-                it("returns false when there is no relationship to the identity in 'shareWith' (a relationship is needed in order to send the response anyway).", async function () {
+                it("returns false when there is no relationship to the identity in 'shareWith' (a relationship is needed in order to send the Response anyway).", async function () {
                     const recipientConsumptionController = consumptionController2
                     const recipientProcessor = processor2
 

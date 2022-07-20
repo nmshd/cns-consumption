@@ -25,7 +25,7 @@ interface TestParam {
         }
     }
     expectedError?: {
-        errorIndexPath?: number[]
+        indexPath?: number[]
         code: string
         message: string
     }
@@ -44,7 +44,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
 
             const successParams: TestParam[] = [
                 {
-                    description: "(1) success: accept request with one RequestItem and accept the item",
+                    description: "(1) success: accept Request with one RequestItem and accept the item",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
                         response: {
@@ -55,7 +55,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(2) success: accept request with RequestItemGroup and accept the item",
+                    description: "(2) success: accept Request with RequestItemGroup and accept the item",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(),
                         response: {
@@ -66,7 +66,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(3) success: accept request with one RequestItem and reject the item",
+                    description: "(3) success: accept Request with one RequestItem and reject the item",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
                         response: {
@@ -77,7 +77,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(4) success: accept request with RequestItemGroup and reject the item",
+                    description: "(4) success: accept Request with RequestItemGroup and reject the item",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(),
                         response: {
@@ -110,7 +110,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(6) success: accept a request without accepting any item (no items mustBeAccepted)",
+                    description: "(6) success: accept a Request without accepting any item (no items mustBeAccepted)",
                     input: {
                         request: Request.from({
                             items: [TestRequestItem.from({ mustBeAccepted: false })]
@@ -151,7 +151,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
 
             const errorParams: TestParam[] = [
                 {
-                    description: "(1) error: id of request is not equal to id of response",
+                    description: "(1) error: id of Request is not equal to id of response",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
                         response: {
@@ -162,11 +162,11 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     },
                     expectedError: {
                         code: "error.requests.decide.validation.invalidRequestId",
-                        message: "The id of the request does not match the id of the response"
+                        message: "The id of the Request does not match the id of the Response"
                     }
                 },
                 {
-                    description: "(2) error: request with two items is answered with one item",
+                    description: "(2) error: Request with two items is answered with one item",
                     input: {
                         request: TestObjectFactory.createRequestWithTwoItems(),
                         response: {
@@ -181,7 +181,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(3) error: request with one item is answered with two items",
+                    description: "(3) error: Request with one item is answered with two items",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
                         response: {
@@ -196,7 +196,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     }
                 },
                 {
-                    description: "(4) error: request with one RequestItemGroup is answered as a RequestItem",
+                    description: "(4) error: Request with one RequestItemGroup is answered as a RequestItem",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(),
                         response: {
@@ -206,13 +206,13 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        errorIndexPath: [0],
+                        indexPath: [0],
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message: "The RequestItemGroup was answered as a RequestItem."
                     }
                 },
                 {
-                    description: "(5) error: request with one RequestItem is answered as a RequestItemGroup",
+                    description: "(5) error: Request with one RequestItem is answered as a RequestItemGroup",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
                         response: {
@@ -222,7 +222,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        errorIndexPath: [0],
+                        indexPath: [0],
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message: "The RequestItem was answered as a RequestItemGroup."
                     }
@@ -242,7 +242,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        errorIndexPath: [0],
+                        indexPath: [0],
                         code: "error.requests.decide.validation.invalidNumberOfItems",
                         message: "Number of items in RequestItemGroup and ResponseItemGroup do not match"
                     }
@@ -258,7 +258,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        errorIndexPath: [0],
+                        indexPath: [0],
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message: "The RequestItem is flagged as 'mustBeAccepted', but it was not accepted."
                     }
@@ -274,14 +274,14 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        errorIndexPath: [0],
+                        indexPath: [0],
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message:
                             "The RequestItemGroup is flagged as 'mustBeAccepted', but it was not accepted. Please accept all 'mustBeAccepted' items in this group."
                     }
                 },
                 {
-                    description: "(9) error: when the request is rejected no RequestItem may be accepted",
+                    description: "(9) error: when the Request is rejected no RequestItem may be accepted",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItem(),
                         response: {
@@ -291,13 +291,13 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        errorIndexPath: [0],
+                        indexPath: [0],
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message: "The RequestItem was accepted, but the parent was not accepted."
                     }
                 },
                 {
-                    description: "(10) error: when the request is rejected no RequestItemGroup may be accepted",
+                    description: "(10) error: when the Request is rejected no RequestItemGroup may be accepted",
                     input: {
                         request: TestObjectFactory.createRequestWithOneItemGroup(),
                         response: {
@@ -307,7 +307,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        errorIndexPath: [0],
+                        indexPath: [0],
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message: "The RequestItemGroup was accepted, but the parent was not accepted."
                     }
@@ -338,7 +338,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        errorIndexPath: [0, 1],
+                        indexPath: [0, 1],
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message: "The RequestItem is flagged as 'mustBeAccepted', but it was not accepted."
                     }
@@ -372,9 +372,9 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                 expect(validationResult.isError(), "expected an error, but received success").to.be.true
                 if (!validationResult.isError()) throw new Error()
 
-                // no error path provided, so we expect the error to be at the root
-                const errorIndexPath = data.expectedError.errorIndexPath
+                const errorIndexPath = data.expectedError.indexPath
                 if (!errorIndexPath) {
+                    // no error path provided, so we expect the error to be at the root
                     expect(validationResult.error.code).to.equal(data.expectedError.code)
                     expect(validationResult.error.message).to.equal(data.expectedError.message)
                     return
@@ -384,7 +384,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                 expect(validationResult.error.message).to.equal("Some child items have errors.")
 
                 let childResult = validationResult
-                errorIndexPath.forEach((index) => (childResult = childResult.items[index] as ErrorValidationResult))
+                for (const index of errorIndexPath) childResult = childResult.items[index] as ErrorValidationResult
 
                 expect(childResult.isError(), "expected an error, but received success").to.be.true
                 if (!childResult.isError()) throw new Error()
