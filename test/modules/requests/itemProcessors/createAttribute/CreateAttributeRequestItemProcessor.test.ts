@@ -26,7 +26,7 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
         const that = this
 
         describe("CreateAttributeRequestItemProcessor", function () {
-            const transport = new Transport(that.connection, that.config, that.loggerFactory)
+            const transport = new Transport(that.connection, that.config, that.eventBus, that.loggerFactory)
 
             let consumptionController: ConsumptionController
             let testAccount: AccountController

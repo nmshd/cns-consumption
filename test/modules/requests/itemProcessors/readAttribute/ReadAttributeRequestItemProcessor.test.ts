@@ -32,7 +32,7 @@ export class ReadAttributeRequestItemProcessorTests extends IntegrationTest {
         const that = this
 
         describe("ReadAttributeRequestItemProcessor", function () {
-            const transport = new Transport(that.connection, that.config, that.loggerFactory)
+            const transport = new Transport(that.connection, that.config, that.eventBus, that.loggerFactory)
 
             let consumptionController: ConsumptionController
             let accountController: AccountController

@@ -17,7 +17,7 @@ import { TestRequestItemProcessor } from "./testHelpers/TestRequestItemProcessor
 export class RequestEnd2EndTests extends RequestsIntegrationTest {
     public run(): void {
         const that = this
-        const transport = new Transport(that.connection, that.config, that.loggerFactory)
+        const transport = new Transport(that.connection, that.config, that.eventBus, that.loggerFactory)
 
         before(async function () {
             await transport.init()

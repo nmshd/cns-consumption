@@ -64,7 +64,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
         const that = this
 
         describe("ShareAttributeRequestItemProcessor", function () {
-            const transport = new Transport(that.connection, that.config, that.loggerFactory)
+            const transport = new Transport(that.connection, that.config, that.eventBus, that.loggerFactory)
 
             let consumptionController1: ConsumptionController
             let accountController1: AccountController

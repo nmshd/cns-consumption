@@ -24,7 +24,7 @@ export class LocalAttributesControllerTest extends IntegrationTest {
         const that = this
 
         describe("LocalAttributesController", function () {
-            const transport = new Transport(that.connection, that.config, that.loggerFactory)
+            const transport = new Transport(that.connection, that.config, that.eventBus, that.loggerFactory)
 
             let consumptionController: ConsumptionController
             let testAccount: AccountController
