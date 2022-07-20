@@ -24,7 +24,7 @@ interface TestParam {
         }
     }
     expectedError?: {
-        isRootError?: boolean
+        xy?: { x: number; y?: number }
         code: string
         message: string
     }
@@ -160,7 +160,6 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        isRootError: true,
                         code: "error.requests.decide.validation.invalidRequestId",
                         message: "The id of the request does not match the id of the response"
                     }
@@ -176,7 +175,6 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        isRootError: true,
                         code: "error.requests.decide.validation.invalidNumberOfItems",
                         message: "Number of items in Request and Response do not match"
                     }
@@ -192,7 +190,6 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        isRootError: true,
                         code: "error.requests.decide.validation.invalidNumberOfItems",
                         message: "Number of items in Request and Response do not match"
                     }
@@ -208,8 +205,9 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
+                        xy: { x: 0 },
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                        message: "The RequestItemGroup with index '0' was answered as a RequestItem."
+                        message: "The RequestItemGroup was answered as a RequestItem."
                     }
                 },
                 {
@@ -223,8 +221,9 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
+                        xy: { x: 0 },
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                        message: "The RequestItem with index '0' was answered as a RequestItemGroup."
+                        message: "The RequestItem was answered as a RequestItemGroup."
                     }
                 },
                 {
@@ -242,6 +241,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
+                        xy: { x: 0 },
                         code: "error.requests.decide.validation.invalidNumberOfItems",
                         message: "Number of items in RequestItemGroup and ResponseItemGroup do not match"
                     }
@@ -257,9 +257,9 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
+                        xy: { x: 0 },
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                        message:
-                            "The RequestItem with index '0', which is flagged as 'mustBeAccepted', was not accepted."
+                        message: "The RequestItem is flagged as 'mustBeAccepted', but it was not accepted."
                     }
                 },
                 {
@@ -273,9 +273,10 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
+                        xy: { x: 0 },
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message:
-                            "The RequestItemGroup with index '0', which is flagged as 'mustBeAccepted', was not accepted. Please accept all 'mustBeAccepted' items in this group."
+                            "The RequestItemGroup is flagged as 'mustBeAccepted', but it was not accepted. Please accept all 'mustBeAccepted' items in this group."
                     }
                 },
                 {
@@ -289,8 +290,9 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
+                        xy: { x: 0 },
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                        message: "The RequestItem with index '0' was accepted, but the parent was not accepted."
+                        message: "The RequestItem was accepted, but the parent was not accepted."
                     }
                 },
                 {
@@ -304,8 +306,9 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
+                        xy: { x: 0 },
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                        message: "The RequestItemGroup with index '0' was accepted, but the parent was not accepted."
+                        message: "The RequestItemGroup was accepted, but the parent was not accepted."
                     }
                 },
                 {
@@ -334,9 +337,9 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
+                        xy: { x: 0, y: 1 },
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                        message:
-                            "The RequestItem with index '0.1', which is flagged as 'mustBeAccepted', was not accepted."
+                        message: "The RequestItem is flagged as 'mustBeAccepted', but it was not accepted."
                     }
                 }
             ]
@@ -366,10 +369,9 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                 }
 
                 expect(validationResult.isError(), "expected an error, but received success").to.be.true
-
                 if (!validationResult.isError()) throw new Error()
 
-                if (data.expectedError.isRootError) {
+                if (!data.expectedError.xy) {
                     expect(validationResult.error.code).to.equal(data.expectedError.code)
                     expect(validationResult.error.message).to.equal(data.expectedError.message)
                     return
@@ -378,9 +380,14 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                 expect(validationResult.error.code).to.equal("inheritedFromItem")
                 expect(validationResult.error.message).to.equal("Some child items have errors.")
 
-                // TODO: validate the items of the ValidationResult
-                // expect(validationResult.error.code).to.equal(data.expectedError.code)
-                // expect(validationResult.error.message).to.equal(data.expectedError.message)
+                let childResult = validationResult.items[data.expectedError.xy.x]
+                if (data.expectedError.xy.y) childResult = childResult.items[data.expectedError.xy.y]
+
+                expect(childResult.isError(), "expected an error, but received success").to.be.true
+                if (!childResult.isError()) throw new Error()
+
+                expect(childResult.error.code).to.equal(data.expectedError.code)
+                expect(childResult.error.message).to.equal(data.expectedError.message)
             })
         })
     }
