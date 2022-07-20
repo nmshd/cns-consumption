@@ -21,6 +21,11 @@ import {
 } from "@nmshd/transport"
 import { ConsumptionBaseController, ConsumptionControllerName, ConsumptionIds } from "../../../consumption"
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
+import {
+    OutgoingRequestCreatedEvent,
+    OutgoingRequestFromRelationshipCreationChangeCreatedAndCompletedEvent,
+    OutgoingRequestStatusChangedEvent
+} from "../events"
 import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProcessorRegistry"
 import { ValidationResult } from "../itemProcessors/ValidationResult"
 import { LocalRequest, LocalRequestSource } from "../local/LocalRequest"
@@ -103,6 +108,8 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
         parsedParams.content.id = id
         const consumptionRequest = await this._create(id, parsedParams.content, parsedParams.peer)
 
+        this.eventBus.publish(new OutgoingRequestCreatedEvent(this.identity.address.toString(), consumptionRequest))
+
         return consumptionRequest
     }
 
@@ -158,12 +165,29 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
 
         const consumptionRequest = await this._complete(id, parsedParams.creationChange, receivedResponse)
 
+        this.eventBus.publish(
+            new OutgoingRequestFromRelationshipCreationChangeCreatedAndCompletedEvent(
+                this.identity.address.toString(),
+                consumptionRequest
+            )
+        )
+
         return consumptionRequest
     }
 
     public async sent(params: ISentOutgoingRequestParameters): Promise<LocalRequest> {
         const parsedParams = SentOutgoingRequestParameters.from(params)
-        return await this._sent(parsedParams.requestId, parsedParams.requestSourceObject)
+        const request = await this._sent(parsedParams.requestId, parsedParams.requestSourceObject)
+
+        this.eventBus.publish(
+            new OutgoingRequestStatusChangedEvent(this.identity.address.toString(), {
+                request: request,
+                oldStatus: LocalRequestStatus.Draft,
+                newStatus: request.status
+            })
+        )
+
+        return request
     }
 
     private async _sent(requestId: CoreId, requestSourceObject: Message | RelationshipTemplate): Promise<LocalRequest> {
@@ -204,11 +228,21 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
 
     public async complete(params: ICompleteOugoingRequestParameters): Promise<LocalRequest> {
         const parsedParams = CompleteOugoingRequestParameters.from(params)
-        return await this._complete(
+        const request = await this._complete(
             parsedParams.requestId,
             parsedParams.responseSourceObject,
             parsedParams.receivedResponse
         )
+
+        this.eventBus.publish(
+            new OutgoingRequestStatusChangedEvent(this.identity.address.toString(), {
+                request,
+                oldStatus: LocalRequestStatus.Open,
+                newStatus: request.status
+            })
+        )
+
+        return request
     }
 
     private async _complete(
