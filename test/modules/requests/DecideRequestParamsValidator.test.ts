@@ -2,6 +2,7 @@ import {
     DecideRequestItemGroupParametersJSON,
     DecideRequestItemParametersJSON,
     DecideRequestParametersValidator,
+    ErrorValidationResult,
     LocalRequest,
     LocalRequestStatus
 } from "@nmshd/consumption"
@@ -24,7 +25,7 @@ interface TestParam {
         }
     }
     expectedError?: {
-        xy?: { x: number; y?: number }
+        errorIndexPath?: number[]
         code: string
         message: string
     }
@@ -205,7 +206,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        xy: { x: 0 },
+                        errorIndexPath: [0],
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message: "The RequestItemGroup was answered as a RequestItem."
                     }
@@ -221,7 +222,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        xy: { x: 0 },
+                        errorIndexPath: [0],
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message: "The RequestItem was answered as a RequestItemGroup."
                     }
@@ -241,7 +242,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        xy: { x: 0 },
+                        errorIndexPath: [0],
                         code: "error.requests.decide.validation.invalidNumberOfItems",
                         message: "Number of items in RequestItemGroup and ResponseItemGroup do not match"
                     }
@@ -257,7 +258,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        xy: { x: 0 },
+                        errorIndexPath: [0],
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message: "The RequestItem is flagged as 'mustBeAccepted', but it was not accepted."
                     }
@@ -273,7 +274,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        xy: { x: 0 },
+                        errorIndexPath: [0],
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message:
                             "The RequestItemGroup is flagged as 'mustBeAccepted', but it was not accepted. Please accept all 'mustBeAccepted' items in this group."
@@ -290,7 +291,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        xy: { x: 0 },
+                        errorIndexPath: [0],
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message: "The RequestItem was accepted, but the parent was not accepted."
                     }
@@ -306,7 +307,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        xy: { x: 0 },
+                        errorIndexPath: [0],
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message: "The RequestItemGroup was accepted, but the parent was not accepted."
                     }
@@ -337,7 +338,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                         }
                     },
                     expectedError: {
-                        xy: { x: 0, y: 1 },
+                        errorIndexPath: [0, 1],
                         code: "error.requests.decide.validation.invalidResponseItemForRequestItem",
                         message: "The RequestItem is flagged as 'mustBeAccepted', but it was not accepted."
                     }
@@ -371,7 +372,9 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                 expect(validationResult.isError(), "expected an error, but received success").to.be.true
                 if (!validationResult.isError()) throw new Error()
 
-                if (!data.expectedError.xy) {
+                // no error path provided, so we expect the error to be at the root
+                const errorIndexPath = data.expectedError.errorIndexPath
+                if (!errorIndexPath) {
                     expect(validationResult.error.code).to.equal(data.expectedError.code)
                     expect(validationResult.error.message).to.equal(data.expectedError.message)
                     return
@@ -380,8 +383,8 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                 expect(validationResult.error.code).to.equal("inheritedFromItem")
                 expect(validationResult.error.message).to.equal("Some child items have errors.")
 
-                let childResult = validationResult.items[data.expectedError.xy.x]
-                if (data.expectedError.xy.y) childResult = childResult.items[data.expectedError.xy.y]
+                let childResult = validationResult
+                errorIndexPath.forEach((index) => (childResult = childResult.items[index] as ErrorValidationResult))
 
                 expect(childResult.isError(), "expected an error, but received success").to.be.true
                 if (!childResult.isError()) throw new Error()
