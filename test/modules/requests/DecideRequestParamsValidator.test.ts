@@ -346,7 +346,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
             ]
 
             itParam("${value.description}", [...successParams, ...errorParams], async function (data) {
-                const consumptionRequest = LocalRequest.from({
+                const localRequest = LocalRequest.from({
                     id: CoreId.from(requestId),
                     content: data.input.request,
                     createdAt: CoreDate.utc(),
@@ -357,7 +357,7 @@ export class DecideRequestParametersValidatorTests extends UnitTest {
                     statusLog: []
                 })
 
-                const validationResult = validator.validate(data.input.response, consumptionRequest)
+                const validationResult = validator.validate(data.input.response, localRequest)
 
                 if (!data.expectedError) {
                     expect(

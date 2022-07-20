@@ -24,14 +24,14 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                 it("returns 'success'", async function () {
                     const processor = createProcessor()
 
-                    const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
+                    const localRequest = undefined! // pass undefined as request since it isn't used anyway
 
                     const result = await processor.canAccept(
                         TestRequestItem.from({ mustBeAccepted: false }),
                         {
                             accept: true
                         },
-                        consumptionRequest
+                        localRequest
                     )
 
                     expect(result).to.be.a.successfulValidationResult()
@@ -42,14 +42,14 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                 it("returns 'success'", async function () {
                     const processor = createProcessor()
 
-                    const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
+                    const localRequest = undefined! // pass undefined as request since it isn't used anyway
 
                     const result = await processor.canReject(
                         TestRequestItem.from({ mustBeAccepted: false }),
                         {
                             accept: false
                         },
-                        consumptionRequest
+                        localRequest
                     )
 
                     expect(result).to.be.a.successfulValidationResult()
@@ -60,14 +60,14 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                 it("returns an AcceptResponseItem", function () {
                     const processor = createProcessor()
 
-                    const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
+                    const localRequest = undefined! // pass undefined as request since it isn't used anyway
 
                     const result = processor.accept(
                         TestRequestItem.from({ mustBeAccepted: false }),
                         {
                             accept: true
                         },
-                        consumptionRequest
+                        localRequest
                     )
 
                     expect(result).to.be.instanceOf(AcceptResponseItem)
@@ -78,14 +78,14 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                 it("returns a RejectResponseItem", function () {
                     const processor = createProcessor()
 
-                    const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
+                    const localRequest = undefined! // pass undefined as request since it isn't used anyway
 
                     const result = processor.reject(
                         TestRequestItem.from({ mustBeAccepted: false }),
                         {
                             accept: false
                         },
-                        consumptionRequest
+                        localRequest
                     )
 
                     expect(result).to.be.instanceOf(RejectResponseItem)
@@ -111,12 +111,12 @@ export class GenericRequestItemProcessorTests extends IntegrationTest {
                 it("returns 'success'", async function () {
                     const processor = createProcessor()
 
-                    const consumptionRequest = undefined! // pass undefined as request since it isn't used anyway
+                    const localRequest = undefined! // pass undefined as request since it isn't used anyway
 
                     const actual = await processor.canApplyIncomingResponseItem(
                         AcceptResponseItem.from({ result: ResponseItemResult.Accepted }),
                         TestRequestItem.from({ mustBeAccepted: false }),
-                        consumptionRequest
+                        localRequest
                     )
 
                     expect(actual.isSuccess()).to.be.true
