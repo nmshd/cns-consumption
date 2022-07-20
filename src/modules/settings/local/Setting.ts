@@ -14,7 +14,6 @@ export interface ISetting extends ICoreSynchronizable {
     reference?: ICoreId
     value: ISerializable
     createdAt: ICoreDate
-    deletedAt?: ICoreDate
     succeedsItem?: ICoreId
     succeedsAt?: ICoreDate
     metadata?: any
@@ -30,7 +29,6 @@ export class Setting extends CoreSynchronizable implements ISetting {
         nameof<Setting>((r) => r.scope),
         nameof<Setting>((r) => r.reference),
         nameof<Setting>((r) => r.createdAt),
-        nameof<Setting>((r) => r.deletedAt),
         nameof<Setting>((r) => r.succeedsItem),
         nameof<Setting>((r) => r.succeedsAt)
     ]
@@ -61,10 +59,6 @@ export class Setting extends CoreSynchronizable implements ISetting {
     @validate()
     @serialize()
     public createdAt: CoreDate
-
-    @validate({ nullable: true })
-    @serialize()
-    public deletedAt?: CoreDate
 
     @validate({ nullable: true })
     @serialize()
