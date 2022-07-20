@@ -75,7 +75,7 @@ export class DecideRequestParametersValidator {
             return ValidationResult.error(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    "The RequestItem is flagged as 'mustBeAccepted', was not accepted."
+                    "The RequestItem is flagged as 'mustBeAccepted', but it was not accepted."
                 )
             )
         }
@@ -118,7 +118,7 @@ export class DecideRequestParametersValidator {
             return ValidationResult.error(
                 new ApplicationError(
                     "error.requests.decide.validation.invalidResponseItemForRequestItem",
-                    "The RequestItemGroup is flagged as 'mustBeAccepted', was not accepted. Please accept all 'mustBeAccepted' items in this group."
+                    "The RequestItemGroup is flagged as 'mustBeAccepted', but it was not accepted. Please accept all 'mustBeAccepted' items in this group."
                 )
             )
         }
