@@ -13,6 +13,13 @@ import {
     ConsumptionIds
 } from "../../consumption"
 import { ConsumptionController } from "../../consumption/ConsumptionController"
+import {
+    AttributeCreatedEvent,
+    AttributeDeletedEvent,
+    AttributeSucceededEvent,
+    AttributeUpdatedEvent,
+    SharedAttributeCopyCreatedEvent
+} from "./events"
 import { ICreateLocalAttributeParams } from "./local/CreateLocalAttributeParams"
 import { ICreatePeerLocalAttributeParams } from "./local/CreatePeerLocalAttributeParams"
 import {
@@ -137,6 +144,7 @@ export class LocalAttributesController extends ConsumptionBaseController {
     public async createLocalAttribute(params: ICreateLocalAttributeParams): Promise<LocalAttribute> {
         const localAttribute = await LocalAttribute.fromAttribute(params.content)
         await this.attributes.create(localAttribute)
+        this.eventBus.publish(new AttributeCreatedEvent(this.identity.address.toString(), localAttribute))
         return localAttribute
     }
 
@@ -158,6 +166,7 @@ export class LocalAttributesController extends ConsumptionBaseController {
 
         const successor = await LocalAttribute.fromAttribute(parsedParams.successorContent, parsedParams.succeeds)
         await this.attributes.create(successor)
+        this.eventBus.publish(new AttributeSucceededEvent(this.identity.address.toString(), successor))
         return successor
     }
 
@@ -182,6 +191,9 @@ export class LocalAttributesController extends ConsumptionBaseController {
             parsedParams.attributeId
         )
         await this.attributes.create(sharedLocalAttributeCopy)
+        this.eventBus.publish(
+            new SharedAttributeCopyCreatedEvent(this.identity.address.toString(), sharedLocalAttributeCopy)
+        )
         return sharedLocalAttributeCopy
     }
 
@@ -216,10 +228,12 @@ export class LocalAttributesController extends ConsumptionBaseController {
             succeeds: current.succeeds
         })
         await this.attributes.update(current, updatedLocalAttribute)
+        this.eventBus.publish(new AttributeUpdatedEvent(this.identity.address.toString(), updatedLocalAttribute))
         return updatedLocalAttribute
     }
 
     public async deleteAttribute(attribute: LocalAttribute): Promise<void> {
         await this.attributes.delete(attribute)
+        this.eventBus.publish(new AttributeDeletedEvent(this.identity.address.toString(), attribute))
     }
 }
