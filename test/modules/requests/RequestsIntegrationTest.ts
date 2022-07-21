@@ -1,6 +1,6 @@
 import { IDatabaseCollection, IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
-import { EventEmitter2EventBus } from "@js-soft/ts-utils"
+import { DataEvent, EventEmitter2EventBus } from "@js-soft/ts-utils"
 import {
     ConsumptionController,
     ConsumptionIds,
@@ -1026,21 +1026,24 @@ export class RequestsThen {
         })
     }
 
-    public eventHasBeenPublished(namespace: string, data?: any): Promise<void> {
+    public eventHasBeenPublished<TEvent extends DataEvent<unknown>>(
+        eventConstructor: (new (...args: any[]) => TEvent) & { namespace: string },
+        data?: Partial<TEvent extends DataEvent<infer X> ? X : never>
+    ): Promise<void> {
         const lastEvent = this.context.eventBus.publishedEvents[this.context.eventBus.publishedEvents.length - 1]
+        expect(lastEvent.namespace).to.equal(eventConstructor.namespace)
 
-        expect(lastEvent.namespace).to.equal(namespace)
-
-        if (data) {
-            expect(lastEvent.data).to.containSubset(data)
-        }
+        if (data) expect(lastEvent.data).to.containSubset(data)
 
         return Promise.resolve()
     }
 
-    public eventsHaveBeenPublished(...events: string[]): Promise<void> {
-        const eventNamespaces = this.context.eventBus.publishedEvents.map((event) => event.namespace)
-        expect(eventNamespaces).to.deep.equal(events)
+    public eventsHaveBeenPublished(
+        ...eventContructors: ((new (...args: any[]) => DataEvent<unknown>) & { namespace: string })[]
+    ): Promise<void> {
+        const eventNamespaces = this.context.eventBus.publishedEvents.map((e) => e.namespace)
+        const constructorNamespaces = eventContructors.map((c) => c.namespace)
+        expect(eventNamespaces).to.deep.equal(constructorNamespaces)
 
         return Promise.resolve()
     }

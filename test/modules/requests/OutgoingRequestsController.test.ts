@@ -8,6 +8,9 @@ import {
     IRequestWithoutId,
     LocalRequest,
     LocalRequestStatus,
+    OutgoingRequestCreatedEvent,
+    OutgoingRequestFromRelationshipCreationChangeCreatedAndCompletedEvent,
+    OutgoingRequestStatusChangedEvent,
     ValidationResult
 } from "@nmshd/consumption"
 import {
@@ -230,13 +233,13 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                     await Then.theRequestIsInStatus(LocalRequestStatus.Draft)
                     await Then.theRequestDoesNotHaveSourceSet()
                     await Then.theNewRequestIsPersistedInTheDatabase()
-                    await Then.eventHasBeenPublished("consumption.outgoingRequestCreated")
+                    await Then.eventHasBeenPublished(OutgoingRequestCreatedEvent)
                 })
 
                 it("calls canCreate", async function () {
                     await When.iCreateAnOutgoingRequest()
                     await Then.canCreateIsBeingCalled()
-                    await Then.eventHasBeenPublished("consumption.outgoingRequestCreated")
+                    await Then.eventHasBeenPublished(OutgoingRequestCreatedEvent)
                 })
 
                 it("throws on syntactically invalid input", async function () {
@@ -267,7 +270,7 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                     await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "RelationshipChange" })
                     await Then.theNewRequestIsPersistedInTheDatabase()
                     await Then.eventHasBeenPublished(
-                        "consumption.outgoingRequestFromRelationshipCreationChangeCreatedAndCompleted"
+                        OutgoingRequestFromRelationshipCreationChangeCreatedAndCompletedEvent
                     )
                 })
 
@@ -280,7 +283,7 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                     })
                     await Then.theRequestHasTheId("requestIdReceivedFromPeer")
                     await Then.eventHasBeenPublished(
-                        "consumption.outgoingRequestFromRelationshipCreationChangeCreatedAndCompleted"
+                        OutgoingRequestFromRelationshipCreationChangeCreatedAndCompletedEvent
                     )
                 })
 
@@ -297,7 +300,7 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                     await Then.theRequestMovesToStatus(LocalRequestStatus.Open)
                     await Then.theRequestHasItsSourcePropertySet()
                     await Then.theChangesArePersistedInTheDatabase()
-                    await Then.eventHasBeenPublished("consumption.outgoingRequestStatusChanged", {
+                    await Then.eventHasBeenPublished(OutgoingRequestStatusChangedEvent, {
                         newStatus: LocalRequestStatus.Open
                     })
                 })
@@ -323,7 +326,7 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                         type: "Message",
                         reference: source.id
                     })
-                    await Then.eventHasBeenPublished("consumption.outgoingRequestStatusChanged", {
+                    await Then.eventHasBeenPublished(OutgoingRequestStatusChangedEvent, {
                         newStatus: LocalRequestStatus.Open
                     })
                 })
@@ -353,7 +356,7 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                     await Then.theRequestHasItsResponsePropertySetCorrectly(ResponseItemResult.Accepted)
                     await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "Message" })
                     await Then.theNewRequestIsPersistedInTheDatabase()
-                    await Then.eventHasBeenPublished("consumption.outgoingRequestStatusChanged", {
+                    await Then.eventHasBeenPublished(OutgoingRequestStatusChangedEvent, {
                         newStatus: LocalRequestStatus.Completed
                     })
                 })
@@ -459,7 +462,7 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                         })
                         await When.iCompleteTheOutgoingRequestWith({ receivedResponse: testParams.response })
                         await Then.applyIncomingResponseItemIsCalledOnTheRequestItemProcessor(testParams.numberOfCalls)
-                        await Then.eventHasBeenPublished("consumption.outgoingRequestStatusChanged", {
+                        await Then.eventHasBeenPublished(OutgoingRequestStatusChangedEvent, {
                             newStatus: LocalRequestStatus.Completed
                         })
                     }
