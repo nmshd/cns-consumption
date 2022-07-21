@@ -1,9 +1,11 @@
 import {
+    AbstractAttributeValue,
     IdentityAttribute,
     ProposeAttributeAcceptResponseItem,
     ProposeAttributeRequestItem,
     RejectResponseItem,
     RelationshipAttribute,
+    RelationshipAttributeQuery,
     Request,
     ResponseItemResult
 } from "@nmshd/content"
@@ -28,9 +30,45 @@ export class ProposeAttributeRequestItemProcessor extends GenericRequestItemProc
         _request: Request,
         recipient: CoreAddress
     ): ValidationResult {
-        const queryValidationResult = validateQuery(requestItem.query, this.currentIdentityAddress, recipient)
+        const queryValidationResult = this.validateQuery(requestItem, recipient)
         if (queryValidationResult.isError()) {
             return queryValidationResult
+        }
+
+        const attributeValidationResult = this.validateAttribute(requestItem.attribute)
+        if (attributeValidationResult.isError()) {
+            return attributeValidationResult
+        }
+
+        return ValidationResult.success()
+    }
+
+    private validateAttribute(
+        attribute: IdentityAttribute<AbstractAttributeValue> | RelationshipAttribute<AbstractAttributeValue>
+    ) {
+        if (attribute.owner.toString() !== "") {
+            return ValidationResult.error(
+                ConsumptionErrors.requests.invalidRequestItem(
+                    "The owner of the given attribute can only be an empty string. This is because you can only propose Attributes where the recipient of the Request is the owner anyway. And in order to avoid mistakes, the owner will be automatically filled for you."
+                )
+            )
+        }
+
+        return ValidationResult.success()
+    }
+
+    private validateQuery(requestItem: ProposeAttributeRequestItem, recipient: CoreAddress) {
+        const commonQueryValidationResult = validateQuery(requestItem.query, this.currentIdentityAddress, recipient)
+        if (commonQueryValidationResult.isError()) {
+            return commonQueryValidationResult
+        }
+
+        if (requestItem.query instanceof RelationshipAttributeQuery && requestItem.query.owner.toString() !== "") {
+            return ValidationResult.error(
+                ConsumptionErrors.requests.invalidRequestItem(
+                    "The owner of the given query can only be an empty string. This is because you can only propose Attributes where the recipient of the Request is the owner anyway. And in order to avoid mistakes, the owner will be automatically filled for you."
+                )
+            )
         }
 
         return ValidationResult.success()
@@ -44,24 +82,28 @@ export class ProposeAttributeRequestItemProcessor extends GenericRequestItemProc
         const parsedParams: AcceptProposeAttributeRequestItemParameters =
             AcceptProposeAttributeRequestItemParameters.from(params)
 
+        let attribute = parsedParams.attribute
+
         if (parsedParams.attributeId) {
-            const foundAttribute = await this.consumptionController.attributes.getLocalAttribute(
+            const localAttribute = await this.consumptionController.attributes.getLocalAttribute(
                 parsedParams.attributeId
             )
 
-            if (!foundAttribute) {
+            if (!localAttribute) {
                 return ValidationResult.error(
                     TransportErrors.general.recordNotFound(LocalAttribute, requestInfo.id.toString())
                 )
             }
 
-            if (!this.accountController.identity.isMe(foundAttribute.content.owner)) {
-                return ValidationResult.error(
-                    ConsumptionErrors.requests.invalidRequestItem(
-                        "The given Attribute belongs to someone else. You can only share own Attributes."
-                    )
+            attribute = localAttribute.content
+        }
+
+        if (!this.accountController.identity.isMe(attribute!.owner)) {
+            return ValidationResult.error(
+                ConsumptionErrors.requests.invalidRequestItem(
+                    "The given Attribute belongs to someone else. You can only share own Attributes."
                 )
-            }
+            )
         }
 
         return ValidationResult.success()
