@@ -61,7 +61,7 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
                         mustBeAccepted: false,
                         attribute: TestObjectFactory.createIdentityAttribute({
                             value: GivenName.fromAny({ value: "AGivenName" }),
-                            owner: recipientAddress
+                            owner: CoreAddress.from("")
                         }),
                         query: IdentityAttributeQuery.from({
                             valueType: "GivenName"
@@ -84,12 +84,12 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
                         mustBeAccepted: false,
                         attribute: TestObjectFactory.createRelationshipAttribute({
                             value: GivenName.fromAny({ value: "AGivenName" }),
-                            owner: recipientAddress
+                            owner: CoreAddress.from("")
                         }),
                         query: RelationshipAttributeQuery.from({
                             valueType: "GivenName",
                             key: "aKey",
-                            owner: accountController.identity.address,
+                            owner: CoreAddress.from(""),
                             attributeCreationHints: {
                                 title: "aTitle",
                                 confidentiality: RelationshipAttributeConfidentiality.Public
@@ -106,15 +106,75 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
                     expect(result).to.be.a.successfulValidationResult()
                 })
 
+                it("returns an error when passing anything other than an empty string as an owner into 'attribute'", function () {
+                    const recipientAddress = CoreAddress.from("recipientAddress")
+
+                    const requestItem = ProposeAttributeRequestItem.from({
+                        mustBeAccepted: false,
+                        attribute: TestObjectFactory.createRelationshipAttribute({
+                            value: GivenName.fromAny({ value: "AGivenName" }),
+                            owner: recipientAddress
+                        }),
+                        query: RelationshipAttributeQuery.from({
+                            valueType: "GivenName",
+                            key: "aKey",
+                            owner: CoreAddress.from(""),
+                            attributeCreationHints: {
+                                title: "aTitle",
+                                confidentiality: RelationshipAttributeConfidentiality.Public
+                            }
+                        })
+                    })
+
+                    const result = processor.canCreateOutgoingRequestItem(
+                        requestItem,
+                        Request.from({ items: [requestItem] }),
+                        recipientAddress
+                    )
+
+                    expect(result).to.be.an.errorValidationResult({
+                        code: "error.consumption.requests.invalidRequestItem"
+                    })
+                })
+
+                it("returns an error when passing anything other than an empty string as an owner into 'query'", function () {
+                    const recipientAddress = CoreAddress.from("recipientAddress")
+
+                    const requestItem = ProposeAttributeRequestItem.from({
+                        mustBeAccepted: false,
+                        attribute: TestObjectFactory.createRelationshipAttribute({
+                            value: GivenName.fromAny({ value: "AGivenName" }),
+                            owner: CoreAddress.from("")
+                        }),
+                        query: RelationshipAttributeQuery.from({
+                            valueType: "GivenName",
+                            key: "aKey",
+                            owner: recipientAddress,
+                            attributeCreationHints: {
+                                title: "aTitle",
+                                confidentiality: RelationshipAttributeConfidentiality.Public
+                            }
+                        })
+                    })
+
+                    const result = processor.canCreateOutgoingRequestItem(
+                        requestItem,
+                        Request.from({ items: [requestItem] }),
+                        recipientAddress
+                    )
+
+                    expect(result).to.be.an.errorValidationResult({
+                        code: "error.consumption.requests.invalidRequestItem"
+                    })
+                })
+
                 describe("query", function () {
                     describe("IdentityAttributeQuery", function () {
                         it("simple query", function () {
-                            const recipientAddress = CoreAddress.from("recipientAddress")
-
                             const requestItem = ProposeAttributeRequestItem.from({
                                 mustBeAccepted: false,
                                 attribute: TestObjectFactory.createIdentityAttribute({
-                                    owner: recipientAddress
+                                    owner: CoreAddress.from("")
                                 }),
                                 query: IdentityAttributeQuery.from({
                                     valueType: "GivenName"
@@ -143,7 +203,6 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
                         interface TestParams {
                             description: string
                             input: {
-                                owner: TestIdentity
                                 thirdParty?: TestIdentity
                             }
                             expectedOutput:
@@ -155,40 +214,15 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
 
                         const testParams: TestParams[] = [
                             {
-                                description: "query with owner=self, used for e.g. electric meter number",
-                                input: {
-                                    owner: TestIdentity.Self
-                                },
+                                description: "simple query",
+                                input: {},
                                 expectedOutput: {
                                     success: true
-                                }
-                            },
-                            {
-                                description:
-                                    "query with owner=thirdParty=someThirdParty, used for e.g. the bonuscard-number of a different company",
-                                input: {
-                                    owner: TestIdentity.ThirdParty,
-                                    thirdParty: TestIdentity.ThirdParty
-                                },
-                                expectedOutput: {
-                                    success: true
-                                }
-                            },
-                            {
-                                description: "cannot query own attributes from third party",
-                                input: {
-                                    owner: TestIdentity.Self,
-                                    thirdParty: TestIdentity.ThirdParty
-                                },
-                                expectedOutput: {
-                                    errorCode: "error.consumption.requests.invalidRequestItem",
-                                    errorMessage: "Cannot query own Attributes from a third party."
                                 }
                             },
                             {
                                 description: "cannot query with thirdParty=self",
                                 input: {
-                                    owner: TestIdentity.Self,
                                     thirdParty: TestIdentity.Self
                                 },
                                 expectedOutput: {
@@ -199,7 +233,6 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
                             {
                                 description: "cannot query with thirdParty = recipient",
                                 input: {
-                                    owner: TestIdentity.Recipient,
                                     thirdParty: TestIdentity.Recipient
                                 },
                                 expectedOutput: {
@@ -231,7 +264,7 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
 
                             const query = RelationshipAttributeQuery.from({
                                 "@type": "RelationshipAttributeQuery",
-                                owner: translateTestIdentityToAddress(testParams.input.owner)!,
+                                owner: "",
                                 thirdParty: translateTestIdentityToAddress(testParams.input.thirdParty),
                                 key: "aKey",
                                 valueType: "ProprietaryString",
@@ -247,7 +280,7 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
                                 query: query,
                                 attribute: TestObjectFactory.createRelationshipAttribute({
                                     value: ProprietaryString.fromAny({ value: "AGivenName" }),
-                                    owner: consumptionController.accountController.identity.address
+                                    owner: CoreAddress.from("")
                                 })
                             })
 
@@ -315,7 +348,7 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
                     expect(result).to.be.a.successfulValidationResult()
                 })
 
-                it("returns success when called with a new Attribute", async function () {
+                it("returns success when called with a new own Attribute", async function () {
                     const requestItem = ProposeAttributeRequestItem.from({
                         mustBeAccepted: true,
                         query: IdentityAttributeQuery.from({ valueType: "GivenName" }),
@@ -420,6 +453,41 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
                     const acceptParams: AcceptProposeAttributeRequestItemParametersJSON = {
                         accept: true,
                         attributeId: idOfAttributeOfOtherIdentity.toString()
+                    }
+
+                    const result = await processor.canAccept(requestItem, acceptParams, request)
+
+                    expect(result).to.be.an.errorValidationResult({
+                        code: "error.consumption.requests.invalidRequestItem",
+                        message: /The given Attribute belongs to someone else. You can only share own Attributes./
+                    })
+                })
+
+                it("returns an error when the given Attribute's owner is not the current identity", async function () {
+                    const someOtherIdentity = CoreAddress.from("id1")
+
+                    const requestItem = ProposeAttributeRequestItem.from({
+                        mustBeAccepted: true,
+                        query: IdentityAttributeQuery.from({ valueType: "GivenName" }),
+                        attribute: TestObjectFactory.createIdentityAttribute()
+                    })
+                    const requestId = await ConsumptionIds.request.generate()
+                    const request = LocalRequest.from({
+                        id: requestId,
+                        createdAt: CoreDate.utc(),
+                        isOwn: false,
+                        peer: accountController.identity.address,
+                        status: LocalRequestStatus.DecisionRequired,
+                        content: Request.from({
+                            id: requestId,
+                            items: [requestItem]
+                        }),
+                        statusLog: []
+                    })
+
+                    const acceptParams: AcceptProposeAttributeRequestItemParametersJSON = {
+                        accept: true,
+                        attribute: TestObjectFactory.createIdentityAttribute({ owner: someOtherIdentity }).toJSON()
                     }
 
                     const result = await processor.canAccept(requestItem, acceptParams, request)
