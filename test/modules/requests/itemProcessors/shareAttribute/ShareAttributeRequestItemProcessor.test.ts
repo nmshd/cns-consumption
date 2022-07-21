@@ -1,3 +1,4 @@
+import { EventEmitter2EventBus } from "@js-soft/ts-utils"
 import {
     AcceptShareAttributeRequestItemParametersJSON,
     ConsumptionController,
@@ -23,7 +24,6 @@ import { expect } from "chai"
 import itParam from "mocha-param"
 import { IntegrationTest } from "../../../../core/IntegrationTest"
 import { TestUtil } from "../../../../core/TestUtil"
-import { MockEventBus } from "../../MockEventBus"
 import { TestObjectFactory } from "../../testHelpers/TestObjectFactory"
 
 class MockOutgoingRequestsController extends OutgoingRequestsController {
@@ -37,7 +37,9 @@ class MockOutgoingRequestsController extends OutgoingRequestsController {
         processorRegistry: RequestItemProcessorRegistry,
         parent: ConsumptionController
     ) {
-        super(localRequests, processorRegistry, parent, new MockEventBus(), { address: CoreAddress.from("address") })
+        super(localRequests, processorRegistry, parent, new EventEmitter2EventBus(), {
+            address: CoreAddress.from("address")
+        })
     }
 
     public override async create(params: ICreateOutgoingRequestParameters): Promise<LocalRequest> {
