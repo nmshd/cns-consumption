@@ -140,6 +140,8 @@ export class RequestsTestsContext {
         this.actionToTry = undefined
 
         TestRequestItemProcessor.numberOfApplyIncomingResponseItemCalls = 0
+
+        this.eventBus.clearPublishedEvents()
     }
 
     public givenLocalRequest?: LocalRequest
@@ -1019,6 +1021,10 @@ export class RequestsThen {
         await TestUtil.expectThrowsAsync(this.context.actionToTry!, (error: Error) => {
             expect((error as any).code).to.be.equal(code)
         })
+    }
+
+    public eventsHaveBeenCalled(...events: string[]): void {
+        expect(this.context.eventBus.publishedEvents).to.deep.equal(events)
     }
 }
 
