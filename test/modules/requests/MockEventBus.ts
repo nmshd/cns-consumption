@@ -6,6 +6,10 @@ export class MockEventBus extends EventBus {
         return this._publishedEvents
     }
 
+    public clearPublishedEvents(): void {
+        this._publishedEvents.splice(0)
+    }
+
     public subscribe<TEvent = any>(
         _subscriptionTarget: SubscriptionTarget<TEvent>,
         _handler: EventHandler<TEvent>
@@ -31,7 +35,7 @@ export class MockEventBus extends EventBus {
         this._publishedEvents.push(event.namespace)
     }
 
-    public close(): void | Promise<void> {
-        this._publishedEvents.splice(0)
+    public close(): void {
+        // noop
     }
 }
