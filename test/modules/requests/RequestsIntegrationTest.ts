@@ -1023,7 +1023,7 @@ export class RequestsThen {
         })
     }
 
-    public eventsHaveBeenCalled(...events: string[]): void {
+    public eventsHaveBeenPublished(...events: string[]): void {
         expect(this.context.eventBus.publishedEvents).to.deep.equal(events)
     }
 }
