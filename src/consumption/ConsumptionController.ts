@@ -51,7 +51,11 @@ export class ConsumptionController {
     public async init(
         requestItemProcessorOverrides = new Map<RequestItemConstructor, ProcessorConstructor>()
     ): Promise<ConsumptionController> {
-        this._attributes = await new LocalAttributesController(this).init()
+        this._attributes = await new LocalAttributesController(
+            this,
+            this.transport.eventBus,
+            this.accountController.identity
+        ).init()
         this._drafts = await new DraftsController(this).init()
 
         const processorRegistry = new RequestItemProcessorRegistry(this, this.getDefaultProcessors())
@@ -63,12 +67,16 @@ export class ConsumptionController {
         this._outgoingRequests = await new OutgoingRequestsController(
             await this.accountController.getSynchronizedCollection("Requests"),
             processorRegistry,
-            this
+            this,
+            this.transport.eventBus,
+            this.accountController.identity
         ).init()
         this._incomingRequests = await new IncomingRequestsController(
             await this.accountController.getSynchronizedCollection("Requests"),
             processorRegistry,
-            this
+            this,
+            this.transport.eventBus,
+            this.accountController.identity
         ).init()
         this._settings = await new SettingsController(this).init()
         return this

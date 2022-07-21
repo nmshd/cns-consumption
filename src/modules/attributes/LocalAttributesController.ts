@@ -1,10 +1,11 @@
+import { EventBus } from "@js-soft/ts-utils"
 import {
     IdentityAttributeQuery,
     IIdentityAttributeQuery,
     IRelationshipAttributeQuery,
     RelationshipAttributeQuery
 } from "@nmshd/content"
-import { CoreDate, CoreId, SynchronizedCollection, TransportErrors } from "@nmshd/transport"
+import { CoreAddress, CoreDate, CoreId, SynchronizedCollection, TransportErrors } from "@nmshd/transport"
 import { nameof } from "ts-simple-nameof"
 import {
     ConsumptionBaseController,
@@ -35,7 +36,11 @@ import { IUpdateLocalAttributeParams } from "./local/UpdateLocalAttributeParams"
 export class LocalAttributesController extends ConsumptionBaseController {
     private attributes: SynchronizedCollection
 
-    public constructor(parent: ConsumptionController) {
+    public constructor(
+        parent: ConsumptionController,
+        private readonly eventBus: EventBus,
+        private readonly identity: { address: CoreAddress }
+    ) {
         super(ConsumptionControllerName.LocalAttributesController, parent)
     }
 

@@ -1,3 +1,4 @@
+import { EventBus } from "@js-soft/ts-utils"
 import {
     RequestItem,
     RequestItemGroup,
@@ -7,6 +8,7 @@ import {
     ResponseResult
 } from "@nmshd/content"
 import {
+    CoreAddress,
     CoreDate,
     CoreId,
     ICoreAddress,
@@ -62,7 +64,9 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     public constructor(
         private readonly localRequests: SynchronizedCollection,
         private readonly processorRegistry: RequestItemProcessorRegistry,
-        parent: ConsumptionController
+        parent: ConsumptionController,
+        private readonly eventBus: EventBus,
+        private readonly identity: { address: CoreAddress }
     ) {
         super(ConsumptionControllerName.RequestsController, parent)
     }

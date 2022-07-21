@@ -1,6 +1,5 @@
 import { ILogger } from "@js-soft/logging-abstractions"
-import { EventBus } from "@js-soft/ts-utils"
-import { CoreSerializable, IdentityController, TransportLoggerFactory } from "@nmshd/transport"
+import { CoreSerializable, TransportLoggerFactory } from "@nmshd/transport"
 import { ConsumptionController } from "./ConsumptionController"
 import { ConsumptionControllerName } from "./ConsumptionControllerName"
 
@@ -12,14 +11,6 @@ export class ConsumptionBaseController {
 
     public get parent(): ConsumptionController {
         return this._parent
-    }
-
-    protected get identity(): IdentityController {
-        return this._parent.accountController.identity
-    }
-
-    protected get eventBus(): EventBus {
-        return this._parent.transport.eventBus
     }
 
     public constructor(controllerName: ConsumptionControllerName, protected _parent: ConsumptionController) {

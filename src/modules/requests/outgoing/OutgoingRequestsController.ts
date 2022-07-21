@@ -1,3 +1,4 @@
+import { EventBus } from "@js-soft/ts-utils"
 import {
     RelationshipCreationChangeRequestBody,
     RelationshipTemplateBody,
@@ -52,7 +53,9 @@ export class OutgoingRequestsController extends ConsumptionBaseController {
     public constructor(
         private readonly localRequests: SynchronizedCollection,
         private readonly processorRegistry: RequestItemProcessorRegistry,
-        parent: ConsumptionController
+        parent: ConsumptionController,
+        private readonly eventBus: EventBus,
+        private readonly identity: { address: CoreAddress }
     ) {
         super(ConsumptionControllerName.RequestsController, parent)
     }
