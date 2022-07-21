@@ -1,5 +1,6 @@
 import { IDatabaseCollection, IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
+import { DataEvent, EventEmitter2EventBus } from "@js-soft/ts-utils"
 import {
     ConsumptionController,
     ConsumptionIds,
@@ -45,11 +46,14 @@ import {
     Message,
     RelationshipChangeType,
     RelationshipTemplate,
-    SynchronizedCollection
+    SynchronizedCollection,
+    Transport
 } from "@nmshd/transport"
 import { expect } from "chai"
+
 import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
+import { MockEventBus } from "../MockEventBus"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
 import { TestRequestItem } from "./testHelpers/TestRequestItem"
 import { TestRequestItemProcessor } from "./testHelpers/TestRequestItemProcessor"
@@ -75,17 +79,23 @@ export class RequestsTestsContext {
     public incomingRequestsController: IncomingRequestsController
     public outgoingRequestsController: OutgoingRequestsController
     public currentIdentity: CoreAddress
+    public mockEventBus = new MockEventBus()
 
     private constructor() {
         // hide constructor
     }
 
-    public static async create(dbConnection: IDatabaseConnection): Promise<RequestsTestsContext> {
+    public static async create(
+        dbConnection: IDatabaseConnection,
+        config: IConfigOverwrite
+    ): Promise<RequestsTestsContext> {
         const context = new RequestsTestsContext()
 
+        const transport = await new Transport(dbConnection, config, new EventEmitter2EventBus()).init()
         const database = await dbConnection.getDatabase(Math.random().toString(36).substring(7))
         const collection = new SynchronizedCollection(await database.getCollection("Requests"), 0)
         const fakeConsumptionController = {
+            transport,
             accountController: {
                 identity: { address: CoreAddress.from("anAddress") } as IdentityController
             } as AccountController
@@ -97,10 +107,22 @@ export class RequestsTestsContext {
 
         context.currentIdentity = CoreAddress.from("id12345")
 
-        context.outgoingRequestsController = new OutgoingRequestsController(collection, processorRegistry, undefined!)
+        context.outgoingRequestsController = new OutgoingRequestsController(
+            collection,
+            processorRegistry,
+            undefined!,
+            context.mockEventBus,
+            { address: CoreAddress.from("anAddress") }
+        )
 
-        context.incomingRequestsController = new IncomingRequestsController(collection, processorRegistry, undefined!)
-        context.requestsCollection = context.incomingRequestsController["consumptionRequests"]
+        context.incomingRequestsController = new IncomingRequestsController(
+            collection,
+            processorRegistry,
+            undefined!,
+            context.mockEventBus,
+            { address: CoreAddress.from("anAddress") }
+        )
+        context.requestsCollection = context.incomingRequestsController["localRequests"]
 
         const originalCanCreate = context.outgoingRequestsController.canCreate
         context.outgoingRequestsController.canCreate = (params: ICreateOutgoingRequestParameters) => {
@@ -119,11 +141,13 @@ export class RequestsTestsContext {
         this.actionToTry = undefined
 
         TestRequestItemProcessor.numberOfApplyIncomingResponseItemCalls = 0
+
+        this.mockEventBus.clearPublishedEvents()
     }
 
     public givenLocalRequest?: LocalRequest
     public localRequestAfterAction?: LocalRequest
-    public consumptionRequestsAfterAction?: LocalRequest[]
+    public localRequestsAfterAction?: LocalRequest[]
     public validationResult?: ValidationResult
     public canCreateWasCalled = false
     public actionToTry?: () => Promise<void>
@@ -178,34 +202,34 @@ export class RequestsGiven {
 
         const requestSource = TestObjectFactory.createIncomingMessage(this.context.currentIdentity)
 
-        const consumptionRequest = await this.context.incomingRequestsController.received({
+        const localRequest = await this.context.incomingRequestsController.received({
             receivedRequest: params.content,
             requestSourceObject: requestSource
         })
 
-        await this.moveIncomingRequestToStatus(consumptionRequest, params.status)
+        await this.moveIncomingRequestToStatus(localRequest, params.status)
 
-        this.context.givenLocalRequest = consumptionRequest
+        this.context.givenLocalRequest = localRequest
 
-        return consumptionRequest
+        return localRequest
     }
 
     public async anIncomingRequestInStatus(status: LocalRequestStatus): Promise<void> {
         await this.anIncomingRequestWith({ status: status })
     }
 
-    private async moveIncomingRequestToStatus(consumptionRequest: LocalRequest, status: LocalRequestStatus) {
-        if (consumptionRequest.status === status) return
+    private async moveIncomingRequestToStatus(localRequest: LocalRequest, status: LocalRequestStatus) {
+        if (localRequest.status === status) return
 
-        if (isStatusAAfterStatusB(status, consumptionRequest.status)) {
-            consumptionRequest = await this.context.incomingRequestsController.checkPrerequisites({
-                requestId: consumptionRequest.id
+        if (isStatusAAfterStatusB(status, localRequest.status)) {
+            localRequest = await this.context.incomingRequestsController.checkPrerequisites({
+                requestId: localRequest.id
             })
         }
 
-        if (isStatusAAfterStatusB(status, consumptionRequest.status)) {
-            consumptionRequest = await this.context.incomingRequestsController.accept({
-                requestId: consumptionRequest.id.toString(),
+        if (isStatusAAfterStatusB(status, localRequest.status)) {
+            localRequest = await this.context.incomingRequestsController.accept({
+                requestId: localRequest.id.toString(),
                 items: [
                     {
                         accept: true
@@ -214,9 +238,9 @@ export class RequestsGiven {
             })
         }
 
-        if (isStatusAAfterStatusB(status, consumptionRequest.status)) {
-            consumptionRequest = await this.context.incomingRequestsController.complete({
-                requestId: consumptionRequest.id,
+        if (isStatusAAfterStatusB(status, localRequest.status)) {
+            localRequest = await this.context.incomingRequestsController.complete({
+                requestId: localRequest.id,
                 responseSourceObject: TestObjectFactory.createOutgoingIMessage(this.context.currentIdentity)
             })
         }
@@ -253,12 +277,12 @@ export class RequestsGiven {
         return this.context.givenLocalRequest
     }
 
-    private async moveOutgoingRequestToStatus(consumptionRequest: LocalRequest, status: LocalRequestStatus) {
-        if (consumptionRequest.status === status) return
+    private async moveOutgoingRequestToStatus(localRequest: LocalRequest, status: LocalRequestStatus) {
+        if (localRequest.status === status) return
 
         if (isStatusAAfterStatusB(status, LocalRequestStatus.Draft)) {
             await this.context.outgoingRequestsController.sent({
-                requestId: consumptionRequest.id,
+                requestId: localRequest.id,
                 requestSourceObject: TestObjectFactory.createOutgoingIMessage(this.context.currentIdentity)
             })
         }
@@ -695,15 +719,11 @@ export class RequestsWhen {
     }
 
     public async iGetIncomingRequestsWithTheQuery(query?: any): Promise<void> {
-        this.context.consumptionRequestsAfterAction = await this.context.incomingRequestsController.getIncomingRequests(
-            query
-        )
+        this.context.localRequestsAfterAction = await this.context.incomingRequestsController.getIncomingRequests(query)
     }
 
     public async iGetOutgoingRequestsWithTheQuery(query?: any): Promise<void> {
-        this.context.consumptionRequestsAfterAction = await this.context.outgoingRequestsController.getOutgoingRequests(
-            query
-        )
+        this.context.localRequestsAfterAction = await this.context.outgoingRequestsController.getOutgoingRequests(query)
     }
 
     public async iGetTheIncomingRequestWith(id: CoreId): Promise<void> {
@@ -850,7 +870,7 @@ export class RequestsThen {
     }
 
     public theNumberOfReturnedRequestsIs(n: number): Promise<void> {
-        expect(this.context.consumptionRequestsAfterAction).to.have.lengthOf(n)
+        expect(this.context.localRequestsAfterAction).to.have.lengthOf(n)
         return Promise.resolve()
     }
 
@@ -1002,6 +1022,21 @@ export class RequestsThen {
         await TestUtil.expectThrowsAsync(this.context.actionToTry!, (error: Error) => {
             expect((error as any).code).to.be.equal(code)
         })
+    }
+
+    public eventHasBeenPublished<TEvent extends DataEvent<unknown>>(
+        eventConstructor: (new (...args: any[]) => TEvent) & { namespace: string },
+        data?: Partial<TEvent extends DataEvent<infer X> ? X : never>
+    ): Promise<void> {
+        this.context.mockEventBus.expectLastPublishedEvent(eventConstructor, data)
+        return Promise.resolve()
+    }
+
+    public eventsHaveBeenPublished(
+        ...eventContructors: ((new (...args: any[]) => DataEvent<unknown>) & { namespace: string })[]
+    ): Promise<void> {
+        this.context.mockEventBus.expectPublishedEvents(...eventContructors)
+        return Promise.resolve()
     }
 }
 

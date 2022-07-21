@@ -1,3 +1,4 @@
+import { EventBus } from "@js-soft/ts-utils"
 import {
     RequestItem,
     RequestItemGroup,
@@ -7,6 +8,7 @@ import {
     ResponseResult
 } from "@nmshd/content"
 import {
+    CoreAddress,
     CoreDate,
     CoreId,
     ICoreAddress,
@@ -24,6 +26,7 @@ import {
     ConsumptionIds
 } from "../../../consumption"
 import { ConsumptionController } from "../../../consumption/ConsumptionController"
+import { IncomingRequestReceivedEvent, IncomingRequestStatusChangedEvent } from "../events"
 import { RequestItemProcessorRegistry } from "../itemProcessors/RequestItemProcessorRegistry"
 import { ValidationResult } from "../itemProcessors/ValidationResult"
 import { ILocalRequestSource, LocalRequest } from "../local/LocalRequest"
@@ -59,9 +62,11 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         new DecideRequestParametersValidator()
 
     public constructor(
-        private readonly consumptionRequests: SynchronizedCollection,
+        private readonly localRequests: SynchronizedCollection,
         private readonly processorRegistry: RequestItemProcessorRegistry,
-        parent: ConsumptionController
+        parent: ConsumptionController,
+        private readonly eventBus: EventBus,
+        private readonly identity: { address: CoreAddress }
     ) {
         super(ConsumptionControllerName.RequestsController, parent)
     }
@@ -71,7 +76,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
         const infoFromSource = this.extractInfoFromSource(parsedParams.requestSourceObject)
 
-        const consumptionRequest = LocalRequest.from({
+        const request = LocalRequest.from({
             id: parsedParams.receivedRequest.id ?? (await ConsumptionIds.request.generate()),
             createdAt: CoreDate.utc(),
             status: LocalRequestStatus.Open,
@@ -82,9 +87,11 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             statusLog: []
         })
 
-        await this.consumptionRequests.create(consumptionRequest)
+        await this.localRequests.create(request)
 
-        return consumptionRequest
+        this.eventBus.publish(new IncomingRequestReceivedEvent(this.identity.address.toString(), request))
+
+        return request
     }
 
     private extractInfoFromSource(source: Message | RelationshipTemplate): InfoFromSource {
@@ -150,6 +157,14 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
         await this.update(request)
 
+        this.eventBus.publish(
+            new IncomingRequestStatusChangedEvent(this.identity.address.toString(), {
+                request,
+                oldStatus: LocalRequestStatus.Open,
+                newStatus: request.status
+            })
+        )
+
         return request
     }
 
@@ -163,6 +178,14 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
         request.changeStatus(LocalRequestStatus.ManualDecisionRequired)
         await this.update(request)
+
+        this.eventBus.publish(
+            new IncomingRequestStatusChangedEvent(this.identity.address.toString(), {
+                request: request,
+                oldStatus: LocalRequestStatus.DecisionRequired,
+                newStatus: request.status
+            })
+        )
 
         return request
     }
@@ -273,22 +296,31 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     }
 
     private async decide(params: InternalDecideRequestParametersJSON) {
-        const consumptionRequest = await this.getOrThrow(params.requestId)
+        const request = await this.getOrThrow(params.requestId)
 
         this.assertRequestStatus(
-            consumptionRequest,
+            request,
             LocalRequestStatus.DecisionRequired,
             LocalRequestStatus.ManualDecisionRequired
         )
 
-        const localResponse = await this.createLocalResponse(params, consumptionRequest)
+        const localResponse = await this.createLocalResponse(params, request)
+        const oldStatus = request.status
 
-        consumptionRequest.response = localResponse
-        consumptionRequest.changeStatus(LocalRequestStatus.Decided)
+        request.response = localResponse
+        request.changeStatus(LocalRequestStatus.Decided)
 
-        await this.update(consumptionRequest)
+        await this.update(request)
 
-        return consumptionRequest
+        this.eventBus.publish(
+            new IncomingRequestStatusChangedEvent(this.identity.address.toString(), {
+                request: request,
+                oldStatus,
+                newStatus: request.status
+            })
+        )
+
+        return request
     }
 
     private async createLocalResponse(params: InternalDecideRequestParametersJSON, request: LocalRequest) {
@@ -404,6 +436,14 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
         await this.update(request)
 
+        this.eventBus.publish(
+            new IncomingRequestStatusChangedEvent(this.identity.address.toString(), {
+                request: request,
+                oldStatus: LocalRequestStatus.Decided,
+                newStatus: request.status
+            })
+        )
+
         return request
     }
 
@@ -411,14 +451,14 @@ export class IncomingRequestsController extends ConsumptionBaseController {
         query ??= {}
         query.isOwn = false
 
-        const requestDocs = await this.consumptionRequests.find(query)
+        const requestDocs = await this.localRequests.find(query)
 
         const requests = requestDocs.map((r) => LocalRequest.from(r))
         return requests
     }
 
     public async getIncomingRequest(idIncomingRequest: ICoreId): Promise<LocalRequest | undefined> {
-        const requestDoc = await this.consumptionRequests.findOne({ id: idIncomingRequest.toString(), isOwn: false })
+        const requestDoc = await this.localRequests.findOne({ id: idIncomingRequest.toString(), isOwn: false })
         const request = requestDoc ? LocalRequest.from(requestDoc) : undefined
         return request
     }
@@ -432,11 +472,11 @@ export class IncomingRequestsController extends ConsumptionBaseController {
     }
 
     private async update(request: LocalRequest) {
-        const requestDoc = await this.consumptionRequests.findOne({ id: request.id.toString(), isOwn: false })
+        const requestDoc = await this.localRequests.findOne({ id: request.id.toString(), isOwn: false })
         if (!requestDoc) {
             throw TransportErrors.general.recordNotFound(LocalRequest, request.id.toString())
         }
-        await this.consumptionRequests.update(requestDoc, request)
+        await this.localRequests.update(requestDoc, request)
     }
 
     private assertRequestStatus(request: LocalRequest, ...status: LocalRequestStatus[]) {

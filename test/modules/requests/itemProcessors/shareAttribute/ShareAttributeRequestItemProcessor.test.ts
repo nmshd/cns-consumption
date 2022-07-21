@@ -1,3 +1,4 @@
+import { EventEmitter2EventBus } from "@js-soft/ts-utils"
 import {
     AcceptShareAttributeRequestItemParametersJSON,
     ConsumptionController,
@@ -32,11 +33,13 @@ class MockOutgoingRequestsController extends OutgoingRequestsController {
     public sentWasCalledWith?: ISentOutgoingRequestParameters
 
     public constructor(
-        consumptionRequests: SynchronizedCollection,
+        localRequests: SynchronizedCollection,
         processorRegistry: RequestItemProcessorRegistry,
         parent: ConsumptionController
     ) {
-        super(consumptionRequests, processorRegistry, parent)
+        super(localRequests, processorRegistry, parent, new EventEmitter2EventBus(), {
+            address: CoreAddress.from("address")
+        })
     }
 
     public override async create(params: ICreateOutgoingRequestParameters): Promise<LocalRequest> {
@@ -64,7 +67,7 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
         const that = this
 
         describe("ShareAttributeRequestItemProcessor", function () {
-            const transport = new Transport(that.connection, that.config, that.loggerFactory)
+            const transport = new Transport(that.connection, that.config, that.eventBus, that.loggerFactory)
 
             let consumptionController1: ConsumptionController
             let accountController1: AccountController
@@ -90,13 +93,13 @@ export class ShareAttributeRequestItemProcessorTests extends IntegrationTest {
                     accounts[1])
 
                 mockOutgoingRequestsController1 = new MockOutgoingRequestsController(
-                    consumptionController1["_outgoingRequests"]["consumptionRequests"],
+                    consumptionController1["_outgoingRequests"]["localRequests"],
                     consumptionController1["_outgoingRequests"]["processorRegistry"],
                     consumptionController1
                 )
                 consumptionController1["_outgoingRequests"] = mockOutgoingRequestsController1
                 mockOutgoingRequestsController2 = new MockOutgoingRequestsController(
-                    consumptionController2["_outgoingRequests"]["consumptionRequests"],
+                    consumptionController2["_outgoingRequests"]["localRequests"],
                     consumptionController2["_outgoingRequests"]["processorRegistry"],
                     consumptionController2
                 )

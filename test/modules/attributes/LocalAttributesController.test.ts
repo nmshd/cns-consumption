@@ -1,10 +1,14 @@
 import {
+    AttributeCreatedEvent,
+    AttributeDeletedEvent,
+    AttributeSucceededEvent,
     ConsumptionController,
     ICreateLocalAttributeParams,
     ICreatePeerLocalAttributeParams,
     ICreateSharedLocalAttributeCopyParams,
     ISucceedLocalAttributeParams,
-    LocalAttribute
+    LocalAttribute,
+    SharedAttributeCopyCreatedEvent
 } from "@nmshd/consumption"
 import {
     IdentityAttribute,
@@ -18,13 +22,15 @@ import { AccountController, CoreAddress, CoreDate, CoreId, Transport } from "@nm
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
+import { MockEventBus } from "../MockEventBus"
 
 export class LocalAttributesControllerTest extends IntegrationTest {
     public run(): void {
         const that = this
+        const mockEventBus = new MockEventBus()
 
         describe("LocalAttributesController", function () {
-            const transport = new Transport(that.connection, that.config, that.loggerFactory)
+            const transport = new Transport(that.connection, that.config, mockEventBus, that.loggerFactory)
 
             let consumptionController: ConsumptionController
             let testAccount: AccountController
@@ -62,6 +68,19 @@ export class LocalAttributesControllerTest extends IntegrationTest {
                 }
                 await consumptionController.attributes.createLocalAttribute(surnameParams)
                 await consumptionController.attributes.createLocalAttribute(givenNamesParams)
+
+                mockEventBus.clearPublishedEvents()
+            })
+
+            after(async function () {
+                await testAccount.close()
+            })
+
+            afterEach(async function () {
+                const attributes = await consumptionController.attributes.getLocalAttributes()
+                attributes.forEach(async (attribute) => {
+                    await consumptionController.attributes.deleteAttribute(attribute)
+                })
             })
 
             it("should list all attributes", async function () {
@@ -111,6 +130,8 @@ export class LocalAttributesControllerTest extends IntegrationTest {
                 const attributesAfterCreate = await consumptionController.attributes.getLocalAttributes()
                 const nrAttributesAfterCreate = attributesAfterCreate.length
                 expect(nrAttributesAfterCreate).equals(nrAttributesBeforeCreate + 2)
+
+                mockEventBus.expectPublishedEvents(AttributeCreatedEvent, AttributeCreatedEvent)
             }).timeout(15000)
 
             it("should delete an attribute", async function () {
@@ -124,6 +145,8 @@ export class LocalAttributesControllerTest extends IntegrationTest {
 
                 const attributesJSON = attributesAfterDelete.map((v) => v.id.toString())
                 expect(attributesJSON).not.to.include(attributes[0]?.id.toString())
+
+                mockEventBus.expectLastPublishedEvent(AttributeDeletedEvent)
             })
 
             it("should succeed attributes", async function () {
@@ -169,6 +192,8 @@ export class LocalAttributesControllerTest extends IntegrationTest {
                 const currentAttributesJSON = currentAttributes.map((v) => v.id.toString())
                 expect(currentAttributesJSON).to.not.include(succeededAttribute?.id.toString())
                 expect(currentAttributesJSON).to.include(succeessorAttribute?.id.toString())
+
+                mockEventBus.expectLastPublishedEvent(AttributeSucceededEvent)
             })
 
             it("should allow to create a share attribute copy", async function () {
@@ -196,6 +221,8 @@ export class LocalAttributesControllerTest extends IntegrationTest {
                     await consumptionController.attributes.createSharedLocalAttributeCopy(createSharedAttributesParams)
                 expect(sharedNationalityAttribute).instanceOf(LocalAttribute)
                 expect(sharedNationalityAttribute.shareInfo?.peer).to.deep.equal(peer)
+
+                mockEventBus.expectLastPublishedEvent(SharedAttributeCopyCreatedEvent)
             })
 
             it("should allow to query relationship attributes", async function () {
@@ -309,17 +336,8 @@ export class LocalAttributesControllerTest extends IntegrationTest {
                 expect(createPeerAttributeParams.requestReference.toString()).equals(
                     CoreId.from("requestId").toString()
                 )
-            })
 
-            afterEach(async function () {
-                const attributes = await consumptionController.attributes.getLocalAttributes()
-                attributes.forEach(async (attribute) => {
-                    await consumptionController.attributes.deleteAttribute(attribute)
-                })
-            })
-
-            after(async function () {
-                await testAccount.close()
+                mockEventBus.expectLastPublishedEvent(AttributeCreatedEvent)
             })
         })
     }

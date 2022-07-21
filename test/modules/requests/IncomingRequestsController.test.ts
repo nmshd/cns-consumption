@@ -4,6 +4,8 @@ import {
     DecideRequestParametersJSON,
     DecideRequestParametersValidator,
     ErrorValidationResult,
+    IncomingRequestReceivedEvent,
+    IncomingRequestStatusChangedEvent,
     LocalRequest,
     LocalRequestStatus,
     ValidationResult
@@ -45,7 +47,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
                 TransportLoggerFactory.init(that.loggerFactory)
 
-                context = await RequestsTestsContext.create(that.connection)
+                context = await RequestsTestsContext.create(that.connection, that.config)
 
                 that.init(context)
 
@@ -69,6 +71,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     )
                     await Then.theRequestIsInStatus(LocalRequestStatus.Open)
                     await Then.theNewRequestIsPersistedInTheDatabase()
+                    await Then.eventHasBeenPublished(IncomingRequestReceivedEvent)
                 })
 
                 it("creates an incoming Request with an incoming RelationshipTemplate as source", async function () {
@@ -81,6 +84,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     )
                     await Then.theRequestIsInStatus(LocalRequestStatus.Open)
                     await Then.theNewRequestIsPersistedInTheDatabase()
+                    await Then.eventHasBeenPublished(IncomingRequestReceivedEvent)
                 })
 
                 it("uses the ID of the given Request if it exists", async function () {
@@ -118,6 +122,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await When.iCheckPrerequisites()
                     await Then.theRequestIsInStatus(LocalRequestStatus.DecisionRequired)
                     await Then.theChangesArePersistedInTheDatabase()
+                    await Then.eventHasBeenPublished(IncomingRequestStatusChangedEvent, {
+                        newStatus: LocalRequestStatus.DecisionRequired
+                    })
                 })
 
                 itParam(
@@ -174,6 +181,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         })
                         await When.iCheckPrerequisites()
                         await Then.theRequestIsInStatus(LocalRequestStatus.Open)
+                        await Then.eventHasBeenPublished(IncomingRequestReceivedEvent)
                     }
                 )
 
@@ -201,6 +209,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await When.iRequireManualDecision()
                     await Then.theRequestIsInStatus(LocalRequestStatus.ManualDecisionRequired)
                     await Then.theChangesArePersistedInTheDatabase()
+                    await Then.eventHasBeenPublished(IncomingRequestStatusChangedEvent, {
+                        newStatus: LocalRequestStatus.ManualDecisionRequired
+                    })
                 })
 
                 it("throws when the Local Request is not in status 'DecisionRequired'", async function () {
@@ -209,6 +220,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.itThrowsAnErrorWithTheErrorMessage(
                         "*Local Request has to be in status 'DecisionRequired'*"
                     )
+                    await Then.eventHasBeenPublished(IncomingRequestReceivedEvent)
                 })
 
                 it("throws when no Local Request with the given id exists in DB", async function () {
@@ -613,6 +625,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.theRequestHasItsResponsePropertySetCorrectly(ResponseItemResult.Accepted)
                     await Then.theRequestMovesToStatus(LocalRequestStatus.Decided)
                     await Then.theChangesArePersistedInTheDatabase()
+                    await Then.eventHasBeenPublished(IncomingRequestStatusChangedEvent, {
+                        newStatus: LocalRequestStatus.Decided
+                    })
                 })
 
                 it("creates Response Items and Groups with the correct structure", async function () {
@@ -636,6 +651,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         expect(responseContent.items[0]).to.be.instanceOf(ResponseItem)
                         expect(responseContent.items[1]).to.be.instanceOf(ResponseItemGroup)
                         expect((responseContent.items[1] as ResponseItemGroup).items[0]).to.be.instanceOf(ResponseItem)
+                    })
+                    await Then.eventHasBeenPublished(IncomingRequestStatusChangedEvent, {
+                        newStatus: LocalRequestStatus.Decided
                     })
                 })
 
@@ -662,6 +680,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         const responseGroup = responseContent.items[1] as ResponseItemGroup
                         const innerResponseItem = responseGroup.items[0]
                         expect(innerResponseItem.result).to.equal(ResponseItemResult.Rejected)
+                    })
+                    await Then.eventHasBeenPublished(IncomingRequestStatusChangedEvent, {
+                        newStatus: LocalRequestStatus.Decided
                     })
                 })
 
@@ -718,6 +739,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.theRequestHasItsResponsePropertySetCorrectly(ResponseItemResult.Rejected)
                     await Then.theRequestMovesToStatus(LocalRequestStatus.Decided)
                     await Then.theChangesArePersistedInTheDatabase()
+                    await Then.eventHasBeenPublished(IncomingRequestStatusChangedEvent, {
+                        newStatus: LocalRequestStatus.Decided
+                    })
                 })
 
                 it("creates Response Items and Groups with the correct structure", async function () {
@@ -741,6 +765,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         expect(responseContent.items[0]).to.be.instanceOf(ResponseItem)
                         expect(responseContent.items[1]).to.be.instanceOf(ResponseItemGroup)
                         expect((responseContent.items[1] as ResponseItemGroup).items[0]).to.be.instanceOf(ResponseItem)
+                    })
+                    await Then.eventHasBeenPublished(IncomingRequestStatusChangedEvent, {
+                        newStatus: LocalRequestStatus.Decided
                     })
                 })
 
@@ -767,6 +794,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         const responseGroup = responseContent.items[1] as ResponseItemGroup
                         const innerResponseItem = responseGroup.items[0]
                         expect(innerResponseItem.result).to.equal(ResponseItemResult.Rejected)
+                    })
+                    await Then.eventHasBeenPublished(IncomingRequestStatusChangedEvent, {
+                        newStatus: LocalRequestStatus.Decided
                     })
                 })
 
@@ -825,6 +855,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.theRequestMovesToStatus(LocalRequestStatus.Completed)
                     await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "Message" })
                     await Then.theChangesArePersistedInTheDatabase()
+                    await Then.eventHasBeenPublished(IncomingRequestStatusChangedEvent, {
+                        newStatus: LocalRequestStatus.Completed
+                    })
                 })
 
                 it("can handle valid input with a RelationshipChange as responseSource", async function () {
@@ -839,6 +872,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.theRequestMovesToStatus(LocalRequestStatus.Completed)
                     await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "RelationshipChange" })
                     await Then.theChangesArePersistedInTheDatabase()
+                    await Then.eventHasBeenPublished(IncomingRequestStatusChangedEvent, {
+                        newStatus: LocalRequestStatus.Completed
+                    })
                 })
 
                 it("throws on syntactically invalid input", async function () {
@@ -944,6 +980,14 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     })
 
                     expect(cnsRequest).to.exist
+
+                    await Then.eventsHaveBeenPublished(
+                        IncomingRequestReceivedEvent,
+                        IncomingRequestStatusChangedEvent,
+                        IncomingRequestStatusChangedEvent,
+                        IncomingRequestStatusChangedEvent,
+                        IncomingRequestStatusChangedEvent
+                    )
                 })
 
                 it("Incoming Request via Message", async function () {
@@ -982,6 +1026,14 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     })
 
                     expect(cnsRequest).to.exist
+
+                    await Then.eventsHaveBeenPublished(
+                        IncomingRequestReceivedEvent,
+                        IncomingRequestStatusChangedEvent,
+                        IncomingRequestStatusChangedEvent,
+                        IncomingRequestStatusChangedEvent,
+                        IncomingRequestStatusChangedEvent
+                    )
                 })
             })
         })
