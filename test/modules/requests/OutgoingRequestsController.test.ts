@@ -230,11 +230,13 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                     await Then.theRequestIsInStatus(LocalRequestStatus.Draft)
                     await Then.theRequestDoesNotHaveSourceSet()
                     await Then.theNewRequestIsPersistedInTheDatabase()
+                    Then.eventsHaveBeenPublished("consumption.outgoingRequestCreated")
                 })
 
                 it("calls canCreate", async function () {
                     await When.iCreateAnOutgoingRequest()
                     await Then.canCreateIsBeingCalled()
+                    Then.eventsHaveBeenPublished("consumption.outgoingRequestCreated")
                 })
 
                 it("throws on syntactically invalid input", async function () {
@@ -264,6 +266,9 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                     await Then.theRequestHasItsResponsePropertySetCorrectly(ResponseItemResult.Accepted)
                     await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "RelationshipChange" })
                     await Then.theNewRequestIsPersistedInTheDatabase()
+                    Then.eventsHaveBeenPublished(
+                        "consumption.outgoingRequestFromRelationshipCreationChangeCreatedAndCompleted"
+                    )
                 })
 
                 it("uses the id from the Creation Change content for the created Local Request", async function () {
@@ -274,6 +279,9 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                         )
                     })
                     await Then.theRequestHasTheId("requestIdReceivedFromPeer")
+                    Then.eventsHaveBeenPublished(
+                        "consumption.outgoingRequestFromRelationshipCreationChangeCreatedAndCompleted"
+                    )
                 })
 
                 it("throws on syntactically invalid input", async function () {
@@ -289,6 +297,10 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                     await Then.theRequestMovesToStatus(LocalRequestStatus.Open)
                     await Then.theRequestHasItsSourcePropertySet()
                     await Then.theChangesArePersistedInTheDatabase()
+                    Then.eventsHaveBeenPublished(
+                        "consumption.outgoingRequestCreated",
+                        "consumption.outgoingRequestStatusChanged"
+                    )
                 })
 
                 it("throws on syntactically invalid input", async function () {
@@ -312,6 +324,10 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                         type: "Message",
                         reference: source.id
                     })
+                    Then.eventsHaveBeenPublished(
+                        "consumption.outgoingRequestCreated",
+                        "consumption.outgoingRequestStatusChanged"
+                    )
                 })
 
                 it("throws when no Request with the given id exists in DB", async function () {
@@ -339,6 +355,11 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                     await Then.theRequestHasItsResponsePropertySetCorrectly(ResponseItemResult.Accepted)
                     await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "Message" })
                     await Then.theNewRequestIsPersistedInTheDatabase()
+                    Then.eventsHaveBeenPublished(
+                        "consumption.outgoingRequestCreated",
+                        "consumption.outgoingRequestStatusChanged",
+                        "consumption.outgoingRequestStatusChanged"
+                    )
                 })
 
                 itParam(
@@ -442,6 +463,11 @@ export class OutgoingRequestsControllerTests extends RequestsIntegrationTest {
                         })
                         await When.iCompleteTheOutgoingRequestWith({ receivedResponse: testParams.response })
                         await Then.applyIncomingResponseItemIsCalledOnTheRequestItemProcessor(testParams.numberOfCalls)
+                        Then.eventsHaveBeenPublished(
+                            "consumption.outgoingRequestCreated",
+                            "consumption.outgoingRequestStatusChanged",
+                            "consumption.outgoingRequestStatusChanged"
+                        )
                     }
                 )
 
