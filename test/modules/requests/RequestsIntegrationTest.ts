@@ -1,5 +1,6 @@
 import { IDatabaseCollection, IDatabaseConnection } from "@js-soft/docdb-access-abstractions"
 import { ILoggerFactory } from "@js-soft/logging-abstractions"
+import { EventEmitter2EventBus } from "@js-soft/ts-utils"
 import {
     ConsumptionController,
     ConsumptionIds,
@@ -45,7 +46,8 @@ import {
     Message,
     RelationshipChangeType,
     RelationshipTemplate,
-    SynchronizedCollection
+    SynchronizedCollection,
+    Transport
 } from "@nmshd/transport"
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
@@ -80,12 +82,17 @@ export class RequestsTestsContext {
         // hide constructor
     }
 
-    public static async create(dbConnection: IDatabaseConnection): Promise<RequestsTestsContext> {
+    public static async create(
+        dbConnection: IDatabaseConnection,
+        config: IConfigOverwrite
+    ): Promise<RequestsTestsContext> {
         const context = new RequestsTestsContext()
 
+        const transport = await new Transport(dbConnection, config, new EventEmitter2EventBus()).init()
         const database = await dbConnection.getDatabase(Math.random().toString(36).substring(7))
         const collection = new SynchronizedCollection(await database.getCollection("Requests"), 0)
         const fakeConsumptionController = {
+            transport,
             accountController: {
                 identity: { address: CoreAddress.from("anAddress") } as IdentityController
             } as AccountController
@@ -97,9 +104,17 @@ export class RequestsTestsContext {
 
         context.currentIdentity = CoreAddress.from("id12345")
 
-        context.outgoingRequestsController = new OutgoingRequestsController(collection, processorRegistry, undefined!)
+        context.outgoingRequestsController = new OutgoingRequestsController(
+            collection,
+            processorRegistry,
+            fakeConsumptionController
+        )
 
-        context.incomingRequestsController = new IncomingRequestsController(collection, processorRegistry, undefined!)
+        context.incomingRequestsController = new IncomingRequestsController(
+            collection,
+            processorRegistry,
+            fakeConsumptionController
+        )
         context.requestsCollection = context.incomingRequestsController["localRequests"]
 
         const originalCanCreate = context.outgoingRequestsController.canCreate

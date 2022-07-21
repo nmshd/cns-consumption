@@ -45,7 +45,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
                 TransportLoggerFactory.init(that.loggerFactory)
 
-                context = await RequestsTestsContext.create(that.connection)
+                context = await RequestsTestsContext.create(that.connection, that.config)
 
                 that.init(context)
 
