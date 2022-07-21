@@ -52,6 +52,7 @@ import {
 import { expect } from "chai"
 import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
+import { MockEventBus } from "./MockEventBus"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
 import { TestRequestItem } from "./testHelpers/TestRequestItem"
 import { TestRequestItemProcessor } from "./testHelpers/TestRequestItemProcessor"
@@ -77,6 +78,7 @@ export class RequestsTestsContext {
     public incomingRequestsController: IncomingRequestsController
     public outgoingRequestsController: OutgoingRequestsController
     public currentIdentity: CoreAddress
+    public eventBus = new MockEventBus()
 
     private constructor() {
         // hide constructor
@@ -107,13 +109,17 @@ export class RequestsTestsContext {
         context.outgoingRequestsController = new OutgoingRequestsController(
             collection,
             processorRegistry,
-            fakeConsumptionController
+            undefined!,
+            context.eventBus,
+            { address: CoreAddress.from("anAddress") }
         )
 
         context.incomingRequestsController = new IncomingRequestsController(
             collection,
             processorRegistry,
-            fakeConsumptionController
+            undefined!,
+            context.eventBus,
+            { address: CoreAddress.from("anAddress") }
         )
         context.requestsCollection = context.incomingRequestsController["localRequests"]
 

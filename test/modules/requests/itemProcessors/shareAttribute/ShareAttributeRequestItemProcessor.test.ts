@@ -23,6 +23,7 @@ import { expect } from "chai"
 import itParam from "mocha-param"
 import { IntegrationTest } from "../../../../core/IntegrationTest"
 import { TestUtil } from "../../../../core/TestUtil"
+import { MockEventBus } from "../../MockEventBus"
 import { TestObjectFactory } from "../../testHelpers/TestObjectFactory"
 
 class MockOutgoingRequestsController extends OutgoingRequestsController {
@@ -36,7 +37,7 @@ class MockOutgoingRequestsController extends OutgoingRequestsController {
         processorRegistry: RequestItemProcessorRegistry,
         parent: ConsumptionController
     ) {
-        super(localRequests, processorRegistry, parent)
+        super(localRequests, processorRegistry, parent, new MockEventBus(), { address: CoreAddress.from("address") })
     }
 
     public override async create(params: ICreateOutgoingRequestParameters): Promise<LocalRequest> {
