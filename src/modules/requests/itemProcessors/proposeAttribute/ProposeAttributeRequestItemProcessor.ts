@@ -98,7 +98,7 @@ export class ProposeAttributeRequestItemProcessor extends GenericRequestItemProc
             attribute = localAttribute.content
         }
 
-        if (!this.accountController.identity.isMe(attribute!.owner)) {
+        if (!attribute!.owner.equals(this.currentIdentityAddress)) {
             return ValidationResult.error(
                 ConsumptionErrors.requests.invalidRequestItem(
                     "The given Attribute belongs to someone else. You can only share own Attributes."
