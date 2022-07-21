@@ -69,7 +69,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     )
                     await Then.theRequestIsInStatus(LocalRequestStatus.Open)
                     await Then.theNewRequestIsPersistedInTheDatabase()
-                    Then.eventsHaveBeenPublished("consumption.incomingRequestReceived")
+                    await Then.eventHasBeenPublished("consumption.incomingRequestReceived")
                 })
 
                 it("creates an incoming Request with an incoming RelationshipTemplate as source", async function () {
@@ -82,7 +82,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     )
                     await Then.theRequestIsInStatus(LocalRequestStatus.Open)
                     await Then.theNewRequestIsPersistedInTheDatabase()
-                    Then.eventsHaveBeenPublished("consumption.incomingRequestReceived")
+                    await Then.eventHasBeenPublished("consumption.incomingRequestReceived")
                 })
 
                 it("uses the ID of the given Request if it exists", async function () {
@@ -120,10 +120,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await When.iCheckPrerequisites()
                     await Then.theRequestIsInStatus(LocalRequestStatus.DecisionRequired)
                     await Then.theChangesArePersistedInTheDatabase()
-                    Then.eventsHaveBeenPublished(
-                        "consumption.incomingRequestReceived",
-                        "consumption.incomingRequestStatusChanged"
-                    )
+                    await Then.eventHasBeenPublished("consumption.incomingRequestStatusChanged", {
+                        newStatus: LocalRequestStatus.DecisionRequired
+                    })
                 })
 
                 itParam(
@@ -180,7 +179,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         })
                         await When.iCheckPrerequisites()
                         await Then.theRequestIsInStatus(LocalRequestStatus.Open)
-                        Then.eventsHaveBeenPublished("consumption.incomingRequestReceived")
+                        await Then.eventHasBeenPublished("consumption.incomingRequestReceived")
                     }
                 )
 
@@ -188,10 +187,6 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestInStatus(LocalRequestStatus.DecisionRequired)
                     await When.iTryToCheckPrerequisites()
                     await Then.itThrowsAnErrorWithTheErrorMessage("*Local Request has to be in status 'Open'*")
-                    Then.eventsHaveBeenPublished(
-                        "consumption.incomingRequestReceived",
-                        "consumption.incomingRequestStatusChanged"
-                    )
                 })
 
                 it("throws when no Local Request with the given id exists in DB", async function () {
@@ -212,11 +207,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await When.iRequireManualDecision()
                     await Then.theRequestIsInStatus(LocalRequestStatus.ManualDecisionRequired)
                     await Then.theChangesArePersistedInTheDatabase()
-                    Then.eventsHaveBeenPublished(
-                        "consumption.incomingRequestReceived",
-                        "consumption.incomingRequestStatusChanged",
-                        "consumption.incomingRequestStatusChanged"
-                    )
+                    await Then.eventHasBeenPublished("consumption.incomingRequestStatusChanged", {
+                        newStatus: LocalRequestStatus.ManualDecisionRequired
+                    })
                 })
 
                 it("throws when the Local Request is not in status 'DecisionRequired'", async function () {
@@ -225,7 +218,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.itThrowsAnErrorWithTheErrorMessage(
                         "*Local Request has to be in status 'DecisionRequired'*"
                     )
-                    Then.eventsHaveBeenPublished("consumption.incomingRequestReceived")
+                    await Then.eventHasBeenPublished("consumption.incomingRequestReceived")
                 })
 
                 it("throws when no Local Request with the given id exists in DB", async function () {
@@ -245,10 +238,6 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestInStatus(LocalRequestStatus.DecisionRequired)
                     await When.iCallCanAccept()
                     await Then.itReturnsASuccessfulValidationResult()
-                    Then.eventsHaveBeenPublished(
-                        "consumption.incomingRequestReceived",
-                        "consumption.incomingRequestStatusChanged"
-                    )
                 })
 
                 itParam(
@@ -337,10 +326,6 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                             items: testParams.acceptParams.items
                         })
                         await Then.itReturnsAnErrorValidationResult()
-                        Then.eventsHaveBeenPublished(
-                            "consumption.incomingRequestReceived",
-                            "consumption.incomingRequestStatusChanged"
-                        )
                     }
                 )
 
@@ -438,10 +423,6 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     expect(validationResult.items[1].items[0].isError()).to.be.true
                     expect(validationResult.items[1].items[1].isError()).to.be.false
                     expect(validationResult.items[1].items[2].isError()).to.be.true
-                    Then.eventsHaveBeenPublished(
-                        "consumption.incomingRequestReceived",
-                        "consumption.incomingRequestStatusChanged"
-                    )
                 })
             })
 
@@ -450,10 +431,6 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Given.anIncomingRequestInStatus(LocalRequestStatus.DecisionRequired)
                     await When.iCallCanReject()
                     await Then.itReturnsASuccessfulValidationResult()
-                    Then.eventsHaveBeenPublished(
-                        "consumption.incomingRequestReceived",
-                        "consumption.incomingRequestStatusChanged"
-                    )
                 })
 
                 itParam(
@@ -540,10 +517,6 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         })
                         await When.iCallCanRejectWith(testParams.rejectParams)
                         await Then.itReturnsAnErrorValidationResult()
-                        Then.eventsHaveBeenPublished(
-                            "consumption.incomingRequestReceived",
-                            "consumption.incomingRequestStatusChanged"
-                        )
                     }
                 )
 
@@ -640,11 +613,6 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     expect(validationResult.items[1].items[0].isError()).to.be.true
                     expect(validationResult.items[1].items[1].isError()).to.be.false
                     expect(validationResult.items[1].items[2].isError()).to.be.true
-
-                    Then.eventsHaveBeenPublished(
-                        "consumption.incomingRequestReceived",
-                        "consumption.incomingRequestStatusChanged"
-                    )
                 })
             })
 
@@ -655,11 +623,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.theRequestHasItsResponsePropertySetCorrectly(ResponseItemResult.Accepted)
                     await Then.theRequestMovesToStatus(LocalRequestStatus.Decided)
                     await Then.theChangesArePersistedInTheDatabase()
-                    Then.eventsHaveBeenPublished(
-                        "consumption.incomingRequestReceived",
-                        "consumption.incomingRequestStatusChanged",
-                        "consumption.incomingRequestStatusChanged"
-                    )
+                    await Then.eventHasBeenPublished("consumption.incomingRequestStatusChanged", {
+                        newStatus: LocalRequestStatus.Decided
+                    })
                 })
 
                 it("creates Response Items and Groups with the correct structure", async function () {
@@ -683,11 +649,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         expect(responseContent.items[0]).to.be.instanceOf(ResponseItem)
                         expect(responseContent.items[1]).to.be.instanceOf(ResponseItemGroup)
                         expect((responseContent.items[1] as ResponseItemGroup).items[0]).to.be.instanceOf(ResponseItem)
-                        Then.eventsHaveBeenPublished(
-                            "consumption.incomingRequestReceived",
-                            "consumption.incomingRequestStatusChanged",
-                            "consumption.incomingRequestStatusChanged"
-                        )
+                    })
+                    await Then.eventHasBeenPublished("consumption.incomingRequestStatusChanged", {
+                        newStatus: LocalRequestStatus.Decided
                     })
                 })
 
@@ -715,11 +679,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         const innerResponseItem = responseGroup.items[0]
                         expect(innerResponseItem.result).to.equal(ResponseItemResult.Rejected)
                     })
-                    Then.eventsHaveBeenPublished(
-                        "consumption.incomingRequestReceived",
-                        "consumption.incomingRequestStatusChanged",
-                        "consumption.incomingRequestStatusChanged"
-                    )
+                    await Then.eventHasBeenPublished("consumption.incomingRequestStatusChanged", {
+                        newStatus: LocalRequestStatus.Decided
+                    })
                 })
 
                 it("throws when canAccept returns an error", async function () {
@@ -775,11 +737,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.theRequestHasItsResponsePropertySetCorrectly(ResponseItemResult.Rejected)
                     await Then.theRequestMovesToStatus(LocalRequestStatus.Decided)
                     await Then.theChangesArePersistedInTheDatabase()
-                    Then.eventsHaveBeenPublished(
-                        "consumption.incomingRequestReceived",
-                        "consumption.incomingRequestStatusChanged",
-                        "consumption.incomingRequestStatusChanged"
-                    )
+                    await Then.eventHasBeenPublished("consumption.incomingRequestStatusChanged", {
+                        newStatus: LocalRequestStatus.Decided
+                    })
                 })
 
                 it("creates Response Items and Groups with the correct structure", async function () {
@@ -804,11 +764,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         expect(responseContent.items[1]).to.be.instanceOf(ResponseItemGroup)
                         expect((responseContent.items[1] as ResponseItemGroup).items[0]).to.be.instanceOf(ResponseItem)
                     })
-                    Then.eventsHaveBeenPublished(
-                        "consumption.incomingRequestReceived",
-                        "consumption.incomingRequestStatusChanged",
-                        "consumption.incomingRequestStatusChanged"
-                    )
+                    await Then.eventHasBeenPublished("consumption.incomingRequestStatusChanged", {
+                        newStatus: LocalRequestStatus.Decided
+                    })
                 })
 
                 it("creates Response Items with the correct result", async function () {
@@ -835,11 +793,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                         const innerResponseItem = responseGroup.items[0]
                         expect(innerResponseItem.result).to.equal(ResponseItemResult.Rejected)
                     })
-                    Then.eventsHaveBeenPublished(
-                        "consumption.incomingRequestReceived",
-                        "consumption.incomingRequestStatusChanged",
-                        "consumption.incomingRequestStatusChanged"
-                    )
+                    await Then.eventHasBeenPublished("consumption.incomingRequestStatusChanged", {
+                        newStatus: LocalRequestStatus.Decided
+                    })
                 })
 
                 it("throws when canReject returns an error", async function () {
@@ -897,12 +853,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.theRequestMovesToStatus(LocalRequestStatus.Completed)
                     await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "Message" })
                     await Then.theChangesArePersistedInTheDatabase()
-                    Then.eventsHaveBeenPublished(
-                        "consumption.incomingRequestReceived",
-                        "consumption.incomingRequestStatusChanged",
-                        "consumption.incomingRequestStatusChanged",
-                        "consumption.incomingRequestStatusChanged"
-                    )
+                    await Then.eventHasBeenPublished("consumption.incomingRequestStatusChanged", {
+                        newStatus: LocalRequestStatus.Completed
+                    })
                 })
 
                 it("can handle valid input with a RelationshipChange as responseSource", async function () {
@@ -917,12 +870,9 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     await Then.theRequestMovesToStatus(LocalRequestStatus.Completed)
                     await Then.theResponseHasItsSourcePropertySetCorrectly({ responseSourceType: "RelationshipChange" })
                     await Then.theChangesArePersistedInTheDatabase()
-                    Then.eventsHaveBeenPublished(
-                        "consumption.incomingRequestReceived",
-                        "consumption.incomingRequestStatusChanged",
-                        "consumption.incomingRequestStatusChanged",
-                        "consumption.incomingRequestStatusChanged"
-                    )
+                    await Then.eventHasBeenPublished("consumption.incomingRequestStatusChanged", {
+                        newStatus: LocalRequestStatus.Completed
+                    })
                 })
 
                 it("throws on syntactically invalid input", async function () {
@@ -1029,7 +979,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
                     expect(cnsRequest).to.exist
 
-                    Then.eventsHaveBeenPublished(
+                    await Then.eventsHaveBeenPublished(
                         "consumption.incomingRequestReceived",
                         "consumption.incomingRequestStatusChanged",
                         "consumption.incomingRequestStatusChanged",
@@ -1075,7 +1025,7 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
 
                     expect(cnsRequest).to.exist
 
-                    Then.eventsHaveBeenPublished(
+                    await Then.eventsHaveBeenPublished(
                         "consumption.incomingRequestReceived",
                         "consumption.incomingRequestStatusChanged",
                         "consumption.incomingRequestStatusChanged",

@@ -1,8 +1,9 @@
 import { Event, EventBus, EventHandler, SubscriptionTarget } from "@js-soft/ts-utils"
+import { TransportDataEvent } from "@nmshd/transport"
 
 export class MockEventBus extends EventBus {
-    private readonly _publishedEvents: string[] = []
-    public get publishedEvents(): string[] {
+    private readonly _publishedEvents: { namespace: string; data?: any }[] = []
+    public get publishedEvents(): { namespace: string; data?: any }[] {
         return this._publishedEvents
     }
 
@@ -32,7 +33,10 @@ export class MockEventBus extends EventBus {
     }
 
     public publish(event: Event): void {
-        this._publishedEvents.push(event.namespace)
+        this._publishedEvents.push({
+            namespace: event.namespace,
+            data: event instanceof TransportDataEvent ? event.data : undefined
+        })
     }
 
     public close(): void {

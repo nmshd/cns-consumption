@@ -49,13 +49,16 @@ import {
     SynchronizedCollection,
     Transport
 } from "@nmshd/transport"
-import { expect } from "chai"
+import chai, { expect } from "chai"
+import chaiSubset from "chai-subset"
 import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
 import { MockEventBus } from "./MockEventBus"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
 import { TestRequestItem } from "./testHelpers/TestRequestItem"
 import { TestRequestItemProcessor } from "./testHelpers/TestRequestItemProcessor"
+
+chai.use(chaiSubset)
 
 export abstract class RequestsIntegrationTest extends IntegrationTest {
     public Given: RequestsGiven // eslint-disable-line @typescript-eslint/naming-convention
@@ -1023,8 +1026,23 @@ export class RequestsThen {
         })
     }
 
-    public eventsHaveBeenPublished(...events: string[]): void {
-        expect(this.context.eventBus.publishedEvents).to.deep.equal(events)
+    public eventHasBeenPublished(namespace: string, data?: any): Promise<void> {
+        const lastEvent = this.context.eventBus.publishedEvents[this.context.eventBus.publishedEvents.length - 1]
+
+        expect(lastEvent.namespace).to.equal(namespace)
+
+        if (data) {
+            expect(lastEvent.data).to.containSubset(data)
+        }
+
+        return Promise.resolve()
+    }
+
+    public eventsHaveBeenPublished(...events: string[]): Promise<void> {
+        const eventNamespaces = this.context.eventBus.publishedEvents.map((event) => event.namespace)
+        expect(eventNamespaces).to.deep.equal(events)
+
+        return Promise.resolve()
     }
 }
 
