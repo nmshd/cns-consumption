@@ -49,16 +49,14 @@ import {
     SynchronizedCollection,
     Transport
 } from "@nmshd/transport"
-import chai, { expect } from "chai"
-import chaiSubset from "chai-subset"
+import { expect } from "chai"
+
 import { IntegrationTest } from "../../core/IntegrationTest"
 import { TestUtil } from "../../core/TestUtil"
-import { MockEventBus } from "./MockEventBus"
+import { MockEventBus } from "../MockEventBus"
 import { TestObjectFactory } from "./testHelpers/TestObjectFactory"
 import { TestRequestItem } from "./testHelpers/TestRequestItem"
 import { TestRequestItemProcessor } from "./testHelpers/TestRequestItemProcessor"
-
-chai.use(chaiSubset)
 
 export abstract class RequestsIntegrationTest extends IntegrationTest {
     public Given: RequestsGiven // eslint-disable-line @typescript-eslint/naming-convention
@@ -81,7 +79,7 @@ export class RequestsTestsContext {
     public incomingRequestsController: IncomingRequestsController
     public outgoingRequestsController: OutgoingRequestsController
     public currentIdentity: CoreAddress
-    public eventBus = new MockEventBus()
+    public mockEventBus = new MockEventBus()
 
     private constructor() {
         // hide constructor
@@ -113,7 +111,7 @@ export class RequestsTestsContext {
             collection,
             processorRegistry,
             undefined!,
-            context.eventBus,
+            context.mockEventBus,
             { address: CoreAddress.from("anAddress") }
         )
 
@@ -121,7 +119,7 @@ export class RequestsTestsContext {
             collection,
             processorRegistry,
             undefined!,
-            context.eventBus,
+            context.mockEventBus,
             { address: CoreAddress.from("anAddress") }
         )
         context.requestsCollection = context.incomingRequestsController["localRequests"]
@@ -144,7 +142,7 @@ export class RequestsTestsContext {
 
         TestRequestItemProcessor.numberOfApplyIncomingResponseItemCalls = 0
 
-        this.eventBus.clearPublishedEvents()
+        this.mockEventBus.clearPublishedEvents()
     }
 
     public givenLocalRequest?: LocalRequest
@@ -1030,21 +1028,14 @@ export class RequestsThen {
         eventConstructor: (new (...args: any[]) => TEvent) & { namespace: string },
         data?: Partial<TEvent extends DataEvent<infer X> ? X : never>
     ): Promise<void> {
-        const lastEvent = this.context.eventBus.publishedEvents[this.context.eventBus.publishedEvents.length - 1]
-        expect(lastEvent.namespace).to.equal(eventConstructor.namespace)
-
-        if (data) expect(lastEvent.data).to.containSubset(data)
-
+        this.context.mockEventBus.expectLastPublishedEvent(eventConstructor, data)
         return Promise.resolve()
     }
 
     public eventsHaveBeenPublished(
         ...eventContructors: ((new (...args: any[]) => DataEvent<unknown>) & { namespace: string })[]
     ): Promise<void> {
-        const eventNamespaces = this.context.eventBus.publishedEvents.map((e) => e.namespace)
-        const constructorNamespaces = eventContructors.map((c) => c.namespace)
-        expect(eventNamespaces).to.deep.equal(constructorNamespaces)
-
+        this.context.mockEventBus.expectPublishedEvents(...eventContructors)
         return Promise.resolve()
     }
 }
