@@ -191,7 +191,7 @@ export class ProposeAttributeRequestItemProcessorTests extends IntegrationTest {
                         })
                     })
 
-                    describe.only("RelationshipAttributeQuery", function () {
+                    describe("RelationshipAttributeQuery", function () {
                         enum TestIdentity {
                             Self,
                             Recipient,
