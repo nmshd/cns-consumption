@@ -49,7 +49,7 @@ export class ProposeAttributeRequestItemProcessor extends GenericRequestItemProc
         if (attribute.owner.toString() !== "") {
             return ValidationResult.error(
                 ConsumptionErrors.requests.invalidRequestItem(
-                    "The owner of the given attribute can only be an empty string. This is because you can only propose Attributes where the recipient of the Request is the owner anyway. And in order to avoid mistakes, the owner will be automatically filled for you."
+                    "The owner of the given `attribute` can only be an empty string. This is because you can only propose Attributes where the recipient of the Request is the owner anyway. And in order to avoid mistakes, the owner will be automatically filled for you."
                 )
             )
         }
@@ -66,7 +66,7 @@ export class ProposeAttributeRequestItemProcessor extends GenericRequestItemProc
         if (requestItem.query instanceof RelationshipAttributeQuery && requestItem.query.owner.toString() !== "") {
             return ValidationResult.error(
                 ConsumptionErrors.requests.invalidRequestItem(
-                    "The owner of the given query can only be an empty string. This is because you can only propose Attributes where the recipient of the Request is the owner anyway. And in order to avoid mistakes, the owner will be automatically filled for you."
+                    "The owner of the given `query` can only be an empty string. This is because you can only propose Attributes where the recipient of the Request is the owner anyway. And in order to avoid mistakes, the owner will be automatically filled for you."
                 )
             )
         }
