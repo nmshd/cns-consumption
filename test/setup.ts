@@ -16,7 +16,7 @@ export default function setup(): void {
         )
     })
 
-    Assertion.addMethod("errorValidationResult", function (error: { code?: string; message?: string | RegExp }) {
+    Assertion.addMethod("errorValidationResult", function (error: { code?: string; message?: string | RegExp } = {}) {
         const obj = this._obj as ValidationResult
 
         this.assert(
