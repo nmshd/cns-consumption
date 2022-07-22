@@ -9,6 +9,8 @@ import {
 import {
     CreateAttributeAcceptResponseItem,
     CreateAttributeRequestItem,
+    GivenName,
+    IdentityAttribute,
     ProprietaryString,
     RelationshipAttribute,
     RelationshipAttributeConfidentiality,
@@ -17,6 +19,7 @@ import {
 } from "@nmshd/content"
 import { AccountController, CoreAddress, CoreDate, Transport } from "@nmshd/transport"
 import { expect } from "chai"
+import itParam from "mocha-param"
 import { IntegrationTest } from "../../../../core/IntegrationTest"
 import { TestUtil } from "../../../../core/TestUtil"
 import { TestObjectFactory } from "../../testHelpers/TestObjectFactory"
@@ -49,141 +52,171 @@ export class CreateAttributeRequestItemProcessorTests extends IntegrationTest {
             })
 
             describe("canCreateOutgoingRequestItem", function () {
-                it("returns success when passing a Relationship Attribute with 'owner=sender'", async function () {
-                    const senderAddress = testAccount.identity.address
-                    const recipientAddress = CoreAddress.from("recipientAddress")
+                interface IdentityAttributeTestParams {
+                    result: "success" | "error"
+                    expectedError?: { code: string; message: string | RegExp }
+                    scenario: string
+                    attribute: RelationshipAttribute | IdentityAttribute
+                    sourceAttributeId: undefined | "{{sourceAttributeId}}"
+                }
+                itParam(
+                    "returns ${value.result} when passing ${value.scenario}",
+                    [
+                        {
+                            scenario: "an Identity Attribute with owner=sender",
+                            result: "success",
+                            attribute: IdentityAttribute.from({
+                                value: GivenName.fromAny({ value: "AGivenName" }),
+                                owner: CoreAddress.from("{{sender}}")
+                            }),
+                            sourceAttributeId: "{{sourceAttributeId}}"
+                        },
+                        {
+                            scenario: "an Identity Attribute with owner=<empty string>",
+                            result: "success",
+                            attribute: IdentityAttribute.from({
+                                value: GivenName.fromAny({ value: "AGivenName" }),
+                                owner: CoreAddress.from("")
+                            }),
+                            sourceAttributeId: "{{sourceAttributeId}}"
+                        },
+                        {
+                            scenario: "an Identity Attribute with owner=someOtherOwner",
+                            result: "error",
+                            expectedError: {
+                                code: "error.consumption.requests.invalidRequestItem",
+                                message:
+                                    /The owner of the given `attribute` can only be an empty string. This is because you can only send Attributes where the recipient of the Request is the owner anyway. And in order to avoid mistakes, the owner will be automatically filled for you./
+                            },
+                            attribute: IdentityAttribute.from({
+                                value: GivenName.fromAny({ value: "AGivenName" }),
+                                owner: CoreAddress.from("someOtherOwner")
+                            }),
+                            sourceAttributeId: "{{sourceAttributeId}}"
+                        },
+                        {
+                            scenario: "an Identity Attribute but no sourceAttributeId",
+                            result: "error",
+                            expectedError: {
+                                code: "error.consumption.requests.invalidRequestItem",
+                                message: /'sourceAttributeId' cannot be undefined when sending an Identity Attribute./
+                            },
+                            attribute: IdentityAttribute.from({
+                                value: GivenName.fromAny({ value: "AGivenName" }),
+                                owner: CoreAddress.from("")
+                            }),
+                            sourceAttributeId: undefined
+                        }
+                    ],
+                    async function (testParams: IdentityAttributeTestParams) {
+                        const senderAddress = testAccount.identity.address
+                        const recipientAddress = CoreAddress.from("recipientAddress")
 
-                    const sourceAttribute = await consumptionController.attributes.createLocalAttribute({
-                        content: RelationshipAttribute.from({
-                            key: "aKey",
-                            confidentiality: RelationshipAttributeConfidentiality.Public,
-                            value: ProprietaryString.fromAny({ value: "aString" }),
-                            owner: senderAddress
+                        if (testParams.attribute.owner.address === "{{sender}}") {
+                            testParams.attribute.owner = senderAddress
+                        }
+
+                        const sourceAttribute = await consumptionController.attributes.createLocalAttribute({
+                            content: testParams.attribute
                         })
-                    })
-                    const requestItem = CreateAttributeRequestItem.from({
-                        mustBeAccepted: false,
-                        attribute: sourceAttribute.content,
-                        sourceAttributeId: sourceAttribute.id
-                    })
-                    const request = Request.from({ items: [requestItem] })
-
-                    const result = await processor.canCreateOutgoingRequestItem(requestItem, request, recipientAddress)
-
-                    expect(result).to.be.a.successfulValidationResult()
-                })
-
-                it("returns an error when passing a Relationship Attribute with 'owner=sender', but no sourceAttributeId", async function () {
-                    const senderAddress = testAccount.identity.address
-                    const recipientAddress = CoreAddress.from("recipientAddress")
-
-                    const sourceAttribute = await consumptionController.attributes.createLocalAttribute({
-                        content: RelationshipAttribute.from({
-                            key: "aKey",
-                            confidentiality: RelationshipAttributeConfidentiality.Public,
-                            value: ProprietaryString.fromAny({ value: "aString" }),
-                            owner: senderAddress
+                        const requestItem = CreateAttributeRequestItem.from({
+                            mustBeAccepted: false,
+                            attribute: sourceAttribute.content,
+                            sourceAttributeId:
+                                testParams.sourceAttributeId === "{{sourceAttributeId}}"
+                                    ? sourceAttribute.id
+                                    : testParams.sourceAttributeId
                         })
-                    })
-                    const requestItem = CreateAttributeRequestItem.from({
-                        mustBeAccepted: false,
-                        attribute: sourceAttribute.content,
-                        sourceAttributeId: undefined
-                    })
-                    const request = Request.from({ items: [requestItem] })
+                        const request = Request.from({ items: [requestItem] })
 
-                    const result = await processor.canCreateOutgoingRequestItem(requestItem, request, recipientAddress)
+                        const result = await processor.canCreateOutgoingRequestItem(
+                            requestItem,
+                            request,
+                            recipientAddress
+                        )
 
-                    expect(result).to.be.an.errorValidationResult({
-                        code: "error.consumption.requests.invalidRequestItem",
-                        message:
-                            /'sourceAttributeId' cannot be undefined when sending an attribute that is not owned by the recipient./
-                    })
-                })
+                        if (testParams.result === "success") {
+                            expect(result).to.be.a.successfulValidationResult()
+                        } else {
+                            expect(result).to.be.an.errorValidationResult(testParams.expectedError)
+                        }
+                    }
+                )
 
-                it("returns success when passing an Identity Attribute with 'owner=sender'", async function () {
-                    const recipientAddress = CoreAddress.from("recipientAddress")
-                    const sourceAttribute = await consumptionController.attributes.createLocalAttribute({
-                        content: TestObjectFactory.createIdentityAttribute({ owner: testAccount.identity.address })
-                    })
-                    const requestItem = CreateAttributeRequestItem.from({
-                        mustBeAccepted: false,
-                        attribute: sourceAttribute.content,
-                        sourceAttributeId: sourceAttribute.id
-                    })
-                    const request = Request.from({ items: [requestItem] })
+                interface RelationshipAttributeTestParams {
+                    result: "success" | "error"
+                    expectedError?: { code: string; message: string | RegExp }
+                    scenario: string
+                    sourceAttribute: RelationshipAttribute | IdentityAttribute
+                }
+                itParam(
+                    "returns ${value.result} when passing ${value.scenario}",
+                    [
+                        {
+                            scenario:
+                                "a Relationship Attribute with owner=sender (even if there is no sourceAttributeId)",
+                            result: "success",
+                            sourceAttribute: RelationshipAttribute.from({
+                                key: "aKey",
+                                confidentiality: RelationshipAttributeConfidentiality.Public,
+                                value: ProprietaryString.fromAny({ value: "aString" }),
+                                owner: CoreAddress.from("{{sender}}")
+                            })
+                        },
+                        {
+                            result: "success",
+                            scenario:
+                                "a Relationship Attribute with owner=<empty string> (even if there is no sourceAttributeId)",
+                            sourceAttribute: RelationshipAttribute.from({
+                                key: "aKey",
+                                confidentiality: RelationshipAttributeConfidentiality.Public,
+                                value: ProprietaryString.fromAny({ value: "aString" }),
+                                owner: CoreAddress.from("")
+                            })
+                        },
+                        {
+                            scenario: "a Relationship Attribute with owner=someOtherOwner",
+                            result: "error",
+                            expectedError: {
+                                code: "error.consumption.requests.invalidRequestItem",
+                                message:
+                                    /The owner of the given `attribute` can only be an empty string. This is because you can only send Attributes where the recipient of the Request is the owner anyway. And in order to avoid mistakes, the owner will be automatically filled for you./
+                            },
+                            sourceAttribute: RelationshipAttribute.from({
+                                key: "aKey",
+                                confidentiality: RelationshipAttributeConfidentiality.Public,
+                                value: ProprietaryString.fromAny({ value: "aString" }),
+                                owner: CoreAddress.from("someOtherOwner")
+                            })
+                        }
+                    ],
+                    async function (testParams: RelationshipAttributeTestParams) {
+                        const senderAddress = testAccount.identity.address
+                        const recipientAddress = CoreAddress.from("recipientAddress")
 
-                    const result = await processor.canCreateOutgoingRequestItem(requestItem, request, recipientAddress)
+                        if (testParams.sourceAttribute.owner.address === "{{sender}}") {
+                            testParams.sourceAttribute.owner = senderAddress
+                        }
 
-                    expect(result).to.be.a.successfulValidationResult()
-                })
-
-                it("returns an error when passing an Identity Attribute with 'owner=sender', but no sourceAttributeId", async function () {
-                    const recipientAddress = CoreAddress.from("recipientAddress")
-                    const sourceAttribute = await consumptionController.attributes.createLocalAttribute({
-                        content: TestObjectFactory.createIdentityAttribute({ owner: testAccount.identity.address })
-                    })
-                    const requestItem = CreateAttributeRequestItem.from({
-                        mustBeAccepted: false,
-                        attribute: sourceAttribute.content,
-                        sourceAttributeId: undefined // this should not be valid
-                    })
-                    const request = Request.from({ items: [requestItem] })
-
-                    const result = await processor.canCreateOutgoingRequestItem(requestItem, request, recipientAddress)
-
-                    expect(result).to.be.an.errorValidationResult({
-                        code: "error.consumption.requests.invalidRequestItem",
-                        message:
-                            /'sourceAttributeId' cannot be undefined when sending an attribute that is not owned by the recipient./
-                    })
-                })
-
-                it("returns an error when passing a Relationship Attribute with 'owner!=sender'", async function () {
-                    const recipientAddress = CoreAddress.from("recipientAddress")
-                    const sourceAttribute = await consumptionController.attributes.createLocalAttribute({
-                        content: RelationshipAttribute.from({
-                            key: "aKey",
-                            confidentiality: RelationshipAttributeConfidentiality.Public,
-                            value: ProprietaryString.fromAny({ value: "aString" }),
-                            owner: CoreAddress.from("ownerAddress")
+                        const requestItem = CreateAttributeRequestItem.from({
+                            mustBeAccepted: false,
+                            attribute: testParams.sourceAttribute
                         })
-                    })
-                    const requestItem = CreateAttributeRequestItem.from({
-                        mustBeAccepted: false,
-                        attribute: sourceAttribute.content,
-                        sourceAttributeId: sourceAttribute.id
-                    })
-                    const request = Request.from({ items: [requestItem] })
+                        const request = Request.from({ items: [requestItem] })
 
-                    const result = await processor.canCreateOutgoingRequestItem(requestItem, request, recipientAddress)
+                        const result = await processor.canCreateOutgoingRequestItem(
+                            requestItem,
+                            request,
+                            recipientAddress
+                        )
 
-                    expect(result).to.be.an.errorValidationResult({
-                        code: "error.consumption.requests.invalidRequestItem",
-                        message: /Cannot send Relationship Attributes of which you are not the owner./
-                    })
-                })
-
-                it("returns an error when passing an Identity Attribute with 'owner!=sender' (Identity Attributes for the recipient should always be created via ProposeAttributeRequestItem)", async function () {
-                    const recipientAddress = CoreAddress.from("recipientAddress")
-                    const attribute = await consumptionController.attributes.createLocalAttribute({
-                        content: TestObjectFactory.createIdentityAttribute({
-                            owner: recipientAddress
-                        })
-                    })
-                    const requestItem = CreateAttributeRequestItem.from({
-                        mustBeAccepted: false,
-                        attribute: attribute.content
-                    })
-                    const request = Request.from({ items: [requestItem] })
-
-                    const result = await processor.canCreateOutgoingRequestItem(requestItem, request, recipientAddress)
-
-                    expect(result).to.be.an.errorValidationResult({
-                        code: "error.consumption.requests.invalidRequestItem",
-                        message: /Cannot send Identity Attributes of which you are not the owner.*/
-                    })
-                })
+                        if (testParams.result === "success") {
+                            expect(result).to.be.a.successfulValidationResult()
+                        } else {
+                            expect(result).to.be.an.errorValidationResult(testParams.expectedError)
+                        }
+                    }
+                )
             })
 
             describe("accept", function () {

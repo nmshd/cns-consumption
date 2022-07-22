@@ -2,7 +2,6 @@ import {
     CreateAttributeAcceptResponseItem,
     CreateAttributeRequestItem,
     IdentityAttribute,
-    ProposeAttributeRequestItem,
     RejectResponseItem,
     Request,
     ResponseItemResult
@@ -21,17 +20,15 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
     public override canCreateOutgoingRequestItem(
         requestItem: CreateAttributeRequestItem,
         _request: Request,
-        recipient: CoreAddress
+        _recipient: CoreAddress
     ): ValidationResult | Promise<ValidationResult> {
-        const recipientIsOwnerOfTheAttribute = requestItem.attribute.owner.equals(recipient)
-
-        // When the owner of the Attribute is not the recipient of the Request, this means that
-        // we need to set the sourceAttributeId, because we have to set shareInfo as soon as the
-        // RequestItem was accepted.
-        if (!recipientIsOwnerOfTheAttribute && !requestItem.sourceAttributeId) {
+        if (
+            requestItem.attribute.owner.toString() !== "" &&
+            !requestItem.attribute.owner.equals(this.currentIdentityAddress)
+        ) {
             return ValidationResult.error(
                 ConsumptionErrors.requests.invalidRequestItem(
-                    "'sourceAttributeId' cannot be undefined when sending an attribute that is not owned by the recipient."
+                    "The owner of the given `attribute` can only be an empty string. This is because you can only send Attributes where the recipient of the Request is the owner anyway. And in order to avoid mistakes, the owner will be automatically filled for you."
                 )
             )
         }
@@ -40,29 +37,14 @@ export class CreateAttributeRequestItemProcessor extends GenericRequestItemProce
             return this.canCreateRequestItemWithIdentityAttribute(requestItem)
         }
 
-        return this.canCreateRequestItemWithRelationshipAttribute(requestItem)
-    }
-
-    private canCreateRequestItemWithIdentityAttribute(requestItem: CreateAttributeRequestItem): ValidationResult {
-        const iAmOwnerOfTheAttribute = this.accountController.identity.isMe(requestItem.attribute.owner)
-        if (!iAmOwnerOfTheAttribute) {
-            return ValidationResult.error(
-                ConsumptionErrors.requests.invalidRequestItem(
-                    `Cannot send Identity Attributes of which you are not the owner via ${CreateAttributeRequestItem.name}. Consider using a ${ProposeAttributeRequestItem.name} instead.`
-                )
-            )
-        }
-
         return ValidationResult.success()
     }
 
-    private canCreateRequestItemWithRelationshipAttribute(requestItem: CreateAttributeRequestItem) {
-        const iAmOwnerOfTheAttribute = this.accountController.identity.isMe(requestItem.attribute.owner)
-
-        if (!iAmOwnerOfTheAttribute) {
+    private canCreateRequestItemWithIdentityAttribute(requestItem: CreateAttributeRequestItem): ValidationResult {
+        if (!requestItem.sourceAttributeId) {
             return ValidationResult.error(
                 ConsumptionErrors.requests.invalidRequestItem(
-                    "Cannot send Relationship Attributes of which you are not the owner."
+                    "'sourceAttributeId' cannot be undefined when sending an Identity Attribute."
                 )
             )
         }
