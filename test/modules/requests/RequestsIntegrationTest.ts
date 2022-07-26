@@ -225,6 +225,22 @@ export class RequestsGiven {
         await this.anIncomingRequestWith({ status: status })
     }
 
+    public async aRejectedIncomingRequestFromARelationshipTemplate(): Promise<void> {
+        await this.anIncomingRequestWith({
+            status: LocalRequestStatus.DecisionRequired,
+            requestSource: TestObjectFactory.createIncomingRelationshipTemplate()
+        })
+
+        this.context.localRequestAfterAction = await this.context.incomingRequestsController.reject({
+            requestId: this.context.givenLocalRequest!.id.toString(),
+            items: [
+                {
+                    accept: false
+                }
+            ]
+        })
+    }
+
     private async moveIncomingRequestToStatus(localRequest: LocalRequest, status: LocalRequestStatus) {
         if (localRequest.status === status) return
 

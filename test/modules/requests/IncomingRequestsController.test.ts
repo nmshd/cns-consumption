@@ -877,12 +877,8 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     })
                 })
 
-                it("can handle valid input without a responseSource", async function () {
-                    await Given.anIncomingRequestWith({
-                        status: LocalRequestStatus.DecisionRequired,
-                        requestSource: TestObjectFactory.createIncomingRelationshipTemplate()
-                    })
-                    await When.iRejectTheRequest()
+                it("can handle valid input without a responseSource for a RelationshipTemplate", async function () {
+                    await Given.aRejectedIncomingRequestFromARelationshipTemplate()
                     await When.iCompleteTheIncomingRequestWith({})
                     await Then.theRequestMovesToStatus(LocalRequestStatus.Completed)
                     await Then.theResponseHasItsSourcePropertyNotSet()
