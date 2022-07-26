@@ -14,7 +14,6 @@ import {
     ICoreAddress,
     ICoreId,
     Message,
-    RelationshipChange,
     RelationshipTemplate,
     SynchronizedCollection,
     TransportErrors
@@ -417,20 +416,19 @@ export class IncomingRequestsController extends ConsumptionBaseController {
 
         this.assertRequestStatus(request, LocalRequestStatus.Decided)
 
-        let responseSource: "Message" | "RelationshipChange"
+        const requestIsRejected = request.response!.content.result === ResponseResult.Rejected
+        const requestIsFromTemplate = request.source!.type === "RelationshipTemplate"
 
-        if (parsedParams.responseSourceObject instanceof Message) {
-            responseSource = "Message"
-        } else if (parsedParams.responseSourceObject instanceof RelationshipChange) {
-            responseSource = "RelationshipChange"
-        } else {
-            throw new Error("Unknown response source")
+        if (parsedParams.responseSourceObject) {
+            request.response!.source = LocalResponseSource.from({
+                type: parsedParams.responseSourceObject instanceof Message ? "Message" : "RelationshipChange",
+                reference: parsedParams.responseSourceObject.id
+            })
+        } else if (!requestIsRejected || !requestIsFromTemplate) {
+            throw new Error(
+                "A request can only be completed wothout a response source if the request is rejected and the request is from a template"
+            )
         }
-
-        request.response!.source = LocalResponseSource.from({
-            type: responseSource,
-            reference: parsedParams.responseSourceObject.id
-        })
 
         request.changeStatus(LocalRequestStatus.Completed)
 
