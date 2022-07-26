@@ -877,10 +877,15 @@ export class IncomingRequestControllerTests extends RequestsIntegrationTest {
                     })
                 })
 
-                it("throws on syntactically invalid input", async function () {
-                    await Given.anIncomingRequestInStatus(LocalRequestStatus.Decided)
-                    await When.iTryToCompleteTheIncomingRequestWithoutResponseSource()
-                    await Then.itThrowsAnErrorWithTheErrorMessage("*responseSource*Value is not defined*")
+                it("can handle valid input without a responseSource for a RelationshipTemplate", async function () {
+                    await Given.aRejectedIncomingRequestFromARelationshipTemplate()
+                    await When.iCompleteTheIncomingRequestWith({})
+                    await Then.theRequestMovesToStatus(LocalRequestStatus.Completed)
+                    await Then.theResponseHasItsSourcePropertyNotSet()
+                    await Then.theChangesArePersistedInTheDatabase()
+                    await Then.eventHasBeenPublished(IncomingRequestStatusChangedEvent, {
+                        newStatus: LocalRequestStatus.Completed
+                    })
                 })
 
                 it("throws when the Local Request is not in status 'Decided'", async function () {

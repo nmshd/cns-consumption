@@ -3,7 +3,7 @@ import { CoreId, ICoreId, IMessage, IRelationshipChange, Message, RelationshipCh
 
 export interface ICompleteIncomingRequestParameters extends ISerializable {
     requestId: ICoreId
-    responseSourceObject: IMessage | IRelationshipChange
+    responseSourceObject?: IMessage | IRelationshipChange
 }
 
 export class CompleteIncomingRequestParameters extends Serializable implements ICompleteIncomingRequestParameters {
@@ -12,8 +12,8 @@ export class CompleteIncomingRequestParameters extends Serializable implements I
     public requestId: CoreId
 
     @serialize({ unionTypes: [Message, RelationshipChange] })
-    @validate()
-    public responseSourceObject: Message | RelationshipChange
+    @validate({ nullable: true })
+    public responseSourceObject?: Message | RelationshipChange
 
     public static from(value: ICompleteIncomingRequestParameters): CompleteIncomingRequestParameters {
         return this.fromAny(value)

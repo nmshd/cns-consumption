@@ -37,9 +37,17 @@ class MockOutgoingRequestsController extends OutgoingRequestsController {
         processorRegistry: RequestItemProcessorRegistry,
         parent: ConsumptionController
     ) {
-        super(localRequests, processorRegistry, parent, new EventEmitter2EventBus(), {
-            address: CoreAddress.from("address")
-        })
+        super(
+            localRequests,
+            processorRegistry,
+            parent,
+            new EventEmitter2EventBus(() => {
+                // noop
+            }),
+            {
+                address: CoreAddress.from("address")
+            }
+        )
     }
 
     public override async create(params: ICreateOutgoingRequestParameters): Promise<LocalRequest> {

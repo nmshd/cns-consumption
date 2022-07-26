@@ -13,7 +13,9 @@ export abstract class IntegrationTest {
         protected loggerFactory: ILoggerFactory
     ) {
         this.logger = loggerFactory.getLogger(this.constructor.name)
-        this.eventBus = new EventEmitter2EventBus()
+        this.eventBus = new EventEmitter2EventBus(() => {
+            // noop
+        })
     }
 
     public abstract run(): void
