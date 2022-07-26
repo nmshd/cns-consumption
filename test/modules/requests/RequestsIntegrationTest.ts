@@ -92,7 +92,13 @@ export class RequestsTestsContext {
     ): Promise<RequestsTestsContext> {
         const context = new RequestsTestsContext()
 
-        const transport = await new Transport(dbConnection, config, new EventEmitter2EventBus()).init()
+        const transport = await new Transport(
+            dbConnection,
+            config,
+            new EventEmitter2EventBus(() => {
+                // noop
+            })
+        ).init()
         const database = await dbConnection.getDatabase(Math.random().toString(36).substring(7))
         const collection = new SynchronizedCollection(await database.getCollection("Requests"), 0)
         const fakeConsumptionController = {
