@@ -43,6 +43,7 @@ import {
     ICoreId,
     IdentityController,
     IMessage,
+    IRelationshipTemplate,
     Message,
     RelationshipChangeType,
     RelationshipTemplate,
@@ -195,16 +196,16 @@ export class RequestsGiven {
         id?: CoreId
         content?: IRequest
         status?: LocalRequestStatus
+        requestSource?: IMessage | IRelationshipTemplate
     }): Promise<LocalRequest> {
         params.id ??= await ConsumptionIds.request.generate()
         params.content ??= TestObjectFactory.createRequestWithOneItem({ id: params.id })
         params.status ??= LocalRequestStatus.Open
-
-        const requestSource = TestObjectFactory.createIncomingMessage(this.context.currentIdentity)
+        params.requestSource ??= TestObjectFactory.createIncomingMessage(this.context.currentIdentity)
 
         const localRequest = await this.context.incomingRequestsController.received({
             receivedRequest: params.content,
-            requestSourceObject: requestSource
+            requestSourceObject: params.requestSource
         })
 
         await this.moveIncomingRequestToStatus(localRequest, params.status)
@@ -651,7 +652,6 @@ export class RequestsWhen {
 
     public async iCompleteTheIncomingRequestWith(params: Partial<ICompleteIncomingRequestParameters>): Promise<void> {
         params.requestId ??= this.context.givenLocalRequest!.id
-        params.responseSourceObject ??= TestObjectFactory.createOutgoingIMessage(this.context.currentIdentity)
         this.context.localRequestAfterAction = await this.context.incomingRequestsController.complete(
             params as ICompleteIncomingRequestParameters
         )
@@ -738,16 +738,6 @@ export class RequestsWhen {
         this.context.localRequestAfterAction = (await this.context.incomingRequestsController.getIncomingRequest(
             await CoreId.generate()
         ))!
-    }
-
-    public iTryToCompleteTheIncomingRequestWithoutResponseSource(): Promise<void> {
-        this.context.actionToTry = async () => {
-            this.context.localRequestAfterAction = await this.context.incomingRequestsController.complete({
-                requestId: this.context.givenLocalRequest!.id
-            } as any)
-        }
-
-        return Promise.resolve()
     }
 
     public iTryToCompleteTheIncomingRequestWith(params: Partial<ICompleteIncomingRequestParameters>): Promise<void> {
@@ -929,10 +919,16 @@ export class RequestsThen {
         responseSourceType: string
     }): Promise<void> {
         expect(this.context.localRequestAfterAction!.response!.source).to.exist
-        expect(this.context.localRequestAfterAction!.response!.source!.reference).to.be.exist
+        expect(this.context.localRequestAfterAction!.response!.source!.reference).to.exist
         expect(this.context.localRequestAfterAction!.response!.source!.type).to.equal(
             expectedProperties.responseSourceType
         )
+
+        return Promise.resolve()
+    }
+
+    public theResponseHasItsSourcePropertyNotSet(): Promise<void> {
+        expect(this.context.localRequestAfterAction!.response!.source).to.not.exist
 
         return Promise.resolve()
     }
