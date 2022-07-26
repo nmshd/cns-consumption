@@ -426,7 +426,7 @@ export class IncomingRequestsController extends ConsumptionBaseController {
             })
         } else if (!requestIsRejected || !requestIsFromTemplate) {
             throw new Error(
-                "A request can only be completed wothout a response source if the request is rejected and the request is from a template"
+                "A Request can only be completed without a responseSource if the Request is rejected and the Request is from a Relationship Template"
             )
         }
 
